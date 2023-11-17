@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}
+Crear Proveedor
+{% endblock %}
+
+{% block content %}
+<h2>Crear Proveedor</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Guardar</button>
+</form>
+{% endblock %}
+

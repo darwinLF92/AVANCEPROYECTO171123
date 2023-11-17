@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>¿Estás seguro de que quieres desactivar al cliente "{{ cliente.nombre }}"?</h2>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit">Sí, desactivar</button>
+    <a href="{% url 'Clientes:cliente-list' %}">Cancelar</a>
+</form>
+{% endblock %}

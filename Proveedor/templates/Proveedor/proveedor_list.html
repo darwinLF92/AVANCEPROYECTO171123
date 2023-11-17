@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}
+Lista de Proveedores
+{% endblock %}
+
+{% block content %}
+<h2>Lista de Proveedores</h2>
+<a href="{% url 'Proveedor:proveedor-create' %}" class="btn btn-primary">Crear Proveedor</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>NIT</th>
+            <th>Nombre</th>
+            <th>Dirección</th>
+            <th>Teléfono</th>
+            <th>Correo</th>
+            <th>Contacto</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for proveedor in proveedores %}
+        <tr>
+            <td>{{ proveedor.nit }}</td>
+            <td>{{ proveedor.nombre }}</td>
+            <td>{{ proveedor.direccion }}</td>
+            <td>{{ proveedor.telefono }}</td>
+            <td>{{ proveedor.correo }}</td>
+            <td>{{ proveedor.contacto }}</td>
+            <td>
+                <a href="{% url 'Proveedor:proveedor-edit' proveedor.id %}">Editar</a> | <!-- Asegúrate de tener la URL proveedor-edit configurada -->
+                <a href="{% url 'Proveedor:proveedor-delete' proveedor.id %}">Eliminar</a> <!-- Y la URL proveedor-delete también -->
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No hay proveedores registrados.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

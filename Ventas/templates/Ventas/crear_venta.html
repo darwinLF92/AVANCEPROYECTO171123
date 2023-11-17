@@ -1,0 +1,783 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<!-- Utiliza contenedores y filas de Bootstrap para una estructura coherente -->
+<div class="container">
+  <!-- Sección de selección de tipo de documento y fecha -->
+  <div class="row">
+    <div class="input-field col s12 m4">
+      <select required name="tipo_documento" id="tipo_documento">
+        <option value="" disabled>Seleccione una opcion</option>
+        <option value="envio" selected>Envío</option>
+        <option value="factura">Factura</option>
+        <!-- Más opciones según sea necesario -->
+      </select>
+      <label>Tipo Documento</label>
+    </div>
+    <div class="input-field col s12 m4">
+      <input required type="text" class="datepicker" name="fecha_creacion" id="fecha_creacion">
+      <label for="fecha_creacion">Fecha</label>
+    </div>
+    <div class="input-field col s12 m4">
+      <select required name="vendedor" id="vendedor">
+        <option value="" disabled selected>Seleccione una opcion</option>
+        <!-- Más opciones según sea necesario -->
+      </select>
+      <label>Seleccione Vendedor</label>
+    </div>
+  </div>
+
+  <!--barra para almacenar el nombre del cliente-->
+<!-- Estructura HTML para los campos del cliente -->
+<div class="row">
+  <!-- Campo NIT -->
+  <div class="col-md-6">
+    <label for="tipo_documento" class="form-label">NI Cliente:</label>
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="NIT" id="cliente-nit" name="cliente_nit" readonly>
+    </div>
+  </div>
+  <!-- Campo Nombre del Cliente y Botón de Búsqueda -->
+  <div class="col-md-6">
+    <label for="tipo_documento" class="form-label">Nombre Cliente:</label>
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="NOMBRE CLIENTE" id="cliente-nombre" name="cliente_nombre" readonly>
+      <div class="input-group-append">
+        <button class="btn btn-primary" type="button" id="button-addon2" data-toggle="modal" data-target="#ClientesModal">
+          <i class="fas fa-search"></i> Buscar
+        </button>        
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Campos Teléfono y Dirección -->
+<div class="row">
+  <div class="col-md-6">
+    <label for="tipo_documento" class="form-label">Telefono:</label>
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="TELEFONO" id="cliente-telefono" name="cliente_telefono" readonly>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <label for="tipo_documento" class="form-label">Direccion:</label>
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" placeholder="DIRECCION" id="cliente-direccion" name="cliente_direccion" readonly>
+    </div>
+  </div>
+</div>
+  <!--barra para busqueda de productos-->
+  <div class="row">
+    <div class="col-md-12 pb-2 mb-2">
+      <div class="input-group">
+        <div class="input-group-append mr-2">
+          Agregar producto:
+        </div>
+        <input type="text" class="form-control border border-dark" placeholder="Ingrese una descripcion" id="search"
+          name="search">
+        <div class="input-group-append">
+              <a class="btn btn-primary ml-2 border border-dark" href="#MaterialesModal" data-toggle="modal" data-dismiss="modal">
+                <i class="nav-icon fas fa-boxes"></i> Buscar
+              </a>
+        </div>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+  </div>
+  
+  <!--tabla para almacenar el detalle de venta-->
+  <div class="row mt-5">
+    <div class="col-md-12" style="overflow:scroll">
+      <table class="table table-secondary" id="tableProducts">
+        <thead>
+          <tr>
+            <th>Quitar</th>
+            <th>Descripción</th>
+            <th>Cantidad</th>
+            <th>Precio </th>
+            <th>Descuento </th>
+            <th>Subtotal </th>
+          </tr>
+        </thead>
+        <tbody id="tableProductsBody" class="text-dark">
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row mt-3">
+    <div class="col-11 text-right">
+      <h5 class="text-danger font-weight-bold" id="total"> Total: Q 0.00 </h5>
+    </div>
+  </div>
+
+  <div class="row text-center mt-4">
+    <div class="col-12">
+      <button id="openModalButton" class="btn btn-success btn-block">Cobrar Venta <i class="fas fa-money-bill"></i></button>
+
+    </div>
+  </div>
+  <!--campo para agregar descripcion o comentario de la venta-->
+  <div class="row">
+    <div class="col-md-12">
+      <p>
+        <label for="comentarios" class="form-control">Comentarios: </label>
+        <textarea class="form-control border border-dark bg-secondary text-white" id="comentarios" name="comentarios"
+          rows="2" cols="6"></textarea>
+
+    </div>
+  </div>
+</div>
+
+<!--modal de buscar productos-->
+<div id="MaterialesModal" class="modal bd-example-modal-lg" style="overflow: scroll;">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header bg-info">
+              <h3 class="modal-title text-dark">Agregar Material</h3>
+          </div>
+          <!--barra de busqueda producto-->
+          <input type="text" id="searchProductos" placeholder="Buscar producto..." oninput="filterTableProducto(this.value)">
+          <div class="modal-body" style="overflow:scroll; max-height: 450px;">
+              <table class="table table-hover" id="myTable">
+                  <thead>
+                      <tr>
+                          <th># ID</th>
+                          <th>Descripción</th>
+                          <th>Precio Q</th>
+                          <th>Agregar</th>
+                      </tr>
+                  </thead>
+                  <tbody class="text-dark">
+                      {% for i in Productos_list %}
+                      <tr>
+                          <td>{{i.id}}</td>
+                          <td>{{i.nombre}}</td>
+                          <td>Q {{i.precio_venta}}</td>
+                          <td>
+                              <button onclick="addProductList('{{i.id}}', '{{i.nombre}}','{{i.precio_venta}}')"
+                                  class="btn btn-success" data-dismiss="modal" type="button">
+                                  <i class="fas fa-share-square"></i>
+                              </button>
+                          </td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+          <div class="modal-footer bg-dark">
+              <button type="button" class="btn btn-danger" data-dismiss="modal">
+                  Cerrar
+                  <i class="fas fa-window-close"></i>
+              </button>
+          </div>
+      </div>
+  </div>
+</div>
+
+<!--Modal de buscar clientes-->
+<div id="ClientesModal" class="modal bd-example-modal-lg" style="overflow: scroll;">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header bg-info">
+              <h3 class="modal-title text-dark">Seleccionar Cliente</h3>
+          </div>
+          <input type="text" id="searchClientes" placeholder="Buscar Cliente..." oninput="filterTableCliente(this.value)">
+          <div class="modal-body" style="overflow:scroll; max-height: 450px;">
+              <table class="table table-hover" id="table2">
+                  <thead>
+                      <tr>
+                          <th># ID</th>
+                          <th>Nit</th>
+                          <th>Nombre</th>
+                          <th>Direccion</th>
+                          <th>Telefono</th>
+                          <th>Seleccionar</th>
+                      </tr>
+                  </thead>
+                  <tbody class="text-black">
+                      {% for i in Clientes_list %}
+                      <tr>
+                          <td>{{i.id}}</td>
+                          <td>{{i.nit}}</td>
+                          <td>{{i.nombre}}</td>
+                          <td>{{i.direccion}}</td>
+                          <td>{{i.telefono}}</td>
+                          <td>
+                            <button onclick="seleccionarCliente('{{i.id}}', '{{i.nombre}}', '{{i.nit}}', '{{i.direccion}}', '{{i.telefono}}')" class="btn btn-success"
+                            data-dismiss="modal" type="button">
+                            <i class="fas fa-share-square"></i>
+                        </button>
+                          </td>
+                      </tr>
+                      {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+          <div class="modal-footer bg-dark">
+              <button type="button" class="btn btn-danger" data-dismiss="modal">
+                  Cerrar
+                  <i class="fas fa-window-close"></i>
+              </button>
+          </div>
+      </div>
+  </div>
+</div>
+
+<!--modal de confirmar venta-->
+<div id="ConfirmacionModal" class="modal bd-example-modal-lg" style="overflow: scroll;">
+  <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+          <div class="modal-header bg-info">
+              <h3 class="modal-title text-dark">Confirmar Pago</h3>
+          </div>
+          <div class="modal-body" style="overflow:scroll; max-height: 450px;">
+              <table class="table table-hover">
+                  <thead>
+                      <tr>
+                          <th>Método</th>
+                          <th>Monto <span id="totalVentaModal">0.00</span></th>
+                      </tr>
+                  </thead>
+                  <tbody class="text-dark">
+                      <tr>
+                        <td>Tipo de Pago: </td>
+                        <td>
+                        <select required name="tipo_pago" class="form-select" id="tipo_pago">
+                          <option value="contado">Contado</option>
+                          <option value="credito">Crédito</option>
+                          <!-- Más opciones según sea necesario -->
+                        </select>
+                      </td>
+                      </tr>
+                      <tr>
+                        <td>Forma de pago: </td>
+                        <td>
+                          <select required name="metodo_pago" class="form-select" id="metodo_pago">
+                            <option value="">-----</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="deposito">Deposito</option>
+                            <!-- Más opciones según sea necesario -->
+                          </select>
+                        </td>
+                      </tr>   
+                      <tr>
+                          <td>Paga con : </td>
+                          <td><input type="number" class="form-control" id="paga_con" value="0.00"></td>
+                      </tr>
+                      <tr>
+                          <td>Cambio : </td>
+                          <td><input type="number" class="form-control" id="cambio" value="0.00"></td>
+                      </tr>
+                      <tr>
+                          <td>Cheque : </td>
+                          <td><input type="number" class="form-control" id="cheque" value="0.00"></td>
+                      </tr>
+                      <tr>
+                          <td>Deposito : </td>
+                          <td><input type="number" class="form-control" id="deposito" value="0.00"></td>
+                      </tr>
+                      <tr>
+                          <td>Dias Credito : </td>
+                          <td><input type="number" class="form-control" id="dias_credito" value="0"></td>
+                      </tr>
+                      <tr>
+                        <td>Fecha de Vencimiento : </td>
+                        <td><input type="date" class="form-control" id="fecha_vencimiento"></td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+          <div class="modal-footer bg-dark">
+            <button type="button" id="closeModalButton" class="btn btn-danger btn-lg">
+              Cerrar
+              <i class="fas fa-window-close"></i>
+          </button>
+              <button onclick="saveData()" id="btn" class="btn btn-success btn-lg">Agregar Venta <i
+                      class="fas fa-money-bill"></i></button>
+          </div>
+      </div>
+  </div>
+</div>
+
+
+
+<script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Inclusión de jQuery y JavaScript de Bootstrap -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<script type="text/javascript">
+  var searchProductUrl = "{% url 'Ventas:buscar_productos' %}";
+</script>
+
+<script>
+ var verts = {
+      items: {
+          total: 0.00,
+          products: []
+      },
+      calculate: function () {
+          var calculatedtotal = 0;
+          this.items.products.forEach(function (dict) {
+              calculatedtotal += parseFloat(dict.subtotal);
+          });
+          this.items.total = calculatedtotal;
+          document.getElementById("total").textContent = "Total " + this.items.total.toFixed(2);
+      },
+
+      list: function () {
+          var tbody = document.getElementById("tableProductsBody");
+          tbody.innerHTML = ''; // Limpiar la tabla
+          this.items.products.forEach(function (product, index) {
+              var tr = document.createElement('tr');
+              tr.innerHTML = `<td><button onclick="removeProduct(${index})">Quitar</button></td>
+                              <td>${product.nombre}</td>
+                              <td><input type="number" value="${product.cantidad}" onchange="updateQuantity(this, ${index})"></td>
+                              <td>${product.precio_venta}</td>
+                              <td><input type="number" value="${product.descuento}" onchange="updateDiscount(this, ${index})"></td>
+                              <td>${product.subtotal}</td>`;
+              tbody.appendChild(tr);
+          });
+      }
+  };
+
+
+  function addProductToSale(product) {
+    // Crea un objeto de producto basado en la selección y añádelo a verts
+    addProductList(product.id, product.nombre, product.precio);
+}
+
+
+function addProductList(id_producto, nombre_producto, precio_producto) {
+    var producto = {
+        id: id_producto,
+        nombre: nombre_producto,
+        cantidad: 1,  // Cantidad inicial
+        precio_venta: precio_producto,
+        descuento: 0,  // Descuento inicial
+        subtotal: precio_producto - 0,  // Subtotal inicial
+    };
+    
+    // Revisa si el producto ya está en el carrito y actualiza la cantidad si es necesario
+    var existingProduct = verts.items.products.find(p => p.id === id_producto);
+    if (existingProduct) {
+        existingProduct.cantidad += 1; // Incrementa la cantidad
+        existingProduct.subtotal = (existingProduct.cantidad * existingProduct.precio_venta) - existingProduct.descuento; // Actualiza el subtotal
+    } else {
+        verts.items.products.push(producto); // Añade el producto nuevo al carrito
+    }
+    
+    verts.list(); // Actualiza la lista
+    verts.calculate(); // Actualiza el total
+}
+
+// Las funciones de actualización deben estar definidas para manejar cambios en cantidad y descuento
+function updateQuantity(input, index) {
+    var product = verts.items.products[index];
+    product.cantidad = parseInt(input.value) || 0;
+    product.subtotal = (product.cantidad * product.precio_venta) - product.descuento;
+    verts.calculate();  // Vuelve a calcular el total
+    verts.list();  // Actualiza la lista
+}
+
+function updateDiscount(input, index) {
+    var product = verts.items.products[index];
+    product.descuento = parseFloat(input.value) || 0;
+    product.subtotal = (product.cantidad * product.precio_venta) - product.descuento;
+    verts.calculate();  // Vuelve a calcular el total
+    verts.list();  // Actualiza la lista
+}
+
+  function removeProduct(index) {
+      verts.items.products.splice(index, 1);
+      verts.list();
+      verts.calculate();
+  }
+
+
+
+  function seleccionarCliente(id, nombre, nit, direccion, telefono) {
+  // Actualiza los valores de los campos en el formulario principal
+  document.getElementById('cliente-nit').value = nit;
+  document.getElementById('cliente-nombre').value = nombre;
+  document.getElementById('cliente-telefono').value = telefono;
+  document.getElementById('cliente-direccion').value = direccion;
+
+  // Actualiza el valor del campo oculto del ID del cliente, si es necesario
+  document.getElementById('id_cliente').value = id;
+  
+  // Cierra el modal si es necesario
+  // $('#ClientesModal').modal('hide'); // Si estás usando jQuery
+}
+
+
+  // El código para el modal y otras funcionalidades deberá ser ajustado de forma similar.
+  // Función para abrir el modal y actualizar el total
+  function openConfirmationModal() {
+    verts.calculate(); // Calcula el total antes de abrir el modal
+    document.getElementById('totalVentaModal').textContent = verts.items.total.toFixed(2);
+
+    var tipoPagoSeleccionado = document.getElementById('tipo_pago').value;
+
+    mostrarOcultarCampos(tipoPagoSeleccionado);
+    calcularCambio();
+
+    var modal = document.getElementById('ConfirmacionModal');
+    modal.style.display = 'block'; // Muestra el modal
+}
+
+
+function actualizarFechaVencimiento(dias) {
+    var fechaVencimiento = new Date();
+    fechaVencimiento.setDate(fechaVencimiento.getDate() + dias);
+    document.getElementById('fecha_vencimiento').value = fechaVencimiento.toISOString().split('T')[0];
+}
+
+// Función para cerrar el modal
+function closeConfirmationModal() {
+    var modal = document.getElementById('ConfirmacionModal');
+    modal.style.display = 'none'; // Oculta el modal
+}
+
+// Añadir evento de clic al botón que abre el modal
+document.getElementById('openModalButton').addEventListener('click', openConfirmationModal);
+
+// Añadir evento de clic al botón que cierra el modal
+document.getElementById('closeModalButton').addEventListener('click', closeConfirmationModal);
+
+
+document.getElementById('closeModalButton').addEventListener('click', function() {
+    var modal = document.getElementById('ConfirmacionModal');
+    modal.style.display = 'none';
+});
+
+function mostrarOcultarCampos(tipoPago) {
+    ocultarTodosLosCampos();
+
+    if (tipoPago === 'contado') {
+        document.getElementById('metodo_pago').style.display = 'block';
+        document.getElementById('dias_credito').value = ''; // Establecer a null o dejar vacío
+        calcularCambio();
+    } else if (tipoPago === 'credito') {
+        document.getElementById('dias_credito').style.display = 'block';
+        document.getElementById('fecha_vencimiento').style.display = 'block';
+        document.getElementById('dias_credito').value = '30'; // Establecer días por defecto a 30
+        actualizarFechaVencimiento(30); // Actualiza la fecha de vencimiento aquí
+    }
+}
+
+
+function ocultarTodosLosCampos() {
+    document.getElementById('metodo_pago').style.display = 'none';
+    document.getElementById('paga_con').style.display = 'none';
+    document.getElementById('cambio').style.display = 'none';
+    document.getElementById('cheque').style.display = 'none';
+    document.getElementById('deposito').style.display = 'none';
+    document.getElementById('dias_credito').style.display = 'none';
+    document.getElementById('fecha_vencimiento').style.display = 'none';
+}
+
+
+function calcularCambio() {
+    var formaPago = document.getElementById('metodo_pago').value;
+    
+    var esEfectivo = formaPago === 'efectivo';
+    document.getElementById('paga_con').style.display = esEfectivo ? 'block' : 'none';
+    document.getElementById('cambio').style.display = esEfectivo ? 'block' : 'none';
+    document.getElementById('cheque').style.display = formaPago === 'cheque' ? 'block' : 'none';
+    document.getElementById('deposito').style.display = formaPago === 'deposito' ? 'block' : 'none';
+
+    // Si es efectivo, recalcula el cambio
+    if (esEfectivo) {
+        calcularCambioEfectivo();
+    }
+}
+
+function calcularCambioEfectivo() {
+    var total = parseFloat(document.getElementById('totalVentaModal').textContent || 0);
+    var pagaCon = parseFloat(document.getElementById('paga_con').value || 0);
+    var cambio = pagaCon - total;
+    document.getElementById('cambio').value = cambio > 0 ? cambio.toFixed(2) : '0.00';
+}
+
+document.getElementById('metodo_pago').addEventListener('change', function(event) {
+    // Primero, verifica si se seleccionó crédito y ajusta el valor si es necesario
+    if (this.value === 'credito') {
+        this.value = null;
+    }
+
+    // Luego, llama a calcularCambio
+    calcularCambio(event);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    ocultarTodosLosCampos();
+    document.getElementById('tipo_pago').addEventListener('change', function() {
+        mostrarOcultarCampos(this.value);
+        calcularCambio(); // Llama a calcularCambio en caso de que se necesite actualizar basado en la forma de pago existente
+    });
+});
+
+document.getElementById('paga_con').addEventListener('input', function() {
+    var total = parseFloat(document.getElementById('totalVentaModal').textContent);
+    var pagaCon = parseFloat(this.value);
+    var cambio = pagaCon - total;
+    document.getElementById('cambio').value = cambio > 0 ? cambio.toFixed(2) : '0.00';
+});
+
+document.getElementById('dias_credito').addEventListener('input', function() {
+    var diasCredito = parseInt(this.value);
+    // Verifica si diasCredito es NaN o no
+    if (isNaN(diasCredito)) {
+        // Maneja el caso donde diasCredito no es un número, por ejemplo, configurando una fecha predeterminada o dejando el campo vacío.
+        document.getElementById('fecha_vencimiento').value = ''; // o alguna fecha predeterminada
+    } else {
+        var fechaVencimiento = new Date();
+        fechaVencimiento.setDate(fechaVencimiento.getDate() + diasCredito);
+        document.getElementById('fecha_vencimiento').value = fechaVencimiento.toISOString().split('T')[0];
+    }
+});
+
+// Obtén el elemento de entrada de búsqueda y añade un event listener para el evento 'input'
+document.getElementById('search').addEventListener('input', function(e) {
+    // Llama a searchProduct con el valor actual del campo de búsqueda
+    searchProduct(e.target.value);
+});
+
+
+//filtrado para productos en la tabla de busqueda
+function filterTableProducto(query) {
+    var rows = document.querySelectorAll("#myTable tbody tr");
+    rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query.toLowerCase()) ? "" : "none";
+    });
+}
+
+//filtrado para clientes en la tabla de busqueda
+function filterTableCliente(query) {
+    var rows = document.querySelectorAll("#table2 tbody tr");
+    rows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(query.toLowerCase()) ? "" : "none";
+    });
+}
+
+let currentIndex = -1; // Índice del elemento seleccionado, definido globalmente
+
+
+function searchProduct(query) {
+    const resultsElement = document.getElementById('searchResults');
+    
+    // Si la consulta está vacía, limpia los resultados y no hace nada más
+    if (!query.trim()) {
+        resultsElement.innerHTML = '';
+        document.removeEventListener('keydown', handleArrowKeys); // Asegúrate de eliminar el evento de teclado cuando no haya resultados
+        return; // Sale temprano de la función
+    }
+    
+    // Continúa con la búsqueda si hay una consulta
+    fetch(searchProductUrl + '?q=' + encodeURIComponent(query))
+    .then(response => response.json())
+    .then(products => {
+        // Limpia los resultados existentes
+        resultsElement.innerHTML = '';
+
+        // Crea un contenedor para los nuevos resultados
+        const list = document.createElement('ul');
+        list.className = 'list-group'; // Clase de Bootstrap para listas
+
+        // Crea y añade los resultados a la lista
+        products.forEach((product, index) => {
+            const item = document.createElement('li');
+            item.className = 'list-group-item search-result-item'; // Clase de Bootstrap y clase para identificar los elementos de búsqueda
+            item.textContent = `${product.nombre} - ${product.precio} - Stock: ${product.stock}`;
+            item.tabIndex = 0; // Hace que el elemento sea enfocable
+            item.addEventListener('click', () => addProductToSale(product));
+            item.dataset.index = index; // Guarda el índice en el elemento
+            list.appendChild(item);
+        });
+
+        // Añade la lista al contenedor de resultados
+        resultsElement.appendChild(list);
+
+        // Desvincula la navegación por teclado antes de establecer una nueva
+        document.removeEventListener('keydown', handleArrowKeys);
+        
+        // Añade la navegación con teclado a los elementos actuales
+        addKeyboardNavigation(products);
+    })
+    .catch(error => {
+        console.error('Error during fetch:', error);
+    });
+}
+
+function addKeyboardNavigation(products) {
+    document.addEventListener('keydown', (e) => handleArrowKeys(e, products));
+}
+
+function handleArrowKeys(e, products) {
+    let items = document.querySelectorAll('.search-result-item');
+
+    if (e.key === 'ArrowDown' && currentIndex < items.length - 1) {
+        currentIndex++;
+        updateSelection(items, currentIndex);
+    } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+        currentIndex--;
+        updateSelection(items, currentIndex);
+    } else if (e.key === 'Enter' && currentIndex > -1) {
+        e.preventDefault();
+        addProductToSale(products[currentIndex]); // Añade el producto seleccionado
+        currentIndex = -1; // Resetea el índice después de la selección
+    }
+}
+
+function updateSelection(items, index) {
+    items.forEach(item => item.classList.remove('selected'));
+    if (items[index]) {
+        items[index].classList.add('selected');
+        items[index].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+}
+
+
+//funcion para guardar datos del html a la vista
+function saveData() {
+    if (parseFloat(verts.items.total) === 0) {
+        Swal.fire({
+            icon: 'error',
+            title: '',
+            text: "No hay ningún producto agregado a la lista",
+        });
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append('action', 'save');
+    formData.append('fecha_creacion', document.getElementById("fecha_creacion").value);
+    formData.append('cliente', document.getElementById("id_cliente").value);
+    formData.append('tipo_documento', document.getElementById('tipo_documento').value);
+    formData.append('tipo_pago', document.getElementById('tipo_pago').value);
+    formData.append('metodo_pago', document.getElementById('metodo_pago').value);
+    formData.append('total', document.getElementById('total').textContent.split(' ')[1]); // Asumiendo que el total está en el formato "Total: Q 0.00"
+    formData.append('paga_con', document.getElementById('paga_con').value);
+    formData.append('cambio', document.getElementById('cambio').value);
+    formData.append('comentarios', document.getElementById("comentarios").value);
+    formData.append('dias_credito', document.getElementById('dias_credito').value);
+    formData.append('fecha_vencimiento', document.getElementById('fecha_vencimiento').value);
+    formData.append('verts', JSON.stringify(verts.items.products));
+
+    sendToServer(formData);
+}
+
+
+// Obtener el token CSRF de las cookies del navegador.
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // ¿Esta cookie es el token CSRF?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie('csrftoken');
+
+
+function sendToServer(formData) {
+    formData.append('csrfmiddlewaretoken', csrftoken);
+
+    fetch("{% url 'Ventas:AddSale' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrftoken  // Agrega el token CSRF en los encabezados
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.href = "{% url 'Ventas:lista_ventas' %}";
+        } else {
+            // Mostrar el mensaje de error específico enviado desde el servidor
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.error || 'No se pudo guardar la venta.',
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Oops...',
+            text: 'Ha ocurrido un error en la solicitud',
+            footer: error
+        });
+    });
+}
+
+
+
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('select');
+    var instances = M.FormSelect.init(elems);
+  
+    var dateElems = document.querySelectorAll('.datepicker');
+    var today = new Date();  // Obtén la fecha actual
+    var dateInstances = M.Datepicker.init(dateElems, {
+        defaultDate: today,    // Establece la fecha actual como predeterminada
+        setDefaultDate: true,  // Muestra la fecha predeterminada en el campo
+        // Otras opciones aquí si es necesario
+    });
+});
+  </script>
+  
+
+{% if messages %}
+{% for message in messages %}
+<script>
+  Swal.fire({
+      icon: 'success',
+      title: 'Confirmación',
+      text: "{{message}}",
+      footer: ""
+  })
+</script>
+{% endfor %}
+{% endif %}
+
+<style>
+  #searchResults {
+    margin-top: 1rem; /* Espacio arriba */
+    background: #fff; /* Fondo blanco */
+    border: 1px solid #ccc; /* Borde */
+    border-radius: 0.25rem; /* Bordes redondeados */
+    max-height: 300px; /* Altura máxima */
+    overflow-y: auto; /* Hacer scroll si el contenido es muy largo */
+}
+</style>
+
+{% endblock %}
+
