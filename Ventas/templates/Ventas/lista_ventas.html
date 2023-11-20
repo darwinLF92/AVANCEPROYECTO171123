@@ -2,7 +2,7 @@
 
 {% block content %}
     <h1>Lista de Ventas</h1>
-    <a href="{% url 'Ventas:create_venta' %}" class="btn btn-primary">Crear Nueva Venta</a>
+    <a href="{% url 'Ventas:AddSale' %}" class="btn btn-primary">Crear Nueva Venta</a>
     <table>
         <thead>
             <tr>
@@ -11,7 +11,7 @@
                 <th>Cliente</th>
                 <th>Total</th>
                 <th>E. Fisico</th>
-                <th>Detalles</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -23,6 +23,7 @@
                 <td>{{ venta.total }}</td>
                 <td>{{ venta.comentarios }}</td>
                 <td><a href="{% url 'Ventas:detalle_venta' venta.id %}">Ver Detalles</a></td>
+                <td><a href="{% url 'Ventas:confirmar_eliminar_venta' venta.id %}">Eliminar</a></td>
             </tr>
             {% empty %}
             <tr>

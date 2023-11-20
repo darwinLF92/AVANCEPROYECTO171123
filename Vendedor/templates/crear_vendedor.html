@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Verificar si se está editando un vendedor existente -->
+{% if editando %}
+<h2>Editando Vendedor: {{ vendedor_nombre }}</h2>
+{% else %}
+<h2>Crear Vendedor</h2>
+{% endif %}
+
+<form method="post" class="form">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="id_codigo">Código:</label>
+    <input type="text" name="codigo" class="form-control" id="id_codigo" value="{{ form.codigo.value|default_if_none:'' }}">
+  </div>
+  <div class="form-group">
+    <label for="id_nombre">Nombre:</label>
+    <input type="text" name="nombre" class="form-control" id="id_nombre" value="{{ form.nombre.value|default_if_none:'' }}">
+  </div>
+  <div class="form-group">
+    <label for="id_direccion">Dirección:</label>
+    <input type="text" name="direccion" class="form-control" id="id_direccion" value="{{ form.direccion.value|default_if_none:'' }}">
+  </div>
+  <div class="form-group">
+    <label for="id_telefono">Teléfono:</label>
+    <input type="text" name="telefono" class="form-control" id="id_telefono" value="{{ form.telefono.value|default_if_none:'' }}">
+  </div>
+  <div class="form-group">
+    <label for="id_fecha_inicio_labores">Fecha inicio labores:</label>
+    <input type="date" name="fecha_inicio_labores" class="form-control" id="id_fecha_inicio_labores" value="{{ form.fecha_inicio_labores.value|date:"d-m-Y"|default_if_none:'' }}">
+  </div>
+
+  <button type="submit" class="btn btn-primary">Guardar</button>
+  <a href="{% url 'Vendedor:lista_vendedores' %}" class="btn btn-secondary">Cancelar</a>
+</form>
+{% endblock %}
+
+{% block javascript %}
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script>
+  $(document).ready(function(){
+    $('.datepicker').datepicker({
+      format: 'dd-mm-yyyy',
+      autoclose: true,
+      todayHighlight: true
+    });
+  });
+</script>
+{% endblock %}

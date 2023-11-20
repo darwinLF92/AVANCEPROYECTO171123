@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Ventas al Crédito de {{ cliente.nombre }}</h2>
+  <form id="ventasForm">
+    <table id="ventasTable">
+      <thead>
+        <tr>
+          <th>ID Venta</th>
+          <th>Vendedor</th>
+          <th>Fecha Creado</th>
+          <th>Fecha Vencimiento</th>
+          <th>Dias Vencidos</th>
+          <th>Total</th>
+          <th>Acción</th>
+          <th>Detalle</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for venta in ventas_credito %}
+          <tr>
+            <td>{{ venta.id }}</td>
+            <td>{{ venta.vendedor.nombre }}</td>
+            <td>{{ venta.fecha_creacion }}</td>
+            <td>{{ venta.fecha_vencimiento }}</td>
+            <td>{{ venta.dias_vencidos }}</td>
+            <td class="totalVenta">{{ venta.saldo_pendiente }}</td>
+            <td>
+              <input type="checkbox" class="ventaCheckbox" data-total="{{ venta.saldo_pendiente }}">
+            </td>
+            <td><a href="{% url 'Ventas:detalle_venta' venta.id %}">Ver Detalles</a></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6">No hay ventas al crédito para este cliente.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
+    <div class="acciones-cobro">
+      <div>
+        <label>Total Créditos:</label>
+        <input type="text" id="totalCreditos" readonly value="0.00">
+      </div>
+      <div>
+        <label>Cobrar Créditos Seleccionados:</label>
+        <input type="text" id="cobrarCreditosSeleccionados" readonly value="0.00">
+      </div>
+      <div>
+        <label>Créditos Pendientes:</label>
+        <input type="text" id="creditosPendientes" readonly value="0.00">
+      </div>
+      <div class="botones-acciones">
+        <input type="button" value="Cobrar Seleccionados" onclick="abrirModalCobro()">
+        <input type="button" value="Abono Crédito Seleccionado" onclick="abrirModalAbono()">
+        <a href="{% url 'Ventas:ventas_credito_cliente' %}" class="btn btn-primary">Cancelar</a>
+      </div>
+    </div>
+  </form>
+
+  <!-- Aquí tu modal para el cobro y para el abono -->
+  <!-- Modal para Cobrar Seleccionados -->
+<div id="modalCobro" class="modal bd-example-modal-lg" style="overflow: scroll;">
+  <div class="modal-dialog modal-lg">
+  <div class="modal-content">
+    <h4>Cobrar Créditos Seleccionados</h4>
+    <form id="formCobro">
+      <div>
+        <label>Total a Cobrar:</label>
+        <input type="text" id="totalCobrarModal" readonly>
+      </div>
+      <div>
+        <label>Método de Pago:</label>
+        <select id="metodoPagoCobro">
+          <option value="efectivo">Efectivo</option>
+          <option value="cheque">Cheque</option>
+          <option value="transferencia">Transferencia</option>
+          </select>
+        </div>
+        <div>
+          <input type="button" value="Confirmar Cobro" onclick="realizarCobroSeleccionado()">
+          <input type="button" value="Cerrar" onclick="cerrarModalCobro()">
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Abono a Crédito Seleccionado -->
+<div id="modalAbono" class="modal bd-example-modal-lg" style="overflow: scroll;">
+  <div class="modal-dialog modal-lg">
+  <div class="modal-content">
+    <h4>Abono a Crédito Seleccionado</h4>
+    <form id="formAbono">
+      <div>
+        <label>Total Crédito Seleccionado:</label>
+        <input type="text" id="totalAbonoModal" readonly>
+      </div>
+      <div>
+        <label>Monto Abono:</label>
+        <input type="number" id="montoAbono">
+      </div>
+      <div>
+        <label>Método de Pago:</label>
+        <select id="metodoPagoAbono">
+          <option value="efectivo">Efectivo</option>
+          <option value="cheque">Cheque</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </div>
+      <div>
+        <input type="button" value="Confirmar Abono" onclick="realizarAbono()">
+        <input type="button" value="Cerrar" onclick="cerrarModalAbono()">
+      </div>
+    </form>
+  </div>
+</div>
+</div>
+
+
+<input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+
+<script>
+
+
+
+  // Función para abrir el modal de Cobro Seleccionado
+  function abrirModalCobro() {
+    let totalSeleccionado = 0;
+    let idsSeleccionados = [];
+
+    document.querySelectorAll('.ventaCheckbox:checked').forEach(function(checkbox) {
+      totalSeleccionado += parseFloat(checkbox.getAttribute('data-total'));
+      idsSeleccionados.push(checkbox.closest('tr').querySelector('td').textContent);
+    });
+
+    document.getElementById('totalCobrarModal').value = totalSeleccionado.toFixed(2);
+    // Guardar los IDs de ventas seleccionadas para uso posterior, por ejemplo, en un campo oculto
+    // document.getElementById('idsVentasCobro').value = idsSeleccionados.join(',');
+
+    document.getElementById('modalCobro').style.display = 'block';
+  }
+
+  // Función para cerrar el modal de Cobro Seleccionado
+  function cerrarModalCobro() {
+    document.getElementById('modalCobro').style.display = 'none';
+  }
+
+  // Función para abrir el modal de Abono a Crédito Seleccionado
+  function abrirModalAbono() {
+    let checkboxesSeleccionados = document.querySelectorAll('.ventaCheckbox:checked');
+    
+    if (checkboxesSeleccionados.length === 1) {
+      let ventaSeleccionada = checkboxesSeleccionados[0];
+      let totalVenta = parseFloat(ventaSeleccionada.getAttribute('data-total'));
+      let idVenta = ventaSeleccionada.closest('tr').querySelector('td').textContent;
+
+      document.getElementById('totalAbonoModal').value = totalVenta.toFixed(2);
+      // Guardar el ID de la venta seleccionada para uso posterior
+      // document.getElementById('idVentaAbono').value = idVenta;
+
+      document.getElementById('modalAbono').style.display = 'block';
+    } else {
+      alert('Por favor, seleccione solo una venta para realizar un abono.');
+    }
+  }
+
+  // Función para cerrar el modal de Abono a Crédito Seleccionado
+  function cerrarModalAbono() {
+    document.getElementById('modalAbono').style.display = 'none';
+  }
+
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Añadir listeners a los checkboxes
+    document.querySelectorAll('.ventaCheckbox').forEach(function(checkbox) {
+      checkbox.addEventListener('change', function() {
+        calcularTotales();
+      });
+    });
+
+    // Calcular los totales iniciales
+    calcularTotales();
+  });
+
+  function calcularTotales() {
+    let totalCreditos = 0;
+    let totalSeleccionado = 0;
+
+    document.querySelectorAll('.ventaCheckbox').forEach(function(checkbox) {
+      let totalVenta = parseFloat(checkbox.getAttribute('data-total'));
+
+      if (!isNaN(totalVenta)) {
+        totalCreditos += totalVenta;
+
+        if (checkbox.checked) {
+          totalSeleccionado += totalVenta;
+        }
+      }
+    });
+
+    let creditosPendientes = totalCreditos - totalSeleccionado;
+
+    document.getElementById('totalCreditos').value = totalCreditos.toFixed(2);
+    document.getElementById('cobrarCreditosSeleccionados').value = totalSeleccionado.toFixed(2);
+    document.getElementById('creditosPendientes').value = creditosPendientes.toFixed(2);
+  }
+  // Aquí puedes agregar las funciones para confirmar cobro y confirmar abono
+  // Estas funciones deberían manejar la lógica para procesar el cobro o el abono
+  function realizarCobroSeleccionado() {
+  const ventasSeleccionadas = document.querySelectorAll('.ventaCheckbox:checked');
+  const datosCobro = Array.from(ventasSeleccionadas).map(checkbox => {
+    const idVenta = checkbox.closest('tr').querySelector('td').textContent;
+    const totalVenta = parseFloat(checkbox.dataset.total);
+    return {
+      venta_id: idVenta,
+      monto: totalVenta // Asegúrate de que este es el monto correcto que quieres cobrar por cada venta
+    };
+  });
+
+  // Aquí se suma el total de todos los montos de las ventas seleccionadas
+  const totalCobrar = datosCobro.reduce((acc, current) => acc + current.monto, 0);
+
+  // Actualiza el valor en el modal si es necesario
+  document.getElementById('totalCobrarModal').value = totalCobrar.toFixed(2);
+
+  enviarDatosCobro(datosCobro);
+}
+
+
+function realizarAbono() {
+  const montoAbono = parseFloat(document.getElementById('montoAbono').value);
+  const ventaCheckbox = document.querySelector('.ventaCheckbox:checked');
+  
+  if (ventaCheckbox) {
+    const datosAbono = [{
+      venta_id: ventaCheckbox.closest('tr').querySelector('td').textContent,
+      monto: montoAbono
+    }];
+
+    enviarDatosCobro(datosAbono);
+  } else {
+    alert('No se ha seleccionado ninguna venta para el abono.');
+  }
+}
+
+function enviarDatosCobro(datos) {
+  const csrftoken = document.getElementById('csrfToken').value;
+
+  fetch('/Ventas/ruta-para-procesar-cobro', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrftoken,
+    },
+    body: JSON.stringify({ cobros: datos }),
+  })
+  .then(response => response.json())
+    .then(data => {
+      console.log('Cobro realizado:', data);
+      // Redirigir al recibo del pago
+      if (data.success && data.recibo_url) {
+        window.location.href = data.recibo_url;
+      } else {
+        // Manejar casos donde no hay URL de recibo o el cobro no fue exitoso
+        console.error('No se pudo redirigir al recibo del pago');
+      }
+
+      // Actualizar el campo "Cobrar Marcados" en la interfaz
+      const cobroMarcadosInput = document.getElementById('cobrarMarcados');
+      const cobroMarcados = parseFloat(cobroMarcadosInput.value) || 0;
+      const montoCobrado = datosCobro.reduce((total, cobro) => total + cobro.monto, 0);
+      cobroMarcadosInput.value = (cobroMarcados + montoCobrado).toFixed(2);
+
+      // Reiniciar los checkboxes y campos de cobro parcial
+      ventasSeleccionadas.forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.closest('tr').querySelector('.cobroParcial').value = '0.00';
+      });
+
+      // Volver a calcular los totales
+      calcularTotales();
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+</script>
+
+
+<style>
+  .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    padding-top: 60px;
+  }
+
+  .modal-dialog {
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+  }
+
+  .modal-content {
+    background-color: #fefefe;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+  }
+
+  .acciones-cobro {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8f9fa; /* Color de fondo (ajustable) */
+    padding: 10px;
+    box-shadow: 0 -5px 10px rgba(0, 0, 0, 0.2); /* Sombra para resaltar el área */
+    text-align: center; /* Centrar contenido horizontalmente */
+  }
+
+  .botones-acciones {
+    margin-top: 10px;
+  }
+
+</style>
+
+
+
+{% endblock %}

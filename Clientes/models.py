@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils import timezone
 
+
 class Cliente(models.Model):
     nit = models.CharField(max_length=20, unique=True, verbose_name='NIT')
     nombre = models.CharField(max_length=100, verbose_name='Nombre')

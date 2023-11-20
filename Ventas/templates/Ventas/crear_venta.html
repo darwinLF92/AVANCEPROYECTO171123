@@ -7,42 +7,51 @@
 <div class="container">
   <!-- Sección de selección de tipo de documento y fecha -->
   <div class="row">
-    <div class="input-field col s12 m4">
-      <select required name="tipo_documento" id="tipo_documento">
-        <option value="" disabled>Seleccione una opcion</option>
+    <!-- Tipo de Documento -->
+    <div class="col-md-4 mb-3">
+      <label for="tipo_documento">Tipo Documento</label>
+      <select class="form-select" name="tipo_documento" id="tipo_documento" required>
+        <option value="" disabled>Seleccione una opción</option>
         <option value="envio" selected>Envío</option>
         <option value="factura">Factura</option>
         <!-- Más opciones según sea necesario -->
       </select>
-      <label>Tipo Documento</label>
     </div>
-    <div class="input-field col s12 m4">
-      <input required type="text" class="datepicker" name="fecha_creacion" id="fecha_creacion">
+  
+    <!-- Fecha de Creación -->
+    <div class="col-md-4 mb-3">
       <label for="fecha_creacion">Fecha</label>
+      <input type="date" class="form-control" name="fecha_creacion" id="fecha_creacion" required>
     </div>
-    <div class="input-field col s12 m4">
-      <select required name="vendedor" id="vendedor">
-        <option value="" disabled selected>Seleccione una opcion</option>
-        <!-- Más opciones según sea necesario -->
-      </select>
-      <label>Seleccione Vendedor</label>
+  
+    <!-- Seleccione Vendedor -->
+    <div class="col-md-4 mb-3">
+      <label for="vendedor">Seleccione Vendedor</label>
+      <select class="form-select" name="vendedor" id="id_vendedor" required>
+      <option value="" disabled selected>Seleccione una opción</option>
+      {% for vendedor in Vendedores_list %}
+      <option value="{{ vendedor.id }}">{{ vendedor.nombre }}</option>
+      {% endfor %}
+    </select> 
     </div>
-  </div>
 
-  <!--barra para almacenar el nombre del cliente-->
+  </div>
+  
+
 <!-- Estructura HTML para los campos del cliente -->
-<div class="row">
+<div class="row mt-5">
   <!-- Campo NIT -->
   <div class="col-md-6">
-    <label for="tipo_documento" class="form-label">NI Cliente:</label>
+    <label for="cliente-nit" class="form-label">NIT Cliente:</label>
     <div class="input-group mb-3">
       <input type="text" class="form-control" placeholder="NIT" id="cliente-nit" name="cliente_nit" readonly>
     </div>
   </div>
   <!-- Campo Nombre del Cliente y Botón de Búsqueda -->
   <div class="col-md-6">
-    <label for="tipo_documento" class="form-label">Nombre Cliente:</label>
+    <label for="cliente-nombre" class="form-label">Nombre Cliente:</label>
     <div class="input-group mb-3">
+      <input type="hidden" name="id_cliente" id="id_cliente" value="" readonly> <!-- Campo oculto para el ID del cliente -->
       <input type="text" class="form-control" placeholder="NOMBRE CLIENTE" id="cliente-nombre" name="cliente_nombre" readonly>
       <div class="input-group-append">
         <button class="btn btn-primary" type="button" id="button-addon2" data-toggle="modal" data-target="#ClientesModal">
@@ -52,6 +61,8 @@
     </div>
   </div>
 </div>
+
+
 
 <!-- Campos Teléfono y Dirección -->
 <div class="row">
@@ -205,7 +216,7 @@
                           <td>{{i.direccion}}</td>
                           <td>{{i.telefono}}</td>
                           <td>
-                            <button onclick="seleccionarCliente('{{i.id}}', '{{i.nombre}}', '{{i.nit}}', '{{i.direccion}}', '{{i.telefono}}')" class="btn btn-success"
+                            <button onclick="seleccionarCliente('{{i.id}}',  '{{i.nit}}', '{{i.nombre}}', '{{i.direccion}}', '{{i.telefono}}')" class="btn btn-success"
                             data-dismiss="modal" type="button">
                             <i class="fas fa-share-square"></i>
                         </button>
@@ -295,8 +306,8 @@
               Cerrar
               <i class="fas fa-window-close"></i>
           </button>
-              <button onclick="saveData()" id="btn" class="btn btn-success btn-lg">Agregar Venta <i
-                      class="fas fa-money-bill"></i></button>
+          <button onclick="saveData()" id="btn" class="btn btn-success btn-lg">Agregar Venta <i
+            class="fas fa-money-bill"></i></button>
           </div>
       </div>
   </div>
@@ -314,6 +325,14 @@
 
 <script type="text/javascript">
   var searchProductUrl = "{% url 'Ventas:buscar_productos' %}";
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', (event) => {
+    var hoy = new Date();
+    var fecha = hoy.toISOString().substr(0, 10);
+    document.getElementById('fecha_creacion').value = fecha;
+  });
 </script>
 
 <script>
@@ -662,6 +681,7 @@ function saveData() {
     formData.append('action', 'save');
     formData.append('fecha_creacion', document.getElementById("fecha_creacion").value);
     formData.append('cliente', document.getElementById("id_cliente").value);
+    formData.append('vendedor', document.getElementById('id_vendedor').value);
     formData.append('tipo_documento', document.getElementById('tipo_documento').value);
     formData.append('tipo_pago', document.getElementById('tipo_pago').value);
     formData.append('metodo_pago', document.getElementById('metodo_pago').value);
@@ -714,17 +734,19 @@ function sendToServer(formData) {
         return response.json();
     })
     .then(data => {
-        if (data.status === 'success') {
-            window.location.href = "{% url 'Ventas:lista_ventas' %}";
-        } else {
-            // Mostrar el mensaje de error específico enviado desde el servidor
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.error || 'No se pudo guardar la venta.',
-            });
-        }
-    })
+    if (data.status === 'success') {
+        // Construye la URL de redirección con el venta_id de acuerdo al patrón de URL de Django
+        const detailUrl = `/detalle-venta/${data.venta_id}/`;
+        window.location.href = detailUrl;
+    } else {
+        // Mostrar el mensaje de error específico enviado desde el servidor
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.error || 'No se pudo guardar la venta.',
+        });
+    }
+})
     .catch(error => {
         Swal.fire({
             icon: 'error',
@@ -737,22 +759,9 @@ function sendToServer(formData) {
 
 
 
+
 </script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    var elems = document.querySelectorAll('select');
-    var instances = M.FormSelect.init(elems);
-  
-    var dateElems = document.querySelectorAll('.datepicker');
-    var today = new Date();  // Obtén la fecha actual
-    var dateInstances = M.Datepicker.init(dateElems, {
-        defaultDate: today,    // Establece la fecha actual como predeterminada
-        setDefaultDate: true,  // Muestra la fecha predeterminada en el campo
-        // Otras opciones aquí si es necesario
-    });
-});
-  </script>
   
 
 {% if messages %}

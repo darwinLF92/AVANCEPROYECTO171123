@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Lista de Cobros</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID del Cobro</th>
+                <th>ID de la Venta</th>
+                <th>Fecha Venta</th>
+                <th>Fecha Cobro</th>
+                <th>Dif. Dias</th>
+                <th>Nombre del Cliente</th>
+                <th>Comentario de la Venta</th>
+                <th>Monto</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cobro in cobros %}
+                <tr>
+                    <td>{{ cobro.id }}</td>
+                    <td>{{ cobro.venta.id }}</td>
+                    <td>{{ cobro.venta.fecha_creacion }}</td>
+                    <td>{{ cobro.fecha_cobro }}</td>
+                    <td>{{ cobro.dif_dias }}</td>
+                    <td>{{ cobro.venta.cliente.nombre }}</td>
+                    <td>{{ cobro.venta.comentarios }}</td>
+                    <td>{{ cobro.monto }}</td>
+                    <td>
+                        <a href="{% url 'Ventas:generar_recibo' pk_cobro=cobro.id %}">Ver Recibo</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="6">No hay cobros registrados.</td>
+                </tr>
+            {% endfor %}
+s
+        </tbody>
+        <tr>
+            <td colspan="3"></td>
+            <td>Total Cobros:</td>
+            <td>{{ total_cobros }}</td>
+        </tr>
+    </table>
+{% endblock %}

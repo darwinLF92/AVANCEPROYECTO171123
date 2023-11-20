@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="recibo">
+    <h1>Recibo de Venta</h1>
+    <p>ID de Venta: {{ venta.id }}</p>
+    <p>Fecha de Venta: {{ venta.fecha_creacion }}</p>
+    <p>Cliente: {{ venta.cliente.nombre }}</p>
+    <p>Total de Venta: {{ venta.total }}</p>
+    <p>Saldo Actual: {{ venta.saldo_pendiente }}</p>
+
+    <h2>Detalle del Cobro Actual</h2>
+    <div class="detalle-cobro">
+        <p>Fecha de Cobro: {{ cobro_actual.fecha_cobro }}</p>
+        <p>Método de Pago: {{ cobro_actual.get_metodo_pago_display }}</p>
+        <p>Monto: {{ cobro_actual.monto }}</p>
+        <p>Vendedor: {{ cobro_actual.vendedor.nombre }}</p>
+    </div>
+
+    <h2>Otros Cobros Relacionados</h2>
+    {% for cobro in otros_cobros %}
+    <div class="detalle-cobro">
+        <p>Fecha de Cobro: {{ cobro.fecha_cobro }}</p>
+        <p>Método de Pago: {{ cobro.get_metodo_pago_display }}</p>
+        <p>Monto: {{ cobro.monto }}</p>
+        <p>Vendedor: {{ cobro.vendedor.nombre }}</p>
+    </div>
+    {% empty %}
+    <p>No hay otros cobros relacionados para esta venta.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
