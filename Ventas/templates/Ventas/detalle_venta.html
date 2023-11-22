@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block content %}
     <h1>Detalle de Ventas</h1>
@@ -9,6 +10,7 @@
     <p><strong>Direccion:</strong> {{ venta.cliente.direccion }}</p>
     <p><strong>Telefono:</strong> {{ venta.cliente.telefono }}</p>
     <p><strong>Total:</strong> {{ venta.total }}</p>
+    <p><strong>Tipo Pago:</strong> {{ venta.tipo_pago }}</p>
 
     <h2>Productos Vendidos</h2>
     <table>
@@ -25,10 +27,10 @@
             {% for detalle in detalles %}
             <tr>
                 <td>{{ detalle.producto.nombre }}</td>
-                <td>{{ detalle.cantidad }}</td>
+                <td>{{ detalle.cantidad|intcomma }}</td>
                 <td>{{ detalle.precio }}</td>
                 <td>{{ detalle.descuento }}</td>
-                <td>{{ detalle.subtotal }}</td>
+                <td>{{ detalle.subtotal|floatformat:2|intcomma }}</td>
             </tr>
             {% empty %}
             <tr>

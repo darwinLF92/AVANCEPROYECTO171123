@@ -1,8 +1,35 @@
 {% extends 'base.html' %}
 
+{% load humanize %}
 {% block content %}
     <h1>Lista de Ventas</h1>
-    <a href="{% url 'Ventas:AddSale' %}" class="btn btn-primary">Crear Nueva Venta</a>
+
+    <div class="text-right">
+        <a href="{% url 'Ventas:AddSale' %}" class="btn btn-primary">Crear Nueva Venta</a>
+    </div>
+    
+
+    <div class="form-container">
+        <form method="get" action="{% url 'Ventas:lista_ventas' %}">
+            <div>
+                <span class="label-title"><label for="cliente">Nombre Cliente:</label></span>
+                <input type="text" id="cliente" name="cliente" placeholder="Nombre del cliente" value="{{ request.GET.cliente }}">
+            </div>
+            
+            <div>
+                <span class="label-title"><label for="fecha_inicio">Fecha Inicio:</label></span>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ request.GET.fecha_inicio|default:today }}">
+            </div>
+            
+            <div>
+                <span class="label-title"><label for="fecha_fin">Fecha Fin:</label></span>
+                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ request.GET.fecha_fin|default:today }}">
+            </div>
+            
+            <button type="submit">BUSCAR</button>
+        </form>
+    </div>
+
     <table>
         <thead>
             <tr>
@@ -18,12 +45,15 @@
             {% for venta in ventas %}
             <tr>
                 <td>{{ venta.id }}</td>
-                <td>{{ venta.fecha_creacion }}</td>
+                <td>{{ venta.fecha_creacion|date:"d-m-Y" }}</td>
                 <td>{{ venta.cliente.nombre }}</td>
-                <td>{{ venta.total }}</td>
+                <td>{{ venta.total|floatformat:2|intcomma }}</td>
                 <td>{{ venta.comentarios }}</td>
-                <td><a href="{% url 'Ventas:detalle_venta' venta.id %}">Ver Detalles</a></td>
-                <td><a href="{% url 'Ventas:confirmar_eliminar_venta' venta.id %}">Eliminar</a></td>
+                <td><a href="{% url 'Ventas:detalle_venta' venta.id %}">Ver Detalles</a>
+                <a href="{% url 'Ventas:confirmar_eliminar_venta' venta.id %}">Eliminar</a>
+                <a href="{% url 'Ventas:anular_venta' venta.id %}">Devolución</a>
+                <a href="{% url 'Ventas:imprimir_venta' venta.id %}">Imprimir Venta</a></td>
+
             </tr>
             {% empty %}
             <tr>
@@ -32,4 +62,76 @@
             {% endfor %}
         </tbody>
     </table>
+
+    
+<style>
+    /* Centrar el formulario en la pantalla */
+    .form-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-container form {
+    display: flex;
+    gap: 10px; /* Espacio entre los elementos del formulario */
+    align-items: center;
+}
+
+.label-title {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.form-container input,
+.form-container button {
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid #ccc;
+}
+
+.form-container button {
+    background-color: #f60; /* Color de fondo del botón similar al de la imagen */
+    color: white;
+    border: none;
+}
+
+/* Asegúrate de que los inputs no sean demasiado anchos */
+.form-container input[type="text"],
+.form-container input[type="date"] {
+    width: 150px; /* O el ancho que prefieras */
+}
+
+/* Asegúrate de que el botón no sea demasiado ancho */
+.form-container button {
+    padding: 5px 20px;
+}
+
+/* Para pantallas más pequeñas, puedes hacer que los elementos se apilen verticalmente */
+@media (max-width: 600px) {
+    .form-container {
+        flex-direction: column;
+    }
+
+    .form-container form {
+        flex-direction: column;
+    }
+
+    .form-container input,
+    .form-container button {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+
+.align-right {
+    display: block;  /* Hace que el enlace se comporte como un bloque */
+    text-align: right;  /* Alinea el contenido del bloque a la derecha */
+    margin-bottom: 10px;  /* Espacio debajo del botón para separación */
+}
+</style>
+
+
 {% endblock %}
+

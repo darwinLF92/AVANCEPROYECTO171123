@@ -7,8 +7,17 @@ from django.http import JsonResponse
 from django.forms import modelformset_factory, inlineformset_factory
 
 def listar_productos(request):
-    producto = Producto.objects.filter(activo=True)  # Assuming 'activo' is a BooleanField in your model
-    return render(request, 'Producto/listar_productos.html', {'productos': producto})
+    nombre = request.GET.get('nombre', '')
+
+    # Filtrar los clientes por nombre si se proporciona un valor de búsqueda
+    if nombre:
+        productos = Producto.objects.filter(activo=True, nombre__icontains=nombre)
+    else:
+        # Si no se proporciona un valor de búsqueda, mostrar todos los clientes activos
+        productos = Producto.objects.filter(activo=True)
+    
+    return render(request, 'Producto/listar_productos.html', {'productos': productos, 'nombre': nombre})
+
 
 
 def get_productos(request):
@@ -179,3 +188,12 @@ def editar_componentes_producto(request, producto_id):
     })
 
 
+def producto_search_view(request):
+    nombre = request.GET.get('nombre', '')
+
+    if nombre:
+        productos = Producto.objects.filter(activo=True, nombre__icontains=nombre)
+    else:
+        productos = Producto.objects.filter(activo=True)
+
+    return render(request, 'Producto/listar_productos.html', {'productos': productos, 'nombre': nombre})

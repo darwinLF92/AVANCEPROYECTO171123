@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
   <h2>Ventas al Crédito de {{ cliente.nombre }}</h2>
   <form id="ventasForm">
@@ -21,10 +21,10 @@
           <tr>
             <td>{{ venta.id }}</td>
             <td>{{ venta.vendedor.nombre }}</td>
-            <td>{{ venta.fecha_creacion }}</td>
-            <td>{{ venta.fecha_vencimiento }}</td>
+            <td>{{ venta.fecha_creacion|date:"d-m-Y" }}</td>
+            <td>{{ venta.fecha_vencimiento|date:"d-m-Y" }}</td>
             <td>{{ venta.dias_vencidos }}</td>
-            <td class="totalVenta">{{ venta.saldo_pendiente }}</td>
+            <td class="totalVenta">{{ venta.saldo_pendiente|floatformat:2|intcomma }}</td>
             <td>
               <input type="checkbox" class="ventaCheckbox" data-total="{{ venta.saldo_pendiente }}">
             </td>
@@ -129,11 +129,11 @@
     let idsSeleccionados = [];
 
     document.querySelectorAll('.ventaCheckbox:checked').forEach(function(checkbox) {
-      totalSeleccionado += parseFloat(checkbox.getAttribute('data-total'));
-      idsSeleccionados.push(checkbox.closest('tr').querySelector('td').textContent);
+        totalSeleccionado += parseFloat(checkbox.getAttribute('data-total'));
+        idsSeleccionados.push(checkbox.closest('tr').querySelector('td').textContent);
     });
 
-    document.getElementById('totalCobrarModal').value = totalSeleccionado.toFixed(2);
+    document.getElementById('totalCobrarModal').value = formatearNumero(totalSeleccionado);
     // Guardar los IDs de ventas seleccionadas para uso posterior, por ejemplo, en un campo oculto
     // document.getElementById('idsVentasCobro').value = idsSeleccionados.join(',');
 
@@ -150,11 +150,11 @@
     let checkboxesSeleccionados = document.querySelectorAll('.ventaCheckbox:checked');
     
     if (checkboxesSeleccionados.length === 1) {
-      let ventaSeleccionada = checkboxesSeleccionados[0];
-      let totalVenta = parseFloat(ventaSeleccionada.getAttribute('data-total'));
-      let idVenta = ventaSeleccionada.closest('tr').querySelector('td').textContent;
+        let ventaSeleccionada = checkboxesSeleccionados[0];
+        let totalVenta = parseFloat(ventaSeleccionada.getAttribute('data-total'));
+        let idVenta = ventaSeleccionada.closest('tr').querySelector('td').textContent;
 
-      document.getElementById('totalAbonoModal').value = totalVenta.toFixed(2);
+        document.getElementById('totalAbonoModal').value = formatearNumero(totalVenta);
       // Guardar el ID de la venta seleccionada para uso posterior
       // document.getElementById('idVentaAbono').value = idVenta;
 
@@ -182,6 +182,11 @@
     calcularTotales();
   });
 
+
+  function formatearNumero(numero) {
+    return numero.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
   function calcularTotales() {
     let totalCreditos = 0;
     let totalSeleccionado = 0;
@@ -199,10 +204,10 @@
     });
 
     let creditosPendientes = totalCreditos - totalSeleccionado;
+    document.getElementById('totalCreditos').value = formatearNumero(totalCreditos);
+    document.getElementById('cobrarCreditosSeleccionados').value = formatearNumero(totalSeleccionado);
+    document.getElementById('creditosPendientes').value = formatearNumero(creditosPendientes);
 
-    document.getElementById('totalCreditos').value = totalCreditos.toFixed(2);
-    document.getElementById('cobrarCreditosSeleccionados').value = totalSeleccionado.toFixed(2);
-    document.getElementById('creditosPendientes').value = creditosPendientes.toFixed(2);
   }
   // Aquí puedes agregar las funciones para confirmar cobro y confirmar abono
   // Estas funciones deberían manejar la lógica para procesar el cobro o el abono

@@ -1,6 +1,5 @@
-<!-- ventas/ventas_credito_cliente.html -->
-
 {% extends 'base.html' %}
+{% load humanize %}
 
 {% block content %}
   <h2>Ventas al Crédito por Cliente</h2>
@@ -8,8 +7,10 @@
     <thead>
       <tr>
         <th>Cliente</th>
-        <th>Cantidad Ventas</th>
-        <th>Saldo por Cobrar</th>
+        <th>Documentos</th>
+        <th>Total Inicial</th>
+        <th>Abonos</th>
+        <th>Saldo Pendiente</th>
         <th>Acciones</th>
       </tr>
     </thead>
@@ -17,16 +18,22 @@
       {% for cliente, datos in ventas_por_cliente.items %}
         <tr>
           <td>{{ cliente.nombre }}</td>
-          <td>{{ datos.ventas|length }}</td>
-          <td>{{ datos.total_credito }}</td>
+          <td>{{ datos.ventas|length|intcomma }}</td>
+          <td>{{ datos.total_inicial|floatformat:2|intcomma }}</td>
+          <td>{{ datos.total_abonos|floatformat:2|intcomma }}</td>
+          <td>{{ datos.saldo_pendiente|floatformat:2|intcomma }}</td>
           <td>
-            <!-- Acciones como botones o enlaces -->
             <a href="{% url 'Ventas:lista_creditos' cliente.id %}">Ver Detalles</a>
-          </td>
-
           </td>
         </tr>
       {% endfor %}
     </tbody>
+    <tr>
+      <td>Totales:</td>
+      <td>{{ suma_total_documentos|intcomma }}</td>
+      <td>{{ suma_total_inicial|floatformat:2|intcomma }}</td>
+      <td>{{ suma_abonos|floatformat:2|intcomma }}</td>
+      <td>{{ suma_saldo_pendiente|floatformat:2|intcomma }}</td>
+    </tr>
   </table>
 {% endblock %}

@@ -1,6 +1,6 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.db import transaction
-from .forms import VentaForm, DetalleVentaFormSet, DetalleVenta
+from .forms import AnulacionForm, DevolucionForm, VentaForm, DetalleVentaFormSet, DetalleVenta
 from django.utils import timezone
 from django.views.generic import ListView, DetailView
 from django.shortcuts import render, redirect, reverse
@@ -17,18 +17,42 @@ from decimal import Decimal
 from django.views.generic.edit import CreateView
 from django.views.decorators.http import require_http_methods
 from django.db.models import Sum
+from reportlab.pdfgen import canvas
 
 
 
-def lista_ventas(request):
-    ventas = Venta.objects.all().order_by('-fecha_creacion')
-    context = {
-        'ventas': ventas,
-    }
-    return render(request, 'Ventas/lista_ventas.html', context)
+class ListaVentasView(ListView):
+    model = Venta
+    template_name = 'Ventas/lista_ventas.html'
+    context_object_name = 'ventas'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        context['today'] = today.strftime("%Y-%m-%d")  # Formato de fecha 'YYYY-MM-DD'
+        return context
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(anulada=False) 
+        cliente_nombre = self.request.GET.get('cliente', '')
+        fecha_inicio = self.request.GET.get('fecha_inicio')
+        fecha_fin = self.request.GET.get('fecha_fin')
+
+        if cliente_nombre:
+            queryset = queryset.filter(cliente__nombre__icontains=cliente_nombre)
+
+        # Si no se proporcionan fechas, se filtra por el día actual
+        if not fecha_inicio or not fecha_fin:
+            today = timezone.now().date()
+            fecha_inicio = fecha_fin = today
+
+        if fecha_inicio and fecha_fin:
+            # Filtrar ventas por el rango de fechas
+            queryset = queryset.filter(fecha_creacion__range=[fecha_inicio, fecha_fin])
+
+        return queryset.order_by('-fecha_creacion')
 
 
-from django.shortcuts import render, get_object_or_404
 
 def detalle_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
@@ -138,33 +162,58 @@ def eliminar_venta(request, id):
         return redirect('Ventas:lista_ventas')  # Redirige a la lista de ventas
     return render(request, 'Ventas/confirmar_eliminar_venta.html', {'venta': venta})
 
+
+
 class VentasCreditoPorClienteView(ListView):
     model = Venta
     template_name = 'Ventas/ventas_credito_cliente.html'
 
     def get_queryset(self):
-        # Filtrar solo ventas al crédito
-        return Venta.objects.filter(tipo_pago='credito').select_related('cliente')
+        # Filtrar solo ventas al crédito con saldo pendiente
+        return Venta.objects.filter(tipo_pago='credito', saldo_pendiente__gt=0, anulada=False).select_related('cliente')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         ventas_por_cliente = {}
 
+        # Inicializar los totales
+        suma_total_documentos = 0
+        suma_total_inicial = 0
+        suma_abonos = 0
+        suma_saldo_pendiente = 0
+
         for venta in self.object_list:
-            # Continuar solo si el saldo pendiente es mayor a cero
-            if venta.saldo_pendiente > 0:
-                if venta.cliente not in ventas_por_cliente:
-                    ventas_por_cliente[venta.cliente] = {
-                        'ventas': [],
-                        'total_credito': 0
-                    }
-                
-                ventas_por_cliente[venta.cliente]['ventas'].append(venta)
-                ventas_por_cliente[venta.cliente]['total_credito'] += venta.saldo_pendiente
+            cliente = venta.cliente
+            if cliente not in ventas_por_cliente:
+                ventas_por_cliente[cliente] = {
+                    'ventas': [],
+                    'total_inicial': 0,
+                    'total_abonos': 0,
+                    'saldo_pendiente': 0,
+                }
 
+            ventas_por_cliente[cliente]['ventas'].append(venta)
+            ventas_por_cliente[cliente]['total_inicial'] += venta.total
+            ventas_por_cliente[cliente]['saldo_pendiente'] += venta.saldo_pendiente
+
+            # Acumular los totales
+            suma_total_inicial += venta.total
+            suma_saldo_pendiente += venta.saldo_pendiente
+
+        # Calcular los abonos para cada cliente y acumular el total de abonos y documentos
+        for cliente, datos in ventas_por_cliente.items():
+            datos['total_abonos'] = datos['total_inicial'] - datos['saldo_pendiente']
+            suma_abonos += datos['total_abonos']
+            suma_total_documentos += len(datos['ventas'])
+
+        # Agregar los totales acumulados al contexto
         context['ventas_por_cliente'] = ventas_por_cliente
-        return context 
+        context['suma_total_documentos'] = suma_total_documentos
+        context['suma_total_inicial'] = suma_total_inicial
+        context['suma_abonos'] = suma_abonos
+        context['suma_saldo_pendiente'] = suma_saldo_pendiente
 
+        return context
 
 class DetalleVentasCreditoClienteView(DetailView):
     model = Cliente
@@ -176,7 +225,7 @@ class DetalleVentasCreditoClienteView(DetailView):
         cliente_id = self.kwargs.get('pk')
 
         # Filtrar ventas de crédito con saldo pendiente mayor a cero
-        ventas_credito = Venta.objects.filter(cliente_id=cliente_id, tipo_pago='credito', saldo_pendiente__gt=0)
+        ventas_credito = Venta.objects.filter(cliente_id=cliente_id, tipo_pago='credito', saldo_pendiente__gt=0, anulada=False)
 
         context['ventas_credito'] = ventas_credito
         return context
@@ -264,3 +313,76 @@ class CobrosListView(ListView):
         context['cobros'] = cobros
         context['total_cobros'] = total_cobros  # Agrega el total de cobros al contexto
         return context
+    
+from reportlab.lib.pagesizes import letter
+
+def imprimir_venta(request, venta_id):
+    venta = Venta.objects.get(pk=venta_id)
+    detalles = DetalleVenta.objects.filter(venta=venta)
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="venta-{venta_id}.pdf"'
+    
+    p = canvas.Canvas(response, pagesize=letter)
+    width, height = letter  # Tamaño de la hoja (carta)
+    
+    # Organizar el contenido
+    p.drawString(85, height - 117, f"{venta.cliente.nombre}")
+    p.drawString(95, height - 133, f"{venta.cliente.direccion}")
+    p.drawString(500, height - 133, f"{venta.cliente.telefono}")
+    
+    fecha = venta.fecha_creacion.strftime('%d %m %Y').split(' ')
+# Asumiendo que tienes una diferencia de 20 puntos entre cada parte de la fecha
+    p.drawString(465, height - 95, fecha[0])  # Día
+    p.drawString(500, height - 95, fecha[1])  # Mes
+    p.drawString(535, height - 95, fecha[2])  # Año
+
+    p.drawString(150, height - 100, f"{venta.id}")
+    
+    y_position = height - 183
+    for detalle in detalles:
+        precio_con_descuento = detalle.subtotal / detalle.cantidad if detalle.cantidad else 0
+        p.drawString(50, y_position, f"{detalle.cantidad}")
+        p.drawString(95, y_position, f"{detalle.producto.nombre}")
+        p.drawString(462, y_position, f"{precio_con_descuento}")              
+        p.drawString(520, y_position, f"{detalle.subtotal}")
+        y_position -= 18
+    
+    p.drawString(50, 98, f"{venta.comentarios}")
+    
+    # Totales y pie de página
+    p.drawString(520, 110, f"{venta.total}")
+    
+    p.showPage()
+    p.save()
+    
+    return response
+
+# views.py
+
+def anular_venta(request, venta_id):
+    venta = get_object_or_404(Venta, pk=venta_id)
+    if request.method == 'POST':
+        form = AnulacionForm(request.POST)
+        if form.is_valid():
+            anulacion = form.save(commit=False)
+            anulacion.venta = venta
+            anulacion.save()
+            # Actualizar el inventario y el saldo del cliente
+            for detalle in venta.detalles.all():
+                detalle.producto.stock += detalle.cantidad
+                detalle.producto.save()
+            if venta.tipo_pago == 'credito':
+                venta.cliente.saldo -= venta.total
+                venta.cliente.save()
+            # Marcar la venta como anulada
+            venta.anulada = True
+            venta.save()
+            return redirect('Ventas:lista_ventas')
+    else:
+        form = AnulacionForm()
+
+    return render(request, 'Ventas/anular_venta.html', {'venta': venta, 'form': form})
+
+
+

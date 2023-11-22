@@ -2,6 +2,7 @@
 
 {% block content %}
 
+<br>
 
 <!-- Utiliza contenedores y filas de Bootstrap para una estructura coherente -->
 <div class="container">
@@ -9,35 +10,33 @@
   <div class="row">
     <!-- Tipo de Documento -->
     <div class="col-md-4 mb-3">
-      <label for="tipo_documento">Tipo Documento</label>
-      <select class="form-select" name="tipo_documento" id="tipo_documento" required>
-        <option value="" disabled>Seleccione una opción</option>
-        <option value="envio" selected>Envío</option>
-        <option value="factura">Factura</option>
-        <!-- Más opciones según sea necesario -->
-      </select>
+        <label for="tipo_documento" style="display: block;">Tipo Documento</label>
+        <select class="form-select" name="tipo_documento" id="tipo_documento" required>
+            <option value="" disabled>Seleccione una opción</option>
+            <option value="envio" selected>Envío</option>
+            <option value="factura">Factura</option>
+            <!-- Más opciones según sea necesario -->
+        </select>
     </div>
   
     <!-- Fecha de Creación -->
     <div class="col-md-4 mb-3">
-      <label for="fecha_creacion">Fecha</label>
+      <label for="fecha_creacion">Fecha:</label>
       <input type="date" class="form-control" name="fecha_creacion" id="fecha_creacion" required>
     </div>
   
     <!-- Seleccione Vendedor -->
     <div class="col-md-4 mb-3">
-      <label for="vendedor">Seleccione Vendedor</label>
-      <select class="form-select" name="vendedor" id="id_vendedor" required>
-      <option value="" disabled selected>Seleccione una opción</option>
-      {% for vendedor in Vendedores_list %}
-      <option value="{{ vendedor.id }}">{{ vendedor.nombre }}</option>
-      {% endfor %}
-    </select> 
-    </div>
-
+        <label for="vendedor" style="display: block;">Seleccione Vendedor:</label>
+        <select class="form-select" name="vendedor" id="id_vendedor" required>
+          <option value="" disabled selected>Seleccione una opción</option>
+          {% for vendedor in Vendedores_list %}
+            <option value="{{ vendedor.id }}">{{ vendedor.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
   </div>
   
-
 <!-- Estructura HTML para los campos del cliente -->
 <div class="row mt-5">
   <!-- Campo NIT -->
@@ -130,6 +129,7 @@
     </div>
   </div>
   <!--campo para agregar descripcion o comentario de la venta-->
+  <br>
   <div class="row">
     <div class="col-md-12">
       <p>
@@ -156,6 +156,7 @@
                       <tr>
                           <th># ID</th>
                           <th>Descripción</th>
+                          <th>Stock</th>
                           <th>Precio Q</th>
                           <th>Agregar</th>
                       </tr>
@@ -165,11 +166,12 @@
                       <tr>
                           <td>{{i.id}}</td>
                           <td>{{i.nombre}}</td>
+                          <td>{{i.stock}}</td>
                           <td>Q {{i.precio_venta}}</td>
                           <td>
                               <button onclick="addProductList('{{i.id}}', '{{i.nombre}}','{{i.precio_venta}}')"
                                   class="btn btn-success" data-dismiss="modal" type="button">
-                                  <i class="fas fa-share-square"></i>
+                                  <i class="fas fa-share-square"></i> Seleccionar
                               </button>
                           </td>
                       </tr>
@@ -256,8 +258,8 @@
                         <td>Tipo de Pago: </td>
                         <td>
                         <select required name="tipo_pago" class="form-select" id="tipo_pago">
-                          <option value="contado">Contado</option>
                           <option value="credito">Crédito</option>
+                          <option value="contado">Contado</option>
                           <!-- Más opciones según sea necesario -->
                         </select>
                       </td>
@@ -665,6 +667,26 @@ function updateSelection(items, index) {
     }
 }
 
+function validarCampos() {
+    const idsCamposRequeridos = [
+        'fecha_creacion',
+        'id_cliente',
+        'id_vendedor',
+        'tipo_documento',
+        // Agrega aquí los IDs de otros campos requeridos.
+    ];
+
+    // Encuentra el primer campo que está vacío o no existe en el DOM.
+    const campoFaltante = idsCamposRequeridos.find(id => {
+        const elemento = document.getElementById(id);
+        return elemento ? !elemento.value : true;
+    });
+
+    // Devuelve el nombre del campo faltante o null si todos los campos están presentes y llenos.
+    return campoFaltante ? ` "${campoFaltante}" es requerido y no ha sido llenado o no existe.` : null;
+}
+
+
 
 //funcion para guardar datos del html a la vista
 function saveData() {
@@ -675,6 +697,16 @@ function saveData() {
             text: "No hay ningún producto agregado a la lista",
         });
         return;
+    }
+
+    let campoFaltante = validarCampos();
+    if (campoFaltante) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Falta Información',
+            text: `El campo "${campoFaltante}"`,
+        });
+        return; // No procedemos con el envío si falta algún campo.
     }
 
     let formData = new FormData();
@@ -718,44 +750,56 @@ const csrftoken = getCookie('csrftoken');
 
 
 function sendToServer(formData) {
+    // Aquí se asume que ya se ha definido 'csrftoken' en algún lugar del código.
     formData.append('csrfmiddlewaretoken', csrftoken);
 
+    // Realizamos la petición fetch al servidor.
     fetch("{% url 'Ventas:AddSale' %}", {
         method: 'POST',
         headers: {
-            'X-CSRFToken': csrftoken  // Agrega el token CSRF en los encabezados
+            'X-CSRFToken': csrftoken
         },
         body: formData
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
+            throw new Error('La respuesta de la red no fue ok.');
         }
         return response.json();
     })
     .then(data => {
-    if (data.status === 'success') {
-        // Construye la URL de redirección con el venta_id de acuerdo al patrón de URL de Django
-        const detailUrl = `/detalle-venta/${data.venta_id}/`;
-        window.location.href = detailUrl;
-    } else {
-        // Mostrar el mensaje de error específico enviado desde el servidor
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: data.error || 'No se pudo guardar la venta.',
-        });
-    }
-})
+        if (data.status === 'success') {
+            // Redirigimos al usuario a la URL de detalle de la venta.
+            const detailUrl = `/detalle-venta/${data.venta_id}/`;
+            window.location.href = detailUrl;
+        } else {
+            // Mostramos errores específicos si los hay.
+            let errorMessage = 'No se pudo guardar la venta.';
+            if (data.error) {
+                errorMessage = data.error;
+            }
+            if (data.missing_fields) {
+                errorMessage += " Campos faltantes: " + data.missing_fields.join(', ');
+            }
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: errorMessage,
+            });
+        }
+    })
     .catch(error => {
+        // Manejamos cualquier error en la petición fetch.
         Swal.fire({
             icon: 'error',
             title: 'Oops...',
-            text: 'Ha ocurrido un error en la solicitud',
-            footer: error
+            text: 'Ha ocurrido un error en la solicitud.',
+            footer: error.toString()
         });
     });
 }
+
 
 
 

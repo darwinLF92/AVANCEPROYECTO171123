@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Mi Aplicación Django{% endblock %}</title>
+    <title>{% block title %}**Sistema Nutral**{% endblock %}</title>
     <!-- Vincular tus hojas de estilo aquí, por ejemplo: -->
     <link rel="stylesheet" href="{% static 'Aplicacion/css/styles.css' %}">
 
@@ -87,7 +87,7 @@
                     <a href="{% url 'Proveedor:proveedor-list' %}">Abonos y Pagos</a>                 
                 </div>
             </div>
-            <!--Submenu para Proveedores y cartera por pagar-->
+            <!--Submenu para Proveedores y cartera por cobrar-->
             <div class="dropdown">
                 <a href="#">Clientes</a>
                 <div class="dropdown-content">
@@ -96,9 +96,17 @@
                     <a href="{% url 'Ventas:cobros-list' %}">Abonos y pagos</a>
                 </div>
             </div>
+
+             <!--Submenu para Ventas-->
+             <div class="dropdown">
+                <a href="#">Ventas</a>
+                <div class="dropdown-content">
+                    <a href="{% url 'Ventas:AddSale' %}">Crear Venta</a>
+                    <a href="{% url 'Ventas:lista_ventas' %}">Ver Ventas</a>
+                </div>
+            </div>
             
-            <a href="{% url 'Ventas:lista_ventas' %}">Ventas</a>
-            <a href="{% url 'Ventas:AddSale' %}">Compras</a>
+            <a href="{% url 'Aplicacion:logout' %}">Compras</a>
             <a href="{% url 'Aplicacion:logout' %}">Reportes</a>
             <a href="{% url 'Aplicacion:logout' %}">Cerrar sesión</a>
             {% else %}

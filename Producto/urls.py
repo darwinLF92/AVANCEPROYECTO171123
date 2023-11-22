@@ -17,5 +17,6 @@ urlpatterns = [
     #path('producto/<int:producto_id>/agregar_componentes/', views.agregar_componentes, name='agregar_componentes'),
     path('producto/<int:producto_id>/editar-componentes/', views.editar_componentes_producto, name='editar_componentes_producto'),
     # Añadir más URLs aquí
+    path('producto-search/', views.producto_search_view, name='producto-search'),
 
 ]

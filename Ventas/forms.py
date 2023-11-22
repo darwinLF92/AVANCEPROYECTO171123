@@ -1,5 +1,5 @@
 from django import forms
-from .models import Venta, DetalleVenta
+from .models import Venta, DetalleVenta, Anulacion, Devolucion
 from django.forms import modelformset_factory
 from django.utils import timezone
 
@@ -46,3 +46,16 @@ DetalleVentaFormSet = modelformset_factory(
     extra=1,  # Número de formas adicionales que quieras mostrar por defecto
     can_delete=True  # Permite eliminar detalles si es necesario
 )
+
+
+# forms.py
+
+class AnulacionForm(forms.ModelForm):
+    class Meta:
+        model = Anulacion
+        fields = ['razon']
+
+class DevolucionForm(forms.ModelForm):
+    class Meta:
+        model = Devolucion
+        fields = ['cantidad', 'razon']

@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.db.models import F
 from decimal import Decimal
 from datetime import timedelta
+from django.db.models import Sum
 
 class Venta(models.Model):
     TIPO_DOCUMENTO_CHOICES = [
@@ -39,7 +40,7 @@ class Venta(models.Model):
     comentarios = models.TextField(blank=True, null=True)
     dias_credito = models.IntegerField(null=True, blank=True)
     fecha_vencimiento = models.DateField(null=True, blank=True)
-
+    anulada = models.BooleanField(default=False)
 
     class Meta:
         verbose_name='venta'
@@ -68,6 +69,7 @@ class Venta(models.Model):
             self.cliente.saldo = nuevo_saldo
             self.cliente.save()
         super(Venta, self).save(*args, **kwargs)
+
 
     def __str__(self):
         return str(self.id)
@@ -103,9 +105,11 @@ class DetalleVenta(models.Model):
         if is_new:  # Si es una nueva instancia de DetalleVenta
             if self.producto.stock < self.cantidad:
                 raise ValidationError(f'No hay suficiente stock para el producto {self.producto}. Disponible: {self.producto.stock}, Requerido: {self.cantidad}')
-            
-            self.producto.stock -= self.cantidad  # Reducir el stock
-            self.producto.save()
+        
+        self.producto.stock -= self.cantidad  # Reducir el stock
+        self.producto.save()
+        # Calcula el subtotal teniendo en cuenta el descuento
+        self.subtotal = (self.cantidad * self.precio) - self.descuento
 
         super(DetalleVenta, self).save(*args, **kwargs)
 
@@ -144,3 +148,22 @@ class Cobro(models.Model):
 
     def __str__(self):
         return f'Cobro {self.id} - Venta {self.venta.id}'
+    
+
+class Anulacion(models.Model):
+    venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='anulacion')
+    razon = models.TextField()
+    fecha_anulacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Anulación de {self.venta}"
+
+
+class Devolucion(models.Model):
+    venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='devoluciones')
+    cantidad = models.PositiveIntegerField()
+    razon = models.TextField()
+    fecha_devolucion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Devolución {self.id} de Venta {self.venta.id}'

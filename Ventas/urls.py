@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
-from .views import VentasCreditoPorClienteView, DetalleVentasCreditoClienteView, generar_recibo, CobrosListView, procesar_cobro
+from .views import VentasCreditoPorClienteView, DetalleVentasCreditoClienteView, generar_recibo, CobrosListView, procesar_cobro, ListaVentasView
+from .views import imprimir_venta
 
 
 
@@ -8,7 +9,7 @@ app_name = 'Ventas'
 
 urlpatterns = [
 
-    path('lista-ventas/', views.lista_ventas, name='lista_ventas'),
+    path('lista-ventas/', views.ListaVentasView.as_view(), name='lista_ventas'),
     # Asumiendo que tienes una vista para ver los detalles de una venta específica
     path('detalle-venta/<int:venta_id>/', views.detalle_venta, name='detalle_venta'),
     path('add_sale/', views.AddVentaView.as_view(), name='AddSale'),
@@ -20,4 +21,6 @@ urlpatterns = [
     path('Ventas/ruta-para-procesar-cobro', procesar_cobro, name='procesar-cobro'),
     path('recibo/<int:pk_cobro>/', generar_recibo, name='generar_recibo'),
     path('cobros/list', CobrosListView.as_view(), name='cobros-list'),
+    path('imprimir-venta/<int:venta_id>/', imprimir_venta, name='imprimir_venta'),
+    path('anular-venta/<int:venta_id>/', views.anular_venta, name='anular_venta'),
 ]

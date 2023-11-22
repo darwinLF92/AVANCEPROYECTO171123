@@ -1,9 +1,26 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 <h2>Lista de Clientes</h2>
-<br>
-<a href="{% url 'Clientes:cliente-create' %}" class="btn btn-primary">Crear Cliente</a>
+
+<div class="text-right">
+    <a href="{% url 'Clientes:cliente-create' %}" class="btn btn-custom">Crear Cliente</a>
+</div>
+
+<div class="form-container">
+    <form method="get" action="{% url 'Clientes:cliente-list' %}" id="search-form">
+        <div>
+            <input type="text" name="nombre" id="search-input" placeholder="Buscar por nombre" value="{{ nombre }}">
+        </div>
+        <button type="submit">BUSCAR</button>
+        <button type="button" id="clear-button">Limpiar</button>
+    </form>
+</div>
+
+<div id="search-results">
+    <!-- Los resultados de la búsqueda se mostrarán aquí -->
+</div>
+
 <br>
 <table class="table">
     <thead>
@@ -25,10 +42,10 @@
             <td>{{ cliente.direccion }}</td>
             <td>{{ cliente.telefono }}</td>
             <td>{{ cliente.correo }}</td>
-            <td>{{ cliente.limitecredito }}</td>
+            <td>{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
             <td>
                 <a href="{% url 'Clientes:cliente-edit' cliente.id %}" class="btn btn-primary btn-sm">Editar</a>
-                <a href="{% url 'Clientes:cliente-delete' cliente.id %}" class="btn btn-danger btn-sm">Desactivar</a>
+                <a href="{% url 'Clientes:cliente-delete' cliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
             </td>
         </tr>
         {% empty %}
@@ -38,4 +55,85 @@
         {% endfor %}
     </tbody>
 </table>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Escuchar el evento de cambio en el campo de entrada de búsqueda
+    $('#search-input').on('input', function() {
+        var searchTerm = $(this).val();
+
+        // Realizar una solicitud AJAX para buscar clientes por nombre
+        $.ajax({
+            url: "{% url 'Clientes:cliente-search' %}",  // Cambia esto a la URL de tu vista de búsqueda
+            method: "GET",
+            data: {nombre: searchTerm},
+            success: function(data) {
+                // Actualizar el contenido del div de resultados con los datos recibidos
+                $('#search-results').html(data.html_result);
+            }
+        });
+    });
+
+    // Escuchar el clic en el botón de limpiar
+    $('#clear-button').on('click', function() {
+        // Limpiar el campo de búsqueda y el div de resultados
+        $('#search-input').val('');
+        $('#search-results').html('');
+    });
+});
+</script>
+
+<style>
+    
+.form-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-container form {
+    display: flex;
+    gap: 10px; /* Espacio entre los elementos del formulario */
+    align-items: center;
+}
+
+.label-title {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.form-container input,
+.form-container button {
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid #ccc;
+}
+
+.form-container button {
+    background-color: #f60; /* Color de fondo del botón similar al de la imagen */
+    color: white;
+    border: none;
+}
+
+.clear-button{
+    background-color: antiquewhite;
+    color: black;
+    border: none;
+}
+
+
+.align-right {
+    display: block;  /* Hace que el enlace se comporte como un bloque */
+    text-align: right;  /* Alinea el contenido del bloque a la derecha */
+    margin-bottom: 10px;  /* Espacio debajo del botón para separación */
+}
+
+.btn-custom {
+    background-color: #0c6936; /* Cambia el color de fondo a naranja */
+    color: #ffffff; /* Cambia el color del texto a blanco */
+    /* Puedes ajustar otros estilos según tus preferencias */
+}
+</style>
 {% endblock %}
