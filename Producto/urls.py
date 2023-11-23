@@ -15,8 +15,9 @@ urlpatterns = [
     path('producto/<int:producto_id>/detalle/', views.ver_detalle_producto, name='ver_detalle_producto'),
     #path('productos/seleccionar_principal/', views.seleccionar_producto_principal, name='seleccionar_producto_principal'),
     #path('producto/<int:producto_id>/agregar_componentes/', views.agregar_componentes, name='agregar_componentes'),
-    path('producto/<int:producto_id>/editar-componentes/', views.editar_componentes_producto, name='editar_componentes_producto'),
+    path('producto/<int:producto_id>/editar-componentes/', views.editar_componentes_producto, name='editar_componentes'),
     # Añadir más URLs aquí
     path('producto-search/', views.producto_search_view, name='producto-search'),
+    path('ruta/busqueda/productos/', views.buscar_productos, name='buscar_productos'),
 
 ]

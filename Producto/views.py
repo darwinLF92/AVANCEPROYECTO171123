@@ -1,10 +1,13 @@
+from decimal import Decimal, InvalidOperation
 from pyexpat.errors import messages
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.db import transaction
 from .models import Producto, ComponenteProducto, Transaccion
 from .forms import ProductoForm, ComponenteProductoForm, ProductoPrincipalForm
 from django.http import JsonResponse
-from django.forms import modelformset_factory, inlineformset_factory
+from django.forms import DecimalField, model_to_dict, modelformset_factory, inlineformset_factory
+from django.db.models import ExpressionWrapper
+
 
 def listar_productos(request):
     nombre = request.GET.get('nombre', '')
@@ -148,6 +151,7 @@ from django.db.models import F, Sum
 
 def editar_componentes_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
+   
     ComponenteProductoFormSet = inlineformset_factory(
         Producto, 
         ComponenteProducto, 
@@ -185,8 +189,8 @@ def editar_componentes_producto(request, producto_id):
         'formset': formset,
         'producto': producto,
         'costo_total_produccion': costo_total_produccion,
+        
     })
-
 
 def producto_search_view(request):
     nombre = request.GET.get('nombre', '')
@@ -197,3 +201,15 @@ def producto_search_view(request):
         productos = Producto.objects.filter(activo=True)
 
     return render(request, 'Producto/listar_productos.html', {'productos': productos, 'nombre': nombre})
+
+def buscar_productos(request):
+    query = request.GET.get('q', '')
+    productos = Producto.objects.filter(nombre__icontains=query)[:10]  # limitamos a 10 resultados
+    productos_json = [
+        {'id': prod.id, 'nombre': prod.nombre, 'precio': prod.precio_venta, 'stock': prod.stock}
+        for prod in productos
+    ]
+    return JsonResponse(productos_json, safe=False)
+
+
+

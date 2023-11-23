@@ -10,6 +10,7 @@ class Producto(models.Model):
     stock = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     stock_minimo = models.PositiveIntegerField(default=0, help_text='La cantidad mínima en stock para reorden')
     tiene_descuento = models.BooleanField(default=False)
+    es_materia_prima = models.BooleanField(default=False)
     para_fabricacion = models.BooleanField(default=False)
     componentes = models.ManyToManyField('self', through='ComponenteProducto', symmetrical=False, blank=True)
     activo = models.BooleanField(default=True)
@@ -24,6 +25,8 @@ class Producto(models.Model):
         # Lógica para actualizar el stock
         self.stock -= cantidad
         self.save()
+
+    
 
 class ComponenteProducto(models.Model):
     producto_principal = models.ForeignKey(
@@ -43,6 +46,8 @@ class ComponenteProducto(models.Model):
     @property
     def costo_total(self):
         return self.cantidad * self.producto_componente.precio_compra
+    
+    
 
 
 
@@ -54,3 +59,5 @@ class Transaccion(models.Model):
 
     def __str__(self):
         return f"Transacción de {self.cantidad} para {self.producto.nombre} el {self.fecha_registro}"
+    
+

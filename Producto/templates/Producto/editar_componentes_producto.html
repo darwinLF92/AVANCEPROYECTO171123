@@ -4,10 +4,11 @@
 {% block content %}
 <h2>Editar Componentes para: {{ producto.nombre }}</h2>
 
+
 <form method="post" class="my-form">
     {% csrf_token %}
     {{ formset.management_form }}
-    <table class="table">
+    <table class="table table-secondary" id="tableComponentes">
         <thead>
             <tr>
                 <th>ID</th>
@@ -18,7 +19,7 @@
                 <th>Eliminar</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="tableComponentesBody" class="text-dark">
             {% for form in formset %}
                 <tr class="form-group">
                     <td>{{ form.id }}</td>
@@ -44,6 +45,7 @@
             {% endfor %}
         </tbody>
     </table>
+    
     <div class="form-group">
         <strong>Costo Total de Producción: {{ costo_total_produccion|floatformat:2 }}</strong>
     </div>
