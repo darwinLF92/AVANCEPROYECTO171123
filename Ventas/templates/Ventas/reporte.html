@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        /* Agrega tus estilos personalizados aquí */
+        .modal-header {
+            background-color: #17a2b8;
+        }
+
+        .modal-title {
+            color: #000000;
+        }
+
+        .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+            background-color: #f5f5f5;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        #CuentascxcModal .modal-body {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .modal-dialog-custom {
+            max-width: 90%;
+            margin: 30px auto;
+        }
+
+        @media (min-width: 992px) {
+            .modal-dialog-custom {
+                max-width: 80%;
+            }
+        }
+
+        #CuentascxcModal .modal-body {
+            overflow-y: auto;
+        }
+
+        #CuentascxcModal table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #CuentascxcModal thead th {
+            position: sticky;
+            top: 0;
+            background: #17a2b8;
+            color: white;
+            z-index: 10;
+        }
+
+        #CuentascxcModal thead {
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        }
+
+        .th-header {
+            background-color: #17a2b8;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!--modal de cuentas por cobrar-->
+    <div id="CuentascxcModal" class="modal bd-example-modal-lg">
+        <div class="modal-dialog modal-dialog-custom"> 
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h3 class="modal-title text-dark">ESTADO DE CUENTA POR COBRAR</h3>
+                </div>
+                <br>
+                <input type="text" id="searchClientes" placeholder="Buscar cliente..." oninput="filterTableCliente(this.value)">
+                <div class="modal-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>DOC</th>
+                                <th>FISICO</th>
+                                <th>CREACION</th>
+                                <th>VENCE</th>
+                                <th>DIASV</th>
+                                <th>MONTO</th>
+                                <th>COBRAR</th>
+                                <th>SIN VENCER</th>
+                                <th>31-60 DIAS</th>
+                                <th>61-90 DIAS</th>
+                                <th>91-120 DIAS</th>
+                                <th>+121 DIAS</th>
+                                <th>T. DIAS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Aquí se cargarán los datos dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer bg-dark">
+                    <div>
+                        <input type="text" id="filtroCliente" placeholder="Filtrar por cliente...">
+                        <select id="filtroVendedor">
+                            <option value="">Seleccionar Vendedor</option>
+                            <!-- Opciones de vendedores cargadas dinámicamente o estáticamente -->
+                            <option value="" disabled selected>Consulta General</option>
+                        </select>
+                    </div>
+                    <button type="button" id="botonImprimirPDF" class="btn btn-danger" data-dismiss="modal">Imprimir</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

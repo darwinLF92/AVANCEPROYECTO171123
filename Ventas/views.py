@@ -1,3 +1,4 @@
+from io import BytesIO
 from django.shortcuts import get_object_or_404, render, redirect
 from django.db import transaction
 from .forms import AnulacionForm, DevolucionForm, VentaForm, DetalleVentaFormSet, DetalleVenta
@@ -6,7 +7,7 @@ from django.views.generic import ListView, DetailView
 from django.shortcuts import render, redirect, reverse
 from .models import Venta, DetalleVenta, Producto, Cliente, Vendedor, Cobro  # Asegúrate de incluir Vendedor aquí
 from django.views.generic.edit import FormView
-from django.http import JsonResponse, HttpResponse
+from django.http import FileResponse, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
@@ -16,9 +17,18 @@ from django.core.exceptions import ValidationError
 from decimal import Decimal
 from django.views.generic.edit import CreateView
 from django.views.decorators.http import require_http_methods
-from django.db.models import Sum
 from reportlab.pdfgen import canvas
-
+from reportlab.lib.pagesizes import landscape, letter
+from django.db.models import Prefetch, Sum, Case, When, IntegerField
+from datetime import timedelta
+from django.db.models import ExpressionWrapper, fields
+from django.db.models.functions import Now
+from django.db.models import Sum, Case, When, Value, IntegerField, F, ExpressionWrapper, fields
+from django.db.models.functions import Now, TruncDay, ExtractDay
+from django.db.models.functions import Coalesce
+from django.db.models import Q
+from django.template.loader import render_to_string
+from weasyprint import HTML
 
 
 class ListaVentasView(ListView):
@@ -321,7 +331,7 @@ def imprimir_venta(request, venta_id):
     detalles = DetalleVenta.objects.filter(venta=venta)
     
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="venta-{venta_id}.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="Venta-{venta.id}-{venta.cliente.nombre}-{venta.fecha_creacion.strftime("%d-%m-%Y")}.pdf"'
     
     p = canvas.Canvas(response, pagesize=letter)
     width, height = letter  # Tamaño de la hoja (carta)
@@ -385,4 +395,141 @@ def anular_venta(request, venta_id):
     return render(request, 'Ventas/anular_venta.html', {'venta': venta, 'form': form})
 
 
+def reporte_ventas(request):
+    fecha_hoy = timezone.now().date()
+    clientes_data = []
+    vendedores = Vendedor.objects.all().values_list('nombre', flat=True)
+    resumen_data = {
+        'total_facturado': 0,
+        'total_cobrar': 0,
+        'total_1_30_dias': 0,
+        'total_31_60_dias': 0,
+        'total_61_90_dias': 0,
+        'total_91_120_dias': 0,
+        'total_mas_121_dias': 0,
+    }
 
+    # Capturar los parámetros de filtrado
+    filtro_cliente = request.GET.get('cliente')
+    filtro_vendedor = request.GET.get('vendedor')
+
+    # Filtrar clientes según los parámetros
+    clientes_queryset = Cliente.objects.annotate(
+        total_saldo_pendiente=Sum('clientee__saldo_pendiente')
+    ).filter(total_saldo_pendiente__gt=0)
+
+    if filtro_cliente:
+        clientes_queryset = clientes_queryset.filter(nombre__icontains=filtro_cliente)
+    
+    # Asegúrate de tener una lista de todos los clientes primero antes de filtrar las ventas
+    clientes = list(clientes_queryset)
+    
+    # Si se ha proporcionado un filtro de vendedor, obtener las ventas filtradas por vendedor
+    if filtro_vendedor:
+        ventas_vendedor = Venta.objects.filter(vendedor__nombre__icontains=filtro_vendedor, saldo_pendiente__gt=0, tipo_pago='credito')
+        # Filtrar la lista de clientes basada en las ventas del vendedor
+        clientes = [cliente for cliente in clientes if cliente.clientee.filter(id__in=ventas_vendedor).exists()]
+
+    for cliente in clientes:
+        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0)
+        cliente.total_monto = 0
+        cliente.total_cobrar = 0
+        cliente.total_sin_vencer = 0
+        cliente.total_31_60 = 0
+        cliente.total_61_90 = 0
+        cliente.total_91_120 = 0
+        cliente.total_121_mas = 0
+
+        ventas_credito_data = []
+        for venta in cliente.ventas_credito:
+            dias_vencidos = venta.dias_vencidos()
+            venta.total_dias = venta.dias_vencidos() + venta.dias_credito
+            cliente.total_monto += venta.total
+            cliente.total_cobrar += venta.saldo_pendiente
+
+            if dias_vencidos < 0:
+                cliente.total_sin_vencer += venta.saldo_pendiente
+            elif 0 <= dias_vencidos <= 30:
+                cliente.total_31_60 += venta.saldo_pendiente
+            elif 31 <= dias_vencidos <= 60:
+                cliente.total_61_90 += venta.saldo_pendiente
+            elif 61 <= dias_vencidos <= 90:
+                cliente.total_91_120 += venta.saldo_pendiente
+            elif dias_vencidos > 90:
+                cliente.total_121_mas += venta.saldo_pendiente
+
+            ventas_credito_data.append({
+                'id': venta.id,
+                'tipo_documento': venta.tipo_documento,
+                'fecha_creacion': venta.fecha_creacion,
+                'fecha_vencimiento': venta.fecha_vencimiento,
+                'dias_vencidos': venta.dias_vencidos(),
+                'total': venta.total,
+                'saldo_pendiente': venta.saldo_pendiente,
+                'total_dias': venta.total_dias,
+            })
+
+        clientes_data.append({
+            'nombre': cliente.nombre,
+            'ventas_credito': ventas_credito_data,
+            'total_monto': cliente.total_monto,
+            'total_cobrar': cliente.total_cobrar,
+            'total_sin_vencer': cliente.total_sin_vencer,
+            'total_31_60': cliente.total_31_60,
+            'total_61_90': cliente.total_61_90,
+            'total_91_120': cliente.total_91_120,
+            'total_121_mas': cliente.total_121_mas,
+            
+        })
+
+        resumen_data['total_facturado'] += cliente.total_monto
+        resumen_data['total_cobrar'] += cliente.total_cobrar
+        resumen_data['total_1_30_dias'] += cliente.total_sin_vencer
+        resumen_data['total_31_60_dias'] += cliente.total_31_60
+        resumen_data['total_61_90_dias'] += cliente.total_61_90
+        resumen_data['total_91_120_dias'] += cliente.total_91_120
+        resumen_data['total_mas_121_dias'] += cliente.total_121_mas
+
+
+    # Preparar la respuesta con los datos de los clientes y el resumen
+    response_data = {
+        'clientes': clientes_data,
+        'fecha_hoy': fecha_hoy.isoformat(),
+        'resumen': resumen_data,
+        'vendedores': list(vendedores)  # Convertir a lista si no lo es ya
+    }
+
+    return JsonResponse(response_data)
+
+
+def generar_pdf_con_filtros(request):
+    # Recoger los parámetros del request
+    filtro_cliente = request.GET.get('cliente', '')
+    filtro_vendedor = request.GET.get('vendedor', '')
+
+    # Filtrar los datos en base a los parámetros
+    queryset = Cliente.objects.all()
+    if filtro_cliente:
+        queryset = queryset.filter(nombre__icontains=filtro_cliente)
+    if filtro_vendedor:
+        queryset = queryset.filter(clientee__vendedor__nombre__icontains=filtro_vendedor)
+
+    # Preparar el contexto para el template
+    context = {
+        'clientes': queryset,
+        'filtro_cliente': filtro_cliente,
+        'filtro_vendedor': filtro_vendedor,
+    }
+    
+    # Renderizar el template HTML con los datos
+    html_string = render_to_string('Ventas/reporte_ventas.html', context)
+    
+    # Crear un objeto WeasyPrint HTML y generar el PDF
+    html = HTML(string=html_string)
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="reporte_ventas.pdf"'
+    
+    # Generar el PDF en la respuesta HTTP
+    html.write_pdf(response)
+
+    return response

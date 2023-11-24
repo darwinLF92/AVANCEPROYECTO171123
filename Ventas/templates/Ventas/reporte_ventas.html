@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+  <h2>Cuentas por Cobrar</h2>
+
+  <table>
+      <thead>
+          <tr>
+              <th>DOC</th>
+              <th>FISICO</th>
+              <th>CREACION</th>
+              <th>VENCE</th>
+              <th>DIASV</th>
+              <th>MONTO</th>
+              <th>COBRAR</th>
+              <th>SIN VENCER</th>
+              <th>31-60 DIAS</th>
+              <th>61-90 DIAS</th>
+              <th>91-120 DIAS</th>
+              <th>+121 DIAS</th>
+              <th>T. DIAS</th>
+          </tr>
+      </thead>
+      <tbody>
+          {% for cliente in clientes %}
+              <!-- Fila del nombre del cliente -->
+              <tr>
+                <td colspan="13"><strong>CLIENTE: {{ cliente.nombre }}</strong></td>
+              </tr>
+              {% for venta in cliente.ventas_credito %}
+              <!-- Fila de cada venta -->
+              <tr>
+                <td>{{ venta.id }}</td>
+                <td>{{ venta.tipo_documento }}</td>
+                <td>{{ venta.fecha_creacion }}</td>
+                <td>{{ venta.fecha_vencimiento }}</td>
+                <td>{{ venta.dias_vencidos }}</td>
+                <td>{{ venta.total|intcomma }}</td>
+                <td>{{ venta.saldo_pendiente|intcomma }}</td>
+                <td>{% if venta.dias_vencidos < 0 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
+                <td>{% if venta.dias_vencidos >= 0 and venta.dias_vencidos <= 30 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
+                <td>{% if venta.dias_vencidos > 30 and venta.dias_vencidos <= 60 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
+                <td>{% if venta.dias_vencidos > 60 and venta.dias_vencidos <= 90 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
+                <td>{% if venta.dias_vencidos > 90 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
+                <td>{{ venta.total_dias }}</td>
+              </tr>
+              </tr>
+              {% endfor %}
+              <!-- Fila de totales para el cliente -->
+              <tr>
+                
+                <td colspan="5"><strong>Totales para {{ cliente.nombre }}</strong></td>
+                <td><strong>{{ cliente.total_monto|floatformat:"2"|intcomma }}</strong></td>
+                <td><strong>{{ cliente.total_cobrar|floatformat:"2"|intcomma }}</strong></td>
+                <td><strong>{{ cliente.total_sin_vencer|floatformat:"2"|intcomma }}</strong></td>
+                <td><strong>{{ cliente.total_31_60|floatformat:"2"|intcomma }}</strong></td>
+                <td><strong>{{ cliente.total_61_90|floatformat:"2"|intcomma }}</strong></td>
+                <td><strong>{{ cliente.total_91_120|floatformat:"2"|intcomma }}</strong></td>
+                <td><strong>{{ cliente.total_121_mas|floatformat:"2"|intcomma }}</strong></td>
+              </tr>
+              <tr>
+                <td colspan="13">&nbsp;</td>
+            </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+{% endblock %}

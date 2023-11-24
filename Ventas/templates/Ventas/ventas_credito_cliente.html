@@ -2,7 +2,13 @@
 {% load humanize %}
 
 {% block content %}
-  <h2>Ventas al Crédito por Cliente</h2>
+  <h2>Cuentas por Cobrar</h2>
+
+  <div class="input-group-append">
+    <button id="botonAbrirModal">Abrir Reporte CXC</button>
+  </div>
+
+
   <table>
     <thead>
       <tr>
@@ -36,4 +42,271 @@
       <td>{{ suma_saldo_pendiente|floatformat:2|intcomma }}</td>
     </tr>
   </table>
+
+<!--modal de cuentas por cobrar-->
+<div id="CuentascxcModal" class="modal bd-example-modal-lg">
+  <div class="modal-dialog modal-dialog-custom"> 
+    <div class="modal-content">
+      <div class="modal-header bg-info">
+        <h3 class="modal-title text-dark">ESTADO DE CUENTA POR COBRAR</h3>
+      </div>
+      <br>
+      <input type="text" id="searchClientes" placeholder="Buscar cliente..." oninput="filterTableCliente(this.value)">
+      <div class="modal-body">
+        <!-- El contenido del modal se cargará aquí -->
+      </div>
+      <div class="modal-footer bg-dark">
+        <div>
+          <input type="text" id="filtroCliente" placeholder="Filtrar por cliente...">
+          <select id="filtroVendedor">
+            <option value="">Seleccionar Vendedor</option>
+            <!-- Opciones de vendedores cargadas dinámicamente o estáticamente -->
+            <option value="" disabled selected>Consulta General</option>
+          </select>
+        </div>
+        <button type="button" id="botonImprimirPDF" class="btn btn-danger" data-dismiss="modal">Imprimir</button>
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Función para formatear números con comas y dos decimales
+  const formatNumber = (value) => {
+    const number = typeof value === 'string' ? parseFloat(value) : value;
+    return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  // Función para actualizar el modal con datos filtrados
+  function actualizarModal(filtroCliente, filtroVendedor) {
+    let url = '/reporte-ventas';
+    let params = new URLSearchParams();
+    
+    if (filtroCliente && filtroCliente.trim() !== '') {
+      params.append('cliente', filtroCliente.trim());
+    }
+    if (filtroVendedor) {
+      params.append('vendedor', filtroVendedor);
+    }
+
+    url += params.toString() ? `?${params.toString()}` : '';
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+      })
+    .then(data => {
+        const modalBody = document.querySelector('#CuentascxcModal .modal-body');
+        let htmlContent = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>DOC</th>
+                        <th>FISICO</th>
+                        <th>CREACION</th>
+                        <th>VENCE</th>
+                        <th>DIASV</th>
+                        <th>MONTO</th>
+                        <th>COBRAR</th>
+                        <th>SIN VENCER</th>
+                        <th>31-60 DIAS</th>
+                        <th>61-90 DIAS</th>
+                        <th>91-120 DIAS</th>
+                        <th>+121 DIAS</th>
+                        <th>T. DIAS</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+
+        data.clientes.forEach(cliente => {
+            htmlContent += `<tr><td colspan="13"><strong>CLIENTE: ${cliente.nombre}</strong></td></tr>`;
+            cliente.ventas_credito.forEach(venta => {
+                htmlContent += `
+                    <tr>
+                        <td>${venta.id}</td>
+                        <td>${venta.tipo_documento}</td>
+                        <td>${venta.fecha_creacion}</td>
+                        <td>${venta.fecha_vencimiento}</td>
+                        <td>${venta.dias_vencidos}</td>
+                        <td>${formatNumber(venta.total)}</td>
+                        <td>${formatNumber(venta.saldo_pendiente)}</td>
+                        <td>${venta.dias_vencidos < 0 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos >= 0 && venta.dias_vencidos <= 30 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos > 30 && venta.dias_vencidos <= 60 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos > 60 && venta.dias_vencidos <= 90 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos > 90 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.total_dias}</td>
+                    </tr>`;
+            });
+            htmlContent += `
+                <tr>
+                  <td colspan="5"><strong>Totales para ${cliente.nombre}</strong></td>
+                  <td><strong>${formatNumber(cliente.total_monto)}</strong></td>
+                  <td><strong>${formatNumber(cliente.total_cobrar)}</strong></td>
+                  <td><strong>${formatNumber(cliente.total_sin_vencer)}</strong></td>
+                  <td><strong>${formatNumber(cliente.total_31_60)}</strong></td>
+                  <td><strong>${formatNumber(cliente.total_61_90)}</strong></td>
+                  <td><strong>${formatNumber(cliente.total_91_120)}</strong></td>
+                  <td><strong>${formatNumber(cliente.total_121_mas)}</strong></td>
+                </tr>`;
+                htmlContent += `<tr><td colspan="13"></tr>`;
+        });
+     
+      htmlContent += `</tbody></table>`;
+
+        // Agregar el resumen al HTML
+     
+      htmlContent += `
+          
+          <div>
+              <br>
+              <h3>RESUMEN</h3>
+              <table>
+                  <tr>
+                    <tr>
+                    <td colspan="3"></td> <!-- Asegúrate de que el colspan aquí sea el número correcto de columnas antes de "31-60 días" -->
+                    <td colspan="4" style="border: 1px solid black; text-align: center;">VENCIDO</td> <!-- Colspan es el número de columnas desde "31-60 días" a "+121 días" -->
+                    </tr>
+                      <th class="th-header">TOTAL FACTURADO</th>
+                      <th class="th-header">COBRAR</th>
+                      <th class="th-header">SIN VENCER</th>
+                      <th class="th-header">31-60 DIAS</th>
+                      <th class="th-header">61-90 DIAS</th>
+                      <th class="th-header">91-120 DIAS</th>
+                      <th class="th-header">+121 DIAS</th>
+                  </tr>
+                  <tr>
+                      <td>${formatNumber(data.resumen.total_facturado)}</td>
+                      <td>${formatNumber(data.resumen.total_cobrar)}</td>
+                      <td>${formatNumber(data.resumen.total_1_30_dias)}</td>
+                      <td>${formatNumber(data.resumen.total_31_60_dias)}</td>
+                      <td>${formatNumber(data.resumen.total_61_90_dias)}</td>
+                      <td>${formatNumber(data.resumen.total_91_120_dias)}</td>
+                      <td>${formatNumber(data.resumen.total_mas_121_dias)}</td>
+                  </tr>
+                  
+
+              </table>
+          </div>`;
+          const selectVendedor = document.getElementById('filtroVendedor');
+        const vendedorActual = filtroVendedor; // Guardar el vendedor seleccionado actualmente
+
+        selectVendedor.innerHTML = '<option value="">Consulta General</option>'; // Opción predeterminada
+        data.vendedores.forEach(vendedor => {
+          const option = new Option(vendedor, vendedor);
+          option.selected = vendedor === vendedorActual; // Mantener seleccionado el vendedor actual
+          selectVendedor.add(option);
+        });
+
+        modalBody.innerHTML = htmlContent;
+        $('#CuentascxcModal').modal('show');
+      })
+      .catch(error => {
+        console.error('There has been a problem with your fetch operation:', error);
+      });
+  }
+
+  // Event listeners para los controles de filtro
+  document.getElementById('filtroCliente').addEventListener('input', function() {
+    actualizarModal(this.value, document.getElementById('filtroVendedor').value);
+  });
+
+  document.getElementById('filtroVendedor').addEventListener('change', function() {
+    actualizarModal(document.getElementById('filtroCliente').value, this.value);
+  });
+
+  // Event listener para el botón que abre el modal
+  document.getElementById('botonAbrirModal').addEventListener('click', function() {
+    document.getElementById('filtroCliente').value = '';
+    document.getElementById('filtroVendedor').value = '';
+    actualizarModal('', '');
+  });
+
+  document.getElementById('botonImprimirPDF').addEventListener('click', function() {
+  // Obtén los valores actuales de los filtros
+  const filtroCliente = document.getElementById('filtroCliente').value;
+  const filtroVendedor = document.getElementById('filtroVendedor').value;
+
+  // Construye la URL con los parámetros de búsqueda
+  let params = new URLSearchParams({
+    cliente: filtroCliente,
+    vendedor: filtroVendedor
+  });
+
+  // Abre una nueva ventana con la URL del PDF generado
+  window.open(`/reporte-ventas-pdf/?${params.toString()}`);
+});
+
+</script>
+
+
+ <style>
+  .modal-header {
+    background-color: #17a2b8; /* Replace with the actual color code */
+}
+
+.modal-title {
+    color: #000000; /* Replace with the actual color code */
+}
+
+
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+    background-color: #f5f5f5; /* Replace with the actual color code */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Replace with the actual color code */
+    border-color: #dc3545; /* Replace with the actual color code */
+}
+
+#CuentascxcModal .modal-body {
+  max-height: 500px; /* Altura máxima en píxeles */
+  overflow-y: auto; /* Muestra una barra de desplazamiento si el contenido excede la altura máxima */
+}
+
+  .modal-dialog-custom {
+  max-width: 90%; /* O cualquier otro valor que prefieras */
+  margin: 30px auto; /* Centra el modal horizontalmente */
+}
+
+/* Puedes también asegurarte de que el modal no sea más ancho que la pantalla */
+@media (min-width: 992px) {
+  .modal-dialog-custom {
+    max-width: 80%; /* O cualquier otro valor que prefieras */
+  }
+} 
+
+
+/* Estilo para la tabla y el encabezado */
+#CuentascxcModal .modal-body {
+  overflow-y: auto; /* Habilita el desplazamiento vertical */
+}
+
+#CuentascxcModal table {
+  width: 100%; /* Asegura que la tabla ocupe todo el ancho del contenedor */
+  border-collapse: collapse; /* Opcional: para que los bordes de la tabla se vean mejor */
+}
+
+#CuentascxcModal thead th {
+  position: sticky;
+  top: 0; /* Ajusta esto si hay algún otro elemento fijo en la parte superior, como un menú de navegación */
+  background: #17a2b8; /* O el color de fondo que desees, para evitar que se vea contenido a través del encabezado */
+  color: white;
+  z-index: 10; /* Asegura que el encabezado se muestre por encima del contenido al desplazarse */
+}
+
+#CuentascxcModal thead {
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4); /* Opcional: agrega sombra para un efecto de elevación */
+}
+
+.th-header {
+  background-color:#17a2b8; /* Cambia esto por el color de fondo que prefieras */
+  color: white; /* Color del texto */
+}
+
+ </style>     
 {% endblock %}

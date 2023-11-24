@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import VentasCreditoPorClienteView, DetalleVentasCreditoClienteView, generar_recibo, CobrosListView, procesar_cobro, ListaVentasView
+from .views import VentasCreditoPorClienteView, DetalleVentasCreditoClienteView, generar_recibo, CobrosListView, procesar_cobro, ListaVentasView, reporte_ventas, generar_pdf_con_filtros
 from .views import imprimir_venta
 
 
@@ -23,4 +23,6 @@ urlpatterns = [
     path('cobros/list', CobrosListView.as_view(), name='cobros-list'),
     path('imprimir-venta/<int:venta_id>/', imprimir_venta, name='imprimir_venta'),
     path('anular-venta/<int:venta_id>/', views.anular_venta, name='anular_venta'),
+    path('reporte-ventas/', reporte_ventas, name='reporte_ventas'),
+    path('reporte-ventas-pdf/', views.generar_pdf_con_filtros, name='reporte_ventas_pdf'),
 ]
