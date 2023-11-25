@@ -80,7 +80,7 @@
 
   // Función para actualizar el modal con datos filtrados
   function actualizarModal(filtroCliente, filtroVendedor) {
-    let url = '/reporte-ventas';
+    let url = '/reporte-cuentasxcobrar';
     let params = new URLSearchParams();
     
     if (filtroCliente && filtroCliente.trim() !== '') {
@@ -234,7 +234,7 @@
         vendedor: filtroVendedor
     });
 
-    window.open(`/reporte-ventas-pdf/?${params.toString()}`);
+    window.open(`/reporte-cuentasxcobrar-pdf/?${params.toString()}`);
 });
 
 </script>

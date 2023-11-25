@@ -1,0 +1,17 @@
+{% extends 'base.html' %}  <!-- Asegúrate de que este extend se ajuste a tu plantilla base -->
+
+{% block content %}
+  <div class="container">
+    <h2>Anular Cobro</h2>
+    <p>Anular el cobro para la Venta: {{ cobro.venta.id }}</p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="razon_anulacion">Razón de Anulación:</label>
+        <textarea id="razon_anulacion" name="razon_anulacion" class="form-control" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-danger">Anular Cobro</button>
+    </form>
+  </div>
+{% endblock %}

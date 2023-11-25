@@ -1,7 +1,33 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
     <h1>Lista de Cobros</h1>
+    <div class="form-container">
+
+        <div class="input-group-append">
+            <button id="botonAbrirModal">Abrir Reporte</button>
+        </div>    
+    <form method="get" action="{% url 'Ventas:cobros-list' %}">
+
+        <div>
+            <span class="label-title"><label for="cliente">Nombre Cliente:</label></span>
+            <input type="text" id="cliente" name="cliente" placeholder="Nombre del cliente" value="{{ request.GET.cliente }}">
+        </div>
+        
+        <div>
+            <span class="label-title"><label for="fecha_inicio">Fecha Inicio:</label></span>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ request.GET.fecha_inicio|default:today }}">
+        </div>
+        
+        <div>
+            <span class="label-title"><label for="fecha_fin">Fecha Fin:</label></span>
+            <input type="date" id="fecha_fin" name="fecha_fin" value="{{ request.GET.fecha_fin|default:today }}">
+        </div>
+        
+        <button type="submit">BUSCAR</button>
+    </form>
+</div>
+
     <table>
         <thead>
             <tr>
@@ -11,7 +37,7 @@
                 <th>Fecha Cobro</th>
                 <th>Dif. Dias</th>
                 <th>Nombre del Cliente</th>
-                <th>Comentario de la Venta</th>
+                <th>E. Fisico</th>
                 <th>Monto</th>
                 <th>Acciones</th>
             </tr>
@@ -21,14 +47,15 @@
                 <tr>
                     <td>{{ cobro.id }}</td>
                     <td>{{ cobro.venta.id }}</td>
-                    <td>{{ cobro.venta.fecha_creacion }}</td>
-                    <td>{{ cobro.fecha_cobro }}</td>
+                    <td>{{ cobro.venta.fecha_creacion|date:"d-m-Y"  }}</td>
+                    <td>{{ cobro.fecha_cobro|date:"d-m-Y"  }}</td>
                     <td>{{ cobro.dif_dias }}</td>
                     <td>{{ cobro.venta.cliente.nombre }}</td>
                     <td>{{ cobro.venta.comentarios }}</td>
-                    <td>{{ cobro.monto }}</td>
+                    <td>{{ cobro.monto|floatformat:2|intcomma }}</td>
                     <td>
                         <a href="{% url 'Ventas:generar_recibo' pk_cobro=cobro.id %}">Ver Recibo</a>
+                        <a href="{% url 'Ventas:anular_cobro' cobro_id=cobro.id %}">Anular Cobro</a>
                     </td>
                 </tr>
             {% empty %}
@@ -39,9 +66,332 @@
 
         </tbody>
         <tr>
-            <td colspan="3"></td>
-            <td>Total Cobros:</td>
-            <td>{{ total_cobros }}</td>
+            <td colspan="7" style="border: none; text-align: center;"><h1>TOTAL COBROS:</h1></td>
+            <td style="border: none;"><h1>{{ total_cobros|floatformat:2|intcomma }}</h1></td>
         </tr>
     </table>
+
+<!--modal de cuentas por cobrar-->
+<div id="CobrosModal" class="modal bd-example-modal-lg">
+    <div class="modal-dialog modal-dialog-custom"> 
+      <div class="modal-content">
+        <div class="modal-header bg-info">
+          <h3 class="modal-title text-dark">ESTADO DE CUENTA POR COBRAR</h3>
+        </div>
+        <br>
+        
+        <div class="modal-body">
+          <!-- El contenido del modal se cargará aquí -->
+        </div>
+        <div class="modal-footer bg-dark">
+            <div>
+                <input type="date" id="fechaInicio" name="fechaInicio" value="{{ request.GET.fechainicio|default:today }}">
+                <input type="date" id="fechaFin" name="fechaFin" value="{{ request.GET.fechafin|default:today }}">                               
+        </div>
+          <div>
+            <input type="text" id="filtroCliente" placeholder="Filtrar por cliente...">
+            <select id="filtroVendedor">
+              <option value="">Seleccionar Vendedor</option>
+              <!-- Opciones de vendedores cargadas dinámicamente o estáticamente -->
+              <option value="" disabled selected>Consulta General</option>
+            </select>
+          </div>
+          <button type="button" id="consultar" class="btn btn-primary">CONSULTAR</button>
+          <button type="button" id="botonImprimirPDF" class="btn btn-danger" data-dismiss="modal">Imprimir</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Función para formatear números con comas y dos decimales
+    const formatNumber = (value) => {
+      const number = typeof value === 'string' ? parseFloat(value) : value;
+      return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    };
+  
+    // Función para actualizar el modal con datos filtrados
+    function actualizarModal(filtroCliente, filtroVendedor, fechainicio, fechafin) {
+      let url = '/reporte-cobros'; // Asegúrate de que esta URL es correcta y está definida en tu Django urls.py
+      let params = new URLSearchParams();
+   
+    if (filtroCliente) {
+        params.append('cliente', filtroCliente);
+    }
+    if (filtroVendedor) {
+        params.append('vendedor', filtroVendedor);
+    }
+    if (fechainicio) {
+        params.append('fechainicio', fechainicio);
+    }
+    if (fechafin) {
+        params.append('fechafin', fechafin);
+    }
+
+    url += `?${params.toString()}`;
+  
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+          }
+          return response.json();
+        })
+      .then(data => {
+          const modalBody = document.querySelector('#CobrosModal .modal-body');
+          let htmlContent = `
+              <table>
+                  <thead>
+                    <tr class="no-border">
+                          <th>ID COBRO</th>
+                          <th>ID VENTA</th>
+                          <th>CREACION</th>
+                          <th>F. COBRO</th>
+                          <th>DIF. DIAS</th>
+                          <th>CLIENTE</th>
+                          <th>E. FISICO</th>
+                          <th>MONTO</th>
+                      </tr>
+                  </thead>
+                  <tbody>`;
+  
+          data.cobros.forEach(cobro => {
+              htmlContent += `
+              <tr class="no-border">
+                      <td>${cobro.cobro_id}</td>
+                      <td>${cobro.venta_id}</td>
+                      <td>${cobro.fecha_creacion}</td>
+                      <td>${cobro.fecha_cobro}</td>
+                      <td>${cobro.dif_dias}</td>
+                      <td>${cobro.cliente}</td>
+                      <td>${cobro.comentarios}</td>
+                      <td>${formatNumber(cobro.monto)}</td>
+                  </tr>`;
+          });
+  
+          htmlContent += `
+          <tr class="border-top">
+                <td colspan="7" style="border:none; text-align: center;"><strong>Total:</strong></td>
+                <td colspan="2" style="border:none;"><strong>${formatNumber(data.monto_total)}</strong></td>
+              </tr>`;
+          htmlContent += '</tbody></table>';
+
+        const selectVendedor = document.getElementById('filtroVendedor');
+        const vendedorActual = filtroVendedor; // Guardar el vendedor seleccionado actualmente
+
+        selectVendedor.innerHTML = '<option value="">Consulta General</option>'; // Opción predeterminada
+        data.vendedores.forEach(vendedor => {
+          const option = new Option(vendedor, vendedor);
+          option.selected = vendedor === vendedorActual; // Mantener seleccionado el vendedor actual
+          selectVendedor.add(option);
+        });
+
+  
+          modalBody.innerHTML = htmlContent;
+          $('#CobrosModal').modal('show');
+        })
+        .catch(error => {
+          console.error('There has been a problem with your fetch operation:', error);
+        });
+    }
+
+function convertirFormatoFecha(fecha) {
+    if (!fecha) return '';
+    const [year, month, day] = fecha.split('-');
+    return `${day}-${month}-${year}`;
+}
+
+document.getElementById('botonAbrirModal').addEventListener('click', function() {
+  // Format the current date to 'YYYY-MM-DD'
+  const today = new Date().toISOString().split('T')[0];
+
+  // Reset the client and vendor filters
+  document.getElementById('filtroCliente').value = '';
+  document.getElementById('filtroVendedor').value = '';
+
+  // Set the date inputs to today's date
+  document.getElementById('fechaInicio').value = today;
+  document.getElementById('fechaFin').value = today;
+
+  // Update the modal with today's date and reset filters
+  actualizarModal('', '', today, today);
+});
+
+
+
+
+    // Event listener para el botón que abre el modal
+    document.getElementById('botonAbrirModal').addEventListener('click', function() {
+    let filtroCliente = document.getElementById('filtroCliente').value;
+    let filtroVendedor = document.getElementById('filtroVendedor').value;
+    let fechainicio = document.getElementById('fechaInicio').value; // Use IDs consistent with your HTML
+    let fechafin = document.getElementById('fechaFin').value;       // Use IDs consistent with your HTML
+    actualizarModal(filtroCliente, filtroVendedor, fechainicio, fechafin);
+});
+
+document.getElementById('consultar').addEventListener('click', function() {
+    let filtroCliente = document.getElementById('filtroCliente').value;
+    let filtroVendedor = document.getElementById('filtroVendedor').value;
+    // No need to convert format as the input type="date" provides the date in 'YYYY-MM-DD' format
+    let fechainicio = document.getElementById('fechaInicio').value;
+    let fechafin = document.getElementById('fechaFin').value;
+
+    actualizarModal(filtroCliente, filtroVendedor, fechainicio, fechafin);
+});
+
+  
+    document.getElementById('botonImprimirPDF').addEventListener('click', function() {
+      // Asegúrate de incluir los parámetros de fecha en la URL de impresión si es necesario
+      const filtroCliente = document.getElementById('filtroCliente').value;
+      const filtroVendedor = document.getElementById('filtroVendedor').value;
+      const fechainicio = document.getElementById('fechaInicio').value;
+      const fechafin = document.getElementById('fechaFin').value;
+  
+      let params = new URLSearchParams({
+          cliente: filtroCliente,
+          vendedor: filtroVendedor,
+          fechainicio: fechainicio,
+          fechafin: fechafin
+      });
+  
+      window.open(`/reporte-cobros-pdf/?${params.toString()}`);
+    });
+  </script>
+  
+
+
+
+
+
+    <style>
+        /* Centrar el formulario en la pantalla */
+        .form-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .form-container form {
+        display: flex;
+        gap: 10px; /* Espacio entre los elementos del formulario */
+        align-items: center;
+    }
+    
+    .label-title {
+        font-weight: bold;
+        margin-right: 5px;
+    }
+    
+    .form-container input,
+    .form-container button {
+        padding: 5px;
+        margin: 5px;
+        border: 1px solid #ccc;
+    }
+    
+    .form-container button {
+        background-color: #f60; /* Color de fondo del botón similar al de la imagen */
+        color: white;
+        border: none;
+    }
+    
+    /* Asegúrate de que los inputs no sean demasiado anchos */
+    .form-container input[type="text"],
+    .form-container input[type="date"] {
+        width: 150px; /* O el ancho que prefieras */
+    }
+    
+    /* Asegúrate de que el botón no sea demasiado ancho */
+    .form-container button {
+        padding: 5px 20px;
+    }
+    
+    /* Para pantallas más pequeñas, puedes hacer que los elementos se apilen verticalmente */
+    @media (max-width: 600px) {
+        .form-container {
+            flex-direction: column;
+        }
+    
+        .form-container form {
+            flex-direction: column;
+        }
+    
+        .form-container input,
+        .form-container button {
+            width: 100%;
+            margin: 5px 0;
+        }
+    }
+    
+    .align-right {
+        display: block;  /* Hace que el enlace se comporte como un bloque */
+        text-align: right;  /* Alinea el contenido del bloque a la derecha */
+        margin-bottom: 10px;  /* Espacio debajo del botón para separación */
+    }
+
+  .modal-header {
+    background-color: #17a2b8; /* Replace with the actual color code */
+}
+
+.modal-title {
+    color: #000000; /* Replace with the actual color code */
+}
+
+
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+    background-color: #f5f5f5; /* Replace with the actual color code */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Replace with the actual color code */
+    border-color: #dc3545; /* Replace with the actual color code */
+}
+
+#CobrosModal .modal-body {
+  max-height: 500px; /* Altura máxima en píxeles */
+  overflow-y: auto; /* Muestra una barra de desplazamiento si el contenido excede la altura máxima */
+}
+
+  .modal-dialog-custom {
+  max-width: 90%; /* O cualquier otro valor que prefieras */
+  margin: 30px auto; /* Centra el modal horizontalmente */
+}
+
+/* Puedes también asegurarte de que el modal no sea más ancho que la pantalla */
+@media (min-width: 992px) {
+  .modal-dialog-custom {
+    max-width: 80%; /* O cualquier otro valor que prefieras */
+  }
+} 
+
+
+/* Estilo para la tabla y el encabezado */
+#CobrosModal .modal-body {
+  overflow-y: auto; /* Habilita el desplazamiento vertical */
+}
+
+#CobrosModal table {
+  width: 100%; /* Asegura que la tabla ocupe todo el ancho del contenedor */
+  border-collapse: collapse; /* Opcional: para que los bordes de la tabla se vean mejor */
+}
+
+#CobrosModal thead th {
+  position: sticky;
+  top: 0; /* Ajusta esto si hay algún otro elemento fijo en la parte superior, como un menú de navegación */
+  background: #17a2b8; /* O el color de fondo que desees, para evitar que se vea contenido a través del encabezado */
+  color: white;
+  z-index: 10; /* Asegura que el encabezado se muestre por encima del contenido al desplazarse */
+}
+
+#CobrosModal thead {
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4); /* Opcional: agrega sombra para un efecto de elevación */
+}
+
+.th-header {
+  background-color:#17a2b8; /* Cambia esto por el color de fondo que prefieras */
+  color: white; /* Color del texto */
+}
+    </style>
 {% endblock %}

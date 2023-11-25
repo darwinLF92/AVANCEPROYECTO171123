@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+{% load humanize %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Cobros</title>
+    <style>
+        /* Aquí van tus estilos CSS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+        }
+        .header {
+            background-color: #f8f8f8;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .total {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: right;
+        }
+        .idcobro {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .ventaid {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .fechacraeado {
+            text-align: left; /* Alineación a la derecha para los montos */
+        }
+        .fechacobro {
+            text-align: left; /* Alineación a la derecha para los montos */
+        }
+        .difdias {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .cliente {
+            text-align: left; /* Alineación a la derecha para los montos */
+        }
+        .fisico {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .monto {
+            text-align: right; /* Alineación a la derecha para los montos */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Reporte de Cobros</h1>
+        {% if fecha_inicio == fecha_fin %}
+        <p>Lista de cobros del día {{ fecha_inicio}}</p>
+        {% else %}
+        <p>Lista de cobros del {{ fecha_inicio }} al {{ fecha_fin }}</p>
+        {% endif %}
+        {% if filtro_cliente %}
+            <p>Consulta por: "Cliente - {{ filtro_cliente }}"</p>
+        {% elif filtro_vendedor %}
+            <p>Consulta por: "Vendedor - {{ filtro_vendedor }}"</p>
+        {% else %}
+            <p>Consulta General</p>
+        {% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID Cobro</th>
+                <th>ID Venta</th>
+                <th>F. Venta</th>
+                <th>F. Cobro</th>
+                <th>Dif. Días</th>
+                <th>Nombre del Cliente</th>
+                <th>E. Fisico</th>
+                <th>Monto Cobro</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cobro in datos %}
+            <tr>
+                <td class="idcobro">{{ cobro.cobro_id }}</td>
+                <td class="ventaid">{{ cobro.venta_id }}</td>
+                <td class="fechacreado">{{ cobro.fecha_creacion }}</td>
+                <td class="fechacobro">{{ cobro.fecha_cobro }}</td> <!-- Formato de fecha -->
+                <td class="difdias">{{ cobro.dif_dias }}</td> 
+                <td class="cliente">{{ cobro.cliente }}</td>
+                <td class="fisico">{{ cobro.comentarios }}</td>
+                <td class="monto">{{ cobro.monto|floatformat:2|intcomma }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="7">Total Cobros</td> 
+                <td class="total">{{ monto_total|floatformat:2|intcomma }}</td> 
+            </tr> 
+        </tbody>
+    </table>
+
+</body>
+</html>

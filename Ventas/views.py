@@ -6,7 +6,7 @@ from .forms import AnulacionForm, DevolucionForm, VentaForm, DetalleVentaFormSet
 from django.utils import timezone
 from django.views.generic import ListView, DetailView
 from django.shortcuts import render, redirect, reverse
-from .models import Venta, DetalleVenta, Producto, Cliente, Vendedor, Cobro  # Asegúrate de incluir Vendedor aquí
+from .models import Venta, DetalleVenta, Producto, Cliente, Vendedor, Cobro, AnulacionCobro  # Asegúrate de incluir Vendedor aquí
 from django.views.generic.edit import FormView
 from django.http import FileResponse, JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -29,6 +29,8 @@ from django.db.models.functions import Now, TruncDay, ExtractDay
 from django.db.models.functions import Coalesce
 from django.db.models import Q
 from django.template.loader import render_to_string
+from datetime import datetime, date
+from django.contrib import messages
 
 
 
@@ -61,7 +63,7 @@ class ListaVentasView(ListView):
             # Filtrar ventas por el rango de fechas
             queryset = queryset.filter(fecha_creacion__range=[fecha_inicio, fecha_fin])
 
-        return queryset.order_by('-fecha_creacion')
+        return queryset.order_by('-id')
 
 
 
@@ -236,7 +238,8 @@ class DetalleVentasCreditoClienteView(DetailView):
         cliente_id = self.kwargs.get('pk')
 
         # Filtrar ventas de crédito con saldo pendiente mayor a cero
-        ventas_credito = Venta.objects.filter(cliente_id=cliente_id, tipo_pago='credito', saldo_pendiente__gt=0, anulada=False)
+        ventas_credito = Venta.objects.filter(cliente_id=cliente_id, 
+        tipo_pago='credito', saldo_pendiente__gt=0, anulada=False).order_by('-id')
 
         context['ventas_credito'] = ventas_credito
         return context
@@ -314,15 +317,37 @@ class CobroCreateView(CreateView):
 
 class CobrosListView(ListView):
     model = Cobro
-    template_name = 'Ventas/cobros_list.html'  # Especifica tu plantilla HTML
-    context_object_name = 'cobros'  # Nombre del contexto en la plantilla
+    template_name = 'Ventas/cobros_list.html'
+    context_object_name = 'cobros'
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(anulado=False) 
+        cliente_nombre = self.request.GET.get('cliente', '')
+        fecha_inicio = self.request.GET.get('fecha_inicio')
+        fecha_fin = self.request.GET.get('fecha_fin')
+
+        if cliente_nombre:
+            queryset = queryset.filter(venta__cliente__nombre__icontains=cliente_nombre)
+        # Si no se proporcionan fechas, se filtra por el día actual
+        if not fecha_inicio or not fecha_fin:
+            today = timezone.now().date()
+            fecha_inicio = fecha_fin = today
+
+        if fecha_inicio and fecha_fin:
+            # Filtrar cobros por el rango de fechas
+            queryset = queryset.filter(fecha_cobro__range=[fecha_inicio, fecha_fin])
+
+        return queryset.order_by('-id') 
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        cobros = Cobro.objects.all()  # Obtén los cobros según tu lógica de filtrado
-        total_cobros = cobros.aggregate(total=Sum('monto'))['total']  # Calcula la suma de los montos
-        context['cobros'] = cobros
-        context['total_cobros'] = total_cobros  # Agrega el total de cobros al contexto
+        today = timezone.now().date()
+        context['today'] = today.strftime("%Y-%m-%d")  # Formato de fecha 'YYYY-MM-DD'
+
+        # Calcular el total de cobros
+        cobros = self.get_queryset()
+        total_cobros = cobros.aggregate(total=Sum('monto'))['total'] if cobros else 0
+        context['total_cobros'] = total_cobros
         return context
     
 from reportlab.lib.pagesizes import letter
@@ -395,8 +420,9 @@ def anular_venta(request, venta_id):
 
     return render(request, 'Ventas/anular_venta.html', {'venta': venta, 'form': form})
 
+#reporte de cuentas por cobrar
 
-def reporte_ventas(request):
+def reporte_cuentasxcobrar(request):
     fecha_hoy = timezone.now().date()
     clientes_data = []
     vendedores = Vendedor.objects.filter(activo=True).values_list('nombre', flat=True)
@@ -432,7 +458,7 @@ def reporte_ventas(request):
         clientes = [cliente for cliente in clientes if cliente.clientee.filter(id__in=ventas_vendedor).exists()]
 
     for cliente in clientes:
-        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0)
+        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0).order_by('-id')
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
@@ -502,7 +528,7 @@ def reporte_ventas(request):
 
     return JsonResponse(response_data)
 
-def reporte_ventas_pdf(request):
+def reporte_cuentasxcobrar_pdf(request):
     # La lógica inicial es similar a reporte_ventas
     fecha_hoy = timezone.now().date()
     clientes_data = []
@@ -537,7 +563,7 @@ def reporte_ventas_pdf(request):
         clientes = [cliente for cliente in clientes if cliente.clientee.filter(id__in=ventas_vendedor).exists()]
 
     for cliente in clientes:
-        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0)
+        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0).order_by('-id')
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
@@ -617,3 +643,163 @@ def reporte_ventas_pdf(request):
     html.write_pdf(response)
 
     return response
+
+from django.core.exceptions import ObjectDoesNotExist
+
+def reporte_cobros(request):
+    vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
+    filtro_cliente = request.GET.get('cliente', '')
+    filtro_vendedor = request.GET.get('vendedor', '')
+    fecha_inicio_str = request.GET.get('fechainicio', '')
+    fecha_fin_str = request.GET.get('fechafin', '')
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+
+    fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date() if fecha_inicio_str else None
+    fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date() if fecha_fin_str else None
+
+    # Incluir solo los cobros que no están anulados
+    cobros_qs = Cobro.objects.filter(anulado=False)
+
+    if filtro_cliente:
+        cobros_qs = cobros_qs.filter(venta__cliente__nombre__icontains=filtro_cliente)
+    if filtro_vendedor:
+        cobros_qs = cobros_qs.filter(vendedor__nombre__icontains=filtro_vendedor)
+    if fecha_inicio:
+        cobros_qs = cobros_qs.filter(fecha_cobro__gte=fecha_inicio)
+    if fecha_fin:
+        cobros_qs = cobros_qs.filter(fecha_cobro__lte=fecha_fin)
+
+    cobros_data = []
+    for cobro in cobros_qs:
+        try:
+            cobros_data.append({
+                "cobro_id": cobro.id,
+                "venta_id": cobro.venta.id,
+                "fecha_creacion": cobro.venta.fecha_creacion.strftime('%Y-%m-%d'),
+                "fecha_cobro": cobro.fecha_cobro.strftime('%Y-%m-%d'),
+                "dif_dias": cobro.dif_dias(),
+                "cliente": cobro.venta.cliente.nombre,
+                "comentarios": cobro.venta.comentarios,
+                "monto": cobro.monto
+            })
+        except ObjectDoesNotExist:
+            continue  # Omitir la iteración actual si no existen objetos relacionados
+
+    monto_total = cobros_qs.aggregate(Sum('monto'))['monto__sum'] or 0
+
+    return JsonResponse({
+        'cobros': cobros_data,
+        'monto_total': monto_total,
+        'fecha_hoy': fecha_hoy,
+        'vendedores': vendedores
+    })
+
+def reporte_cobros_pdf(request):
+    # Obtener lista de vendedores activos
+    vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
+
+    # Obtener filtros desde la solicitud
+    filtro_cliente = request.GET.get('cliente', '')
+    filtro_vendedor = request.GET.get('vendedor', '')
+    fecha_inicio_str = request.GET.get('fechainicio', '') or datetime.now().strftime('%Y-%m-%d')
+    fecha_fin_str = request.GET.get('fechafin', '') or datetime.now().strftime('%Y-%m-%d')
+
+    # Convertir cadenas de fecha a objetos de fecha, si se proporcionan
+    fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date() if fecha_inicio_str else None
+    fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date() if fecha_fin_str else None
+
+    # Filtrar los cobros según los criterios proporcionados
+    cobros_qs = Cobro.objects.filter(anulado=False)
+    if filtro_cliente:
+        cobros_qs = cobros_qs.filter(venta__cliente__nombre__icontains=filtro_cliente)
+    if filtro_vendedor:
+        cobros_qs = cobros_qs.filter(vendedor__nombre__icontains=filtro_vendedor)
+    if fecha_inicio:
+        cobros_qs = cobros_qs.filter(fecha_cobro__gte=fecha_inicio)
+    if fecha_fin:
+        cobros_qs = cobros_qs.filter(fecha_cobro__lte=fecha_fin)
+
+    # Preparar los datos para la plantilla
+    cobros_data = []
+    for cobro in cobros_qs:
+        try:
+            cobros_data.append({
+                "cobro_id": cobro.id,
+                "venta_id": cobro.venta.id,
+                "fecha_creacion": cobro.venta.fecha_creacion.strftime('%Y-%m-%d'),
+                "fecha_cobro": cobro.fecha_cobro.strftime('%Y-%m-%d'),
+                "dif_dias": cobro.dif_dias(),  # Asegúrate de que este método existe en tu modelo
+                "cliente": cobro.venta.cliente.nombre,
+                "comentarios": cobro.venta.comentarios,
+                "monto": cobro.monto
+            })
+        except ObjectDoesNotExist:
+            continue  # Omitir la iteración actual si no existen objetos relacionados
+
+    # Calcular el monto total
+    monto_total = cobros_qs.aggregate(Sum('monto'))['monto__sum'] or 0
+
+    # Renderizar la plantilla HTML con los datos
+    html_string = render_to_string('Ventas/reporte_cobros.html', {
+        'datos': cobros_data,
+        'monto_total': monto_total,
+        'fecha_inicio': fecha_inicio_str,
+        'fecha_fin': fecha_fin_str,
+        'filtro_cliente': filtro_cliente,
+        'filtro_vendedor': filtro_vendedor,
+    })
+
+    # Crear un PDF usando WeasyPrint
+    html = HTML(string=html_string)
+    result = html.write_pdf()
+
+    # Crear una respuesta HTTP con el PDF
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="reporte_cobros.pdf"'
+
+    return response
+
+
+def anular_cobro(request, cobro_id):
+    cobro = get_object_or_404(Cobro, pk=cobro_id)
+
+    if request.method == 'POST':
+        razon_anulacion = request.POST.get('razon_anulacion')
+
+        try:
+            with transaction.atomic():
+                # Obtener la venta y el cliente asociados al cobro
+                venta = cobro.venta
+                cliente = venta.cliente
+
+                print("Saldo del cliente antes de anular: ", cliente.saldo)
+                print("Saldo pendiente de la venta antes de anular: ", venta.saldo_pendiente)
+
+                cliente.saldo += cobro.monto
+                cliente.save()
+
+                venta.saldo_pendiente += cobro.monto
+                venta.save()
+
+                print("Saldo del cliente después de anular: ", cliente.saldo)
+                print("Saldo pendiente de la venta después de anular: ", venta.saldo_pendiente)
+
+                # Marcar el cobro como anulado
+                cobro.anulado = True
+                cobro.save()
+
+                AnulacionCobro.objects.create(
+                    cobro=cobro,
+                    fecha_anulacion=timezone.now(),
+                    razon=razon_anulacion
+                )
+
+            messages.success(request, 'Cobro anulado con éxito.')
+            return redirect('Ventas:cobros-list')  # Reemplaza con la URL de destino adecuada
+
+        except Exception as e:
+            messages.error(request, f'Ocurrió un error al anular el cobro: {e}')
+            # Considera agregar registros en lugar de imprimir en un entorno de producción
+
+    context = {'cobro': cobro}
+    return render(request, 'ventas/anular_cobro.html', context)

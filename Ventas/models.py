@@ -126,18 +126,24 @@ class Cobro(models.Model):
     fecha_cobro = models.DateField(auto_now_add=True)
     monto = models.DecimalField(max_digits=10, decimal_places=2)
     metodo_pago = models.CharField(max_length=13, choices=METODO_PAGO_CHOICES)
+    anulado = models.BooleanField(default=False)
 
     def clean(self):
         if self.monto > self.venta.saldo_pendiente:
             raise ValidationError('El monto del abono no puede superar el saldo pendiente de la venta.')
 
     def save(self, *args, **kwargs):
-        self.clean()  # Realizar la validación antes de guardar
-        super(Cobro, self).save(*args, **kwargs)
-        self.venta.saldo_pendiente -= self.monto
-        self.venta.save()
-        self.venta.cliente.saldo -= self.monto
-        self.venta.cliente.save()
+        # Bandera para saber si es una nueva instancia o si el monto ha cambiado
+        is_new_or_changed = self.pk is None or Cobro.objects.get(pk=self.pk).monto != self.monto
+
+        super().save(*args, **kwargs)
+
+        if is_new_or_changed and not self.anulado:  # Asegurarse de que no esté anulado
+            # Actualizar saldos solo si es un nuevo cobro o si el monto ha cambiado
+            self.venta.saldo_pendiente -= self.monto
+            self.venta.save()
+            self.venta.cliente.saldo -= self.monto
+            self.venta.cliente.save()
     
     def dif_dias(self):
         if self.fecha_cobro and self.venta.fecha_creacion:
@@ -167,3 +173,12 @@ class Devolucion(models.Model):
 
     def __str__(self):
         return f'Devolución {self.id} de Venta {self.venta.id}'
+    
+
+class AnulacionCobro(models.Model):
+    cobro = models.OneToOneField(Cobro, on_delete=models.CASCADE, related_name='anulacion_cobro')
+    fecha_anulacion = models.DateTimeField(auto_now_add=True)
+    razon = models.TextField()
+
+    def __str__(self):
+        return f'Anulación de Cobro {self.cobro.id} - {self.fecha_anulacion.strftime("%Y-%m-%d")}'

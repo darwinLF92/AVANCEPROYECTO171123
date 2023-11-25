@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
-from .views import VentasCreditoPorClienteView, DetalleVentasCreditoClienteView, generar_recibo, CobrosListView, procesar_cobro, ListaVentasView, reporte_ventas
-from .views import imprimir_venta, reporte_ventas_pdf
+from .views import VentasCreditoPorClienteView, DetalleVentasCreditoClienteView, generar_recibo, CobrosListView, procesar_cobro, ListaVentasView
+from .views import imprimir_venta, reporte_cuentasxcobrar_pdf, reporte_cuentasxcobrar, reporte_cobros_pdf
 
 
 
@@ -23,6 +23,9 @@ urlpatterns = [
     path('cobros/list', CobrosListView.as_view(), name='cobros-list'),
     path('imprimir-venta/<int:venta_id>/', imprimir_venta, name='imprimir_venta'),
     path('anular-venta/<int:venta_id>/', views.anular_venta, name='anular_venta'),
-    path('reporte-ventas/', reporte_ventas, name='reporte_ventas'),
-    path('reporte-ventas-pdf/', reporte_ventas_pdf, name='reporte_ventas_pdf'),
+    path('reporte-cuentasxcobrar/', reporte_cuentasxcobrar, name='reporte_cuentasxcobrar'),
+    path('reporte-cuentasxcobrar-pdf/', reporte_cuentasxcobrar_pdf, name='reporte_cuentasxcobrar_pdf'),
+    path('reporte-cobros', views.reporte_cobros, name='reporte_cobros'),
+    path('anular-cobro/<int:cobro_id>/', views.anular_cobro, name='anular_cobro'),
+    path('reporte-cobros-pdf/', reporte_cobros_pdf, name='reporte_cobros_pdf'),
 ]
