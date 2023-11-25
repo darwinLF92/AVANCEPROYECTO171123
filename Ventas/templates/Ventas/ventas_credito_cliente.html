@@ -51,7 +51,7 @@
         <h3 class="modal-title text-dark">ESTADO DE CUENTA POR COBRAR</h3>
       </div>
       <br>
-      <input type="text" id="searchClientes" placeholder="Buscar cliente..." oninput="filterTableCliente(this.value)">
+      
       <div class="modal-body">
         <!-- El contenido del modal se cargará aquí -->
       </div>
@@ -104,7 +104,7 @@
         let htmlContent = `
             <table>
                 <thead>
-                    <tr>
+                  <tr class="no-border">
                         <th>DOC</th>
                         <th>FISICO</th>
                         <th>CREACION</th>
@@ -123,12 +123,12 @@
                 <tbody>`;
 
         data.clientes.forEach(cliente => {
-            htmlContent += `<tr><td colspan="13"><strong>CLIENTE: ${cliente.nombre}</strong></td></tr>`;
+            htmlContent += `<tr class="no-border"><td colspan="13" style="border:none;"><strong>CLIENTE: ${cliente.nombre}</strong></td></tr>`;
             cliente.ventas_credito.forEach(venta => {
                 htmlContent += `
-                    <tr>
+                <tr class="no-border">
                         <td>${venta.id}</td>
-                        <td>${venta.tipo_documento}</td>
+                        <td>${venta.comentarios}</td>
                         <td>${venta.fecha_creacion}</td>
                         <td>${venta.fecha_vencimiento}</td>
                         <td>${venta.dias_vencidos}</td>
@@ -143,17 +143,17 @@
                     </tr>`;
             });
             htmlContent += `
-                <tr>
-                  <td colspan="5"><strong>Totales para ${cliente.nombre}</strong></td>
-                  <td><strong>${formatNumber(cliente.total_monto)}</strong></td>
-                  <td><strong>${formatNumber(cliente.total_cobrar)}</strong></td>
-                  <td><strong>${formatNumber(cliente.total_sin_vencer)}</strong></td>
-                  <td><strong>${formatNumber(cliente.total_31_60)}</strong></td>
-                  <td><strong>${formatNumber(cliente.total_61_90)}</strong></td>
-                  <td><strong>${formatNumber(cliente.total_91_120)}</strong></td>
-                  <td><strong>${formatNumber(cliente.total_121_mas)}</strong></td>
+            <tr class="border-top">
+                  <td colspan="5" style="border:none;"><strong>Totales para ${cliente.nombre}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_monto)}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_cobrar)}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_sin_vencer)}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_31_60)}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_61_90)}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_91_120)}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_121_mas)}</strong></td>
                 </tr>`;
-                htmlContent += `<tr><td colspan="13"></tr>`;
+                htmlContent += `<tr class="no-border"><td colspan="13"></tr>`;
         });
      
       htmlContent += `</tbody></table>`;
@@ -163,12 +163,10 @@
       htmlContent += `
           
           <div>
-              <br>
-              <h3>RESUMEN</h3>
               <table>
                   <tr>
                     <tr>
-                    <td colspan="3"></td> <!-- Asegúrate de que el colspan aquí sea el número correcto de columnas antes de "31-60 días" -->
+                    <td colspan="3" style="border:none;"></td> <!-- Asegúrate de que el colspan aquí sea el número correcto de columnas antes de "31-60 días" -->
                     <td colspan="4" style="border: 1px solid black; text-align: center;">VENCIDO</td> <!-- Colspan es el número de columnas desde "31-60 días" a "+121 días" -->
                     </tr>
                       <th class="th-header">TOTAL FACTURADO</th>
@@ -227,18 +225,16 @@
   });
 
   document.getElementById('botonImprimirPDF').addEventListener('click', function() {
-  // Obtén los valores actuales de los filtros
-  const filtroCliente = document.getElementById('filtroCliente').value;
-  const filtroVendedor = document.getElementById('filtroVendedor').value;
+    // Puedes usar los mismos parámetros que usas para la vista de JSON
+    const filtroCliente = document.getElementById('filtroCliente').value;
+    const filtroVendedor = document.getElementById('filtroVendedor').value;
 
-  // Construye la URL con los parámetros de búsqueda
-  let params = new URLSearchParams({
-    cliente: filtroCliente,
-    vendedor: filtroVendedor
-  });
+    let params = new URLSearchParams({
+        cliente: filtroCliente,
+        vendedor: filtroVendedor
+    });
 
-  // Abre una nueva ventana con la URL del PDF generado
-  window.open(`/reporte-ventas-pdf/?${params.toString()}`);
+    window.open(`/reporte-ventas-pdf/?${params.toString()}`);
 });
 
 </script>
@@ -307,6 +303,30 @@
   background-color:#17a2b8; /* Cambia esto por el color de fondo que prefieras */
   color: white; /* Color del texto */
 }
+
+table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+    }
+    .no-border td, .no-border th {
+        border: none;
+    }
+    .border-top {
+        border-top: 1px solid black;
+    }
+    .resumen {
+        background-color: #e7f4f9;
+        font-weight: bold;
+    }
+    .text-right {
+        text-align: right;
+    }
+    /* Otros estilos */
 
  </style>     
 {% endblock %}

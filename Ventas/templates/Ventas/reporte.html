@@ -1,117 +1,176 @@
 <!DOCTYPE html>
-<html lang="en">
+{% load humanize %}
+<html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Estado de Cuenta por Cobrar</title>
     <style>
-        /* Agrega tus estilos personalizados aquí */
+        @page {
+            size: A4 landscape;
+            margin: 20mm;
+        }
+        body, th, td {
+        font-family: 'Arial', sans-serif;
+        font-size: 10pt;
+        }
         .modal-header {
             background-color: #17a2b8;
+            color: white;
+            padding: 5px;
+            text-align: left;
         }
-
-        .modal-title {
-            color: #000000;
-        }
-
-        .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
-            background-color: #f5f5f5;
-        }
-
-        .btn-danger {
-            background-color: #dc3545;
-            border-color: #dc3545;
-        }
-
-        #CuentascxcModal .modal-body {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .modal-dialog-custom {
-            max-width: 90%;
-            margin: 30px auto;
-        }
-
-        @media (min-width: 992px) {
-            .modal-dialog-custom {
-                max-width: 80%;
-            }
-        }
-
-        #CuentascxcModal .modal-body {
-            overflow-y: auto;
-        }
-
-        #CuentascxcModal table {
+        table {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 20px;
+        }
+        /* Eliminar bordes de todas las celdas */
+        th, td {
+        border: none;
+        padding: 8px;
+        text-align: left;
         }
 
-        #CuentascxcModal thead th {
-            position: sticky;
-            top: 0;
-            background: #17a2b8;
-            color: white;
-            z-index: 10;
+        /* Definir bordes solo para la fila de totales */
+        .totales {
+        border-top: 1px solid black; /* o el grosor/color que prefieras */
         }
 
-        #CuentascxcModal thead {
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4);
+        .t_resumen {
+        border: 1px solid black; /* o el grosor/color que prefieras */
         }
 
-        .th-header {
+        th {
             background-color: #17a2b8;
             color: white;
         }
+        .resumen {
+            background-color: #e7f4f9;
+            font-weight: bold;
+        }
+        .text-right {
+            text-align: right;
+        }
+        
     </style>
 </head>
 <body>
-    <!--modal de cuentas por cobrar-->
-    <div id="CuentascxcModal" class="modal bd-example-modal-lg">
-        <div class="modal-dialog modal-dialog-custom"> 
-            <div class="modal-content">
-                <div class="modal-header bg-info">
-                    <h3 class="modal-title text-dark">ESTADO DE CUENTA POR COBRAR</h3>
-                </div>
-                <br>
-                <input type="text" id="searchClientes" placeholder="Buscar cliente..." oninput="filterTableCliente(this.value)">
-                <div class="modal-body">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>DOC</th>
-                                <th>FISICO</th>
-                                <th>CREACION</th>
-                                <th>VENCE</th>
-                                <th>DIASV</th>
-                                <th>MONTO</th>
-                                <th>COBRAR</th>
-                                <th>SIN VENCER</th>
-                                <th>31-60 DIAS</th>
-                                <th>61-90 DIAS</th>
-                                <th>91-120 DIAS</th>
-                                <th>+121 DIAS</th>
-                                <th>T. DIAS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Aquí se cargarán los datos dinámicamente -->
-                        </tbody>
-                    </table>
-                </div>
-                <div class="modal-footer bg-dark">
-                    <div>
-                        <input type="text" id="filtroCliente" placeholder="Filtrar por cliente...">
-                        <select id="filtroVendedor">
-                            <option value="">Seleccionar Vendedor</option>
-                            <!-- Opciones de vendedores cargadas dinámicamente o estáticamente -->
-                            <option value="" disabled selected>Consulta General</option>
-                        </select>
-                    </div>
-                    <button type="button" id="botonImprimirPDF" class="btn btn-danger" data-dismiss="modal">Imprimir</button>
-                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
-                </div>
-            </div>
-        </div>
+    <div class="modal-header">
+        <h3>ESTADO DE CUENTA POR COBRAR AL DÍA: {{ fecha_hoy|date:"d/m/Y" }}</h3>
     </div>
+    <table>
+        <thead>
+            <tr >
+                <th>DOC</th>
+                <th>FISICO</th>
+                <th>CREACION</th>
+                <th>VENCE</th>
+                <th>DIASV</th>
+                <th>MONTO</th>
+                <th>COBRAR</th>
+                <th>SIN VENCER</th>
+                <th>31-60 DIAS</th>
+                <th>61-90 DIAS</th>
+                <th>91-120 DIAS</th>
+                <th>+121 DIAS</th>
+                <th>T. DIAS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+                <tr>
+                    <td colspan="13" class="resumen">CLIENTE: {{ cliente.nombre }}</td>
+                </tr>
+                {% for venta in cliente.ventas_credito %}
+                <tr>
+                    <td>{{ venta.id }}</td>
+                    <td>{{ venta.comentarios }}</td>
+                    <td>{{ venta.fecha_creacion|date:"d/m/Y" }}</td>
+                    <td>{{ venta.fecha_vencimiento|date:"d/m/Y" }}</td>
+                    <td>{{ venta.dias_vencidos }}</td>
+                    <td>{{ venta.total |floatformat:2|intcomma   }}</td>
+                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
+                    <!-- Saldo Pendiente SIN VENCER -->
+                    {% if venta.dias_vencidos < 0 %}
+                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
+                    {% else %}
+                    <td>0.00</td>
+                    {% endif %}
+
+                    <!-- Saldo Pendiente para 0-30 DÍAS -->
+                    {% if venta.dias_vencidos >= 0 and venta.dias_vencidos <= 30 %}
+                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
+                    {% else %}
+                    <td>0.00</td>
+                    {% endif %}
+
+                    <!-- Saldo Pendiente para 31-60 DÍAS -->
+                    {% if venta.dias_vencidos > 30 and venta.dias_vencidos <= 60 %}
+                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
+                    {% else %}
+                    <td>0.00</td>
+                    {% endif %}
+
+                    <!-- Saldo Pendiente para 61-90 DÍAS -->
+                    {% if venta.dias_vencidos > 60 and venta.dias_vencidos <= 90 %}
+                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
+                    {% else %}
+                    <td>0.00</td>
+                    {% endif %}
+
+                    <!-- Saldo Pendiente para +91 DÍAS -->
+                    {% if venta.dias_vencidos > 90 %}
+                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
+                    {% else %}
+                    <td>0.00</td>
+                    {% endif %}
+                    <td>{{ venta.total_dias }}</td
+                </tr>
+                {% endfor %}
+                <tr class="totales">
+                    <td colspan="5" class="text-left">Totales para {{ cliente.nombre }}</td>
+                    <td>{{ cliente.total_monto |floatformat:2|intcomma   }}</td>
+                    <td>{{ cliente.total_cobrar |floatformat:2|intcomma   }}</td>
+                    <td>{{ cliente.total_sin_vencer |floatformat:2|intcomma   }}</td>
+                    <td>{{ cliente.total_31_60 |floatformat:2|intcomma   }}</td>
+                    <td>{{ cliente.total_61_90 |floatformat:2|intcomma   }}</td>
+                    <td>{{ cliente.total_91_120 |floatformat:2|intcomma   }}</td>
+                    <td>{{ cliente.total_121_mas |floatformat:2|intcomma   }}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="13"></td> 
+                </tr> 
+            {% endfor %}
+        </tbody>
+    </table>
+    <table>
+        <thead>
+            <tr>
+                <tr>
+                <td colspan="3"></td> <!-- Asegúrate de que el colspan aquí sea el número correcto de columnas antes de "31-60 días" -->
+                <td colspan="4" style="border: 1px solid black; text-align: center;">VENCIDO</td> <!-- Colspan es el número de columnas desde "31-60 días" a "+121 días" -->
+                </tr>
+                  <th class="th-header">TOTAL FACTURADO</th>
+                  <th class="th-header">COBRAR</th>
+                  <th class="th-header">SIN VENCER</th>
+                  <th class="th-header">31-60 DIAS</th>
+                  <th class="th-header">61-90 DIAS</th>
+                  <th class="th-header">91-120 DIAS</th>
+                  <th class="th-header">+121 DIAS</th>
+              </tr>
+        </thead>
+        <tbody>
+            <tr class="t_resumen">
+                <td>{{ resumen.total_facturado |floatformat:2|intcomma   }}</td>
+                <td>{{ resumen.total_cobrar |floatformat:2|intcomma   }}</td>
+                <td>{{ resumen.total_1_30_dias |floatformat:2|intcomma  }}</td>
+                <td>{{ resumen.total_31_60_dias |floatformat:2|intcomma  }}</td>
+                <td>{{ resumen.total_61_90_dias |floatformat:2|intcomma  }}</td>
+                <td>{{ resumen.total_91_120_dias |floatformat:2|intcomma  }}</td>
+                <td>{{ resumen.total_mas_121_dias |floatformat:2|intcomma  }}</td>
+            </tr>  
+        </tbody>
+    </table>
 </body>
 </html>
