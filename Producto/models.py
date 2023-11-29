@@ -1,4 +1,5 @@
 from django.db import models
+from Proveedor.models import Proveedor
 
 class Producto(models.Model):
     codigo = models.CharField(max_length=50, unique=True)

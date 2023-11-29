@@ -61,8 +61,6 @@
   </div>
 </div>
 
-
-
 <!-- Campos Teléfono y Dirección -->
 <div class="row">
   <div class="col-md-6">
@@ -423,7 +421,7 @@ function updateDiscount(input, index) {
 
 
 
-  function seleccionarCliente(id, nombre, nit, direccion, telefono) {
+  function seleccionarCliente(id, nit, nombre, direccion, telefono) {
   // Actualiza los valores de los campos en el formulario principal
   document.getElementById('cliente-nit').value = nit;
   document.getElementById('cliente-nombre').value = nombre;
@@ -770,7 +768,7 @@ function sendToServer(formData) {
     .then(data => {
         if (data.status === 'success') {
             // Redirigimos al usuario a la URL de detalle de la venta.
-            const detailUrl = `/detalle-venta/${data.venta_id}/`;
+            const detailUrl = `/lista-ventas/`;
             window.location.href = detailUrl;
         } else {
             // Mostramos errores específicos si los hay.

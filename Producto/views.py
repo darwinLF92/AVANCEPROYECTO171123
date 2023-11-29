@@ -7,6 +7,8 @@ from .forms import ProductoForm, ComponenteProductoForm, ProductoPrincipalForm
 from django.http import JsonResponse
 from django.forms import DecimalField, model_to_dict, modelformset_factory, inlineformset_factory
 from django.db.models import ExpressionWrapper
+from datetime import datetime
+from .models import Proveedor
 
 
 def listar_productos(request):
@@ -212,4 +214,92 @@ def buscar_productos(request):
     return JsonResponse(productos_json, safe=False)
 
 
+def reporte_inventario(request):
+    proveedores = list(Proveedor.objects.filter(activo=True).values_list('nombre', flat=True))
+    filtro_producto = request.GET.get('producto', '')
+    filtro_tipo_producto = request.GET.get('tipoproducto', '')
+    filtro_proveedor = request.GET.get('proveedor', '')
+    filtro_stock = request.GET.get('stock', '')
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
 
+    productos_qs = Producto.objects.filter(activo=True)
+
+    estados_stock = [
+        {'nombre': 'Con Existencia', 'valor': 'con_existencia'},
+        {'nombre': 'Sin Existencia', 'valor': 'sin_existencia'}
+    ]
+
+    tipos_producto = [
+        {'nombre': 'Materia Prima', 'valor': 'materia_prima'},
+        {'nombre': 'Para Fabricación', 'valor': 'para_fabricacion'},
+        {'nombre': 'Producto Terminado', 'valor': 'producto_terminado'}
+    ]
+
+    # Filtrar por nombre de producto
+    if filtro_producto:
+        productos_qs = productos_qs.filter(nombre__icontains=filtro_producto)
+
+    # Filtrar por tipo de producto
+    if filtro_tipo_producto:
+        if filtro_tipo_producto == 'materia_prima':
+            productos_qs = productos_qs.filter(es_materia_prima=True)
+        elif filtro_tipo_producto == 'para_fabricacion':
+            productos_qs = productos_qs.filter(para_fabricacion=True)
+        elif filtro_tipo_producto == 'producto_terminado':
+            productos_qs = productos_qs.filter(es_materia_prima=False, para_fabricacion=False)
+
+    # Filtrar por proveedor
+    if filtro_proveedor:
+        productos_qs = productos_qs.filter(proveedor__nombre__icontains=filtro_proveedor)
+
+    # Filtrar por stock
+    if filtro_stock:
+        if filtro_stock == 'con_existencia':
+            productos_qs = productos_qs.filter(stock__gt=0)
+        elif filtro_stock == 'sin_existencia':
+            productos_qs = productos_qs.filter(stock__lte=0)
+
+    # Agregando datos de inventario
+    datos_inventario = productos_qs.values(
+        'id', 'codigo', 'nombre', 'stock', 'precio_compra', 'precio_venta'
+    ).annotate(
+        total_costo=Sum(F('stock') * F('precio_compra')),
+        total_venta=Sum(F('stock') * F('precio_venta')),
+    )
+
+    datos_productos = [
+        {
+            'producto_id': dato['id'],
+            'codigo': dato['codigo'],
+            'nombre': dato['nombre'],
+            'stock': dato['stock'],
+            'precio_compra': dato['precio_compra'],
+            'precio_venta': dato['precio_venta'],
+            'total_costo': dato['total_costo'],
+            'total_venta': dato['total_venta'],
+        }
+        for dato in datos_inventario
+    ]
+
+    # Cálculos de totales
+    # Cálculos de totales
+    total_stock = sum(item['stock'] for item in datos_productos)
+    total_costos = sum(item['total_costo'] for item in datos_productos)
+    total_ventas = sum(item['total_venta'] for item in datos_productos)
+
+    return JsonResponse({
+        'productos': datos_productos,
+        'total_stock': total_stock,
+        'total_costos': total_costos,
+        'total_ventas': total_ventas,
+        'fecha_hoy': fecha_hoy,
+        'proveedores': proveedores,
+        'estadosStock': estados_stock, 
+        'tiposProducto': tipos_producto
+    })
+
+
+def buscar_producto2(request):
+    termino_busqueda = request.GET.get('q', '')
+    productos = Producto.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
+    return JsonResponse(list(productos), safe=False)

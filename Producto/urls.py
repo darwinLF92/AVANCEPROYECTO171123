@@ -19,5 +19,7 @@ urlpatterns = [
     # Añadir más URLs aquí
     path('producto-search/', views.producto_search_view, name='producto-search'),
     path('ruta/busqueda/productos/', views.buscar_productos, name='buscar_productos'),
+    path('reporte-inventario', views.reporte_inventario, name='reporte_inventario'),
+    path('buscar-producto2/', views.buscar_producto2, name='buscar_producto2'),
 
 ]

@@ -8,6 +8,9 @@
     <a href="{% url 'Producto:agregar_producto' %}" class="btn btn-custom">Crear Producto</a>
 </div>
 
+<div class="input-group-append">
+    <button id="botonAbrirModal">Abrir Reporte</button>
+</div>
 
 <div class="form-container">
     <form method="get" action="{% url 'Producto:listar_productos' %}" id="search-form">
@@ -53,8 +56,58 @@
     </tbody>
 </table>
 
+<div id="ProductosModal" class="modal bd-example-modal-lg">
+    <div class="modal-dialog modal-dialog-custom"> 
+      <div class="modal-content">
+        <div class="modal-header bg-info">
+          <h3 class="modal-title text-dark">REPORTE DE INVENTARIO</h3>
+        </div>
+        <br>
+            <div class="modal-body">
+            <!-- El contenido del modal se cargará aquí -->
+            </div>
+        <div class="modal-footer bg-dark">
+            <div class="form-group">
+                <label for="filtroProducto">Producto:</label>
+                <input type="text" id="filtroProducto" placeholder="Filtrar por producto...">
+                <div class="resultados-busqueda" style="position: absolute; z-index: 1000;"></div>                        
+            </div>
+
+            <div class="form-group">
+                <label for="filtroTipoProducto">Tipo Producto:</label>
+                <select id="filtroTipoProducto">
+                <option value="">Seleccionar Tipo Producto</option>
+                <!-- Opciones de vendedores -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="filtroProveedor">Proveedor:</label>
+                <select id="filtroProveedor">
+                <option value="">Seleccionar Proeedor</option>
+                <!-- Opciones de vendedores -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="filtroStock">Filtrar por Existencia:</label>
+                <select id="filtroStock">
+                <option value="">Seleccionar Opcion</option>
+                <!-- Opciones de vendedores -->
+                </select>
+            </div>
+            
+          <button type="button" id="consultar" class="btn btn-primary">CONSULTAR</button>
+          <button type="button" id="botonImprimirPDF" class="btn btn-danger" data-dismiss="modal">Imprimir</button>
+          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+
 $(document).ready(function() {
     // Escuchar el evento de cambio en el campo de entrada de búsqueda
     $('#search-input').on('input', function() {
@@ -81,6 +134,204 @@ $(document).ready(function() {
     // Disparar el clic en el botón de buscar para cargar todos los productos
     $('#search-input').click();
     });
+</script>
+
+<script>
+    // Función para formatear números con comas y dos decimales
+    const formatNumber = (value, isPercentage = false) => {
+        const number = typeof value === 'string' ? parseFloat(value) : value;
+        const formattedNumber = number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return isPercentage ? `${formattedNumber}%` : formattedNumber;
+        };
+      
+        // Función para actualizar el modal con datos filtrados
+        function actualizarModal(filtroProducto, filtroTipoProducto, filtroProveedor, filtroStock) {
+          let url = '/reporte-inventario'; // Asegúrate de que esta URL es correcta y está definida en tu Django urls.py
+          let params = new URLSearchParams();
+       
+        if (filtroProducto) {
+            params.append('producto', filtroProducto);
+        }
+        if (filtroTipoProducto) {
+            params.append('tipoproducto', filtroTipoProducto);
+        }
+        if (filtroProveedor) {
+            params.append('proveedor', filtroProveedor);
+        }
+        if (filtroStock) {
+            params.append('stock', filtroStock);
+        }
+    
+        url += `?${params.toString()}`;
+      
+          fetch(url)
+            .then(response => {
+              if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+              }
+              return response.json();
+            })
+          .then(data => {
+              const modalBody = document.querySelector('#ProductosModal .modal-body');
+              let htmlContent = `
+                  <table>
+                      <thead>
+                        <tr class="no-border">
+                            <th style="text-align: center">Id Prod.</th>
+                            <th style="text-align: center">Codigo</th>
+                            <th style="text-align: left">Producto</th>
+                            <th style="text-align: center">Existencia</th>
+                            <th style="text-align: center">P. Costo</th>
+                            <th style="text-align: center">P. Venta</th>
+                            <th style="text-align: center">T. Costo</th>
+                            <th style="text-align: center">T. Venta</th>
+                          </tr>
+                      </thead>
+                      <tbody>`;
+      
+              data.productos.forEach(producto => {
+                  htmlContent += `
+                  <tr class="no-border">
+                          <td style="text-align: center">${producto.producto_id}</td>
+                          <td style="text-align: center">${producto.codigo}</td>
+                          <td style="text-align: left">${producto.nombre}</td>
+                          <td style="text-align: center">${formatNumber(producto.stock)}</td>
+                          <td style="text-align: right">${formatNumber(producto.precio_compra)}</td>
+                          <td style="text-align: right">${formatNumber(producto.precio_venta)}</td>
+                          <td style="text-align: right">${formatNumber(producto.total_costo)}</td>
+                          <td style="text-align: right">${formatNumber(producto.total_venta)}</td>
+                      </tr>`;
+              });
+      
+              htmlContent += `
+              <tr class="border-top">
+                    <td colspan="3" style="border:none; text-align: center;"><strong>Totales:</strong></td>
+                    <td style="border:none; text-align: center"><strong>${formatNumber(data.total_stock)}</strong></td>
+                    <td colspan="2" style="border:none"></td>
+                    <td style="border:none; text-align: right;"><strong>${formatNumber(data.total_costos)}</strong></td>
+                    <td style="border:none; text-align: right;"><strong>${formatNumber(data.total_ventas)}</strong></td>
+                  </tr>`;
+              htmlContent += '</tbody></table>';
+
+        
+                      //devuelve el listado para filtrar por tipo producto
+        const selectTipoProducto = document.getElementById('filtroTipoProducto');
+        const tipoProductoActual = filtroTipoProducto;
+
+        selectTipoProducto.innerHTML = '<option value="">Consulta General</option>';
+        data.tiposProducto.forEach(tipoProducto => {
+        const option = new Option(tipoProducto.nombre, tipoProducto.valor);
+        option.selected = tipoProducto.valor === tipoProductoActual;
+        selectTipoProducto.add(option);
+        });
+
+        //devuelve el listado para filtra por proveedor
+        const selectProveedor = document.getElementById('filtroProveedor');
+        const proveedorActual = filtroProveedor; 
+    
+        selectProveedor.innerHTML = '<option value="">Consulta General</option>';
+        data.proveedores.forEach(proveedor => {
+        const option = new Option(proveedor, proveedor);
+        option.selected = proveedor === proveedorActual; 
+        selectProveedor.add(option);
+        });
+
+        //devuelve el listado para filtrar por existencia    
+        const selectStock = document.getElementById('filtroStock');
+        const stockActual = filtroStock;
+
+        selectStock.innerHTML = '<option value="">Consulta General</option>';
+        data.estadosStock.forEach(estadoStock => {
+        const option = new Option(estadoStock.nombre, estadoStock.valor);
+        option.selected = estadoStock.valor === stockActual;
+        selectStock.add(option);
+        });
+    
+      
+              modalBody.innerHTML = htmlContent;
+              $('#ProductosModal').modal('show');
+            })
+            .catch(error => {
+              console.error('There has been a problem with your fetch operation:', error);
+            });
+        }
+
+
+    
+document.getElementById('botonAbrirModal').addEventListener('click', function() {
+    // Resetear los valores de los filtros
+    document.getElementById('filtroProducto').value = '';
+    document.getElementById('filtroTipoProducto').value = '';
+    document.getElementById('filtroProveedor').value = '';
+    document.getElementById('filtroStock').value = '';
+
+    // Llamar a actualizarModal con los valores reseteados
+    actualizarModal('', '', '', '');
+});
+
+    
+document.getElementById('consultar').addEventListener('click', function() {
+    let filtroProducto = document.getElementById('filtroProducto').value;
+    let filtroTipoProducto = document.getElementById('filtroTipoProducto').value;
+    let filtroProveedor = document.getElementById('filtroProveedor').value;
+    let filtroStock = document.getElementById('filtroStock').value;
+
+    actualizarModal(filtroProducto, filtroTipoProducto, filtroProveedor, filtroStock);
+});
+
+    
+      
+        document.getElementById('botonImprimirPDF').addEventListener('click', function() {
+        let filtroProducto = document.getElementById('filtroProducto').value;
+        let filtroTipoProducto = document.getElementById('filtroTipoProducto').value;
+        let filtroProveedor = document.getElementById('filtroProveedor').value;
+        let filtroStock = document.getElementById('filtroStock').value;
+      
+          let params = new URLSearchParams({
+              producto: filtroProducto,
+              tipoproducto: filtroTipoProducto,
+              proveedor: filtroProveedor,
+              stock: filtroStock
+          });
+      
+          window.open(`/reporte-ventas-pdf/?${params.toString()}`);
+        });
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const inputProducto = document.getElementById('filtroProducto');
+    const resultadosBusqueda = document.querySelector('.resultados-busqueda');
+
+    inputProducto.addEventListener('input', function() {
+        const query = this.value;
+        if (query.length < 2) {
+            resultadosBusqueda.innerHTML = '';
+            return;
+        }
+
+        fetch(`/buscar-producto2?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(productos => {
+                resultadosBusqueda.innerHTML = '';
+                productos.forEach(producto => {
+                    const div = document.createElement('div');
+                    div.textContent = producto.nombre;
+                    div.addEventListener('click', function() {
+                        inputProducto.value = this.textContent;
+                        resultadosBusqueda.innerHTML = '';
+                    });
+                    resultadosBusqueda.appendChild(div);
+                });
+            });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target !== inputProducto) {
+            resultadosBusqueda.innerHTML = '';
+        }
+    });
+});
+
 
 </script>
 
@@ -134,6 +385,108 @@ $(document).ready(function() {
     background-color: #0c6936; /* Cambia el color de fondo a naranja */
     color: #ffffff; /* Cambia el color del texto a blanco */
     /* Puedes ajustar otros estilos según tus preferencias */
+}
+
+/*css para el modal*/
+.modal-header {
+    background-color: #17a2b8; /* Replace with the actual color code */
+}
+
+.modal-title {
+    color: #000000; /* Replace with the actual color code */
+}
+
+
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+    background-color: #f5f5f5; /* Replace with the actual color code */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Replace with the actual color code */
+    border-color: #dc3545; /* Replace with the actual color code */
+}
+
+#ProductosModal .modal-body {
+  max-height: 500px; /* Altura máxima en píxeles */
+  overflow-y: auto; /* Muestra una barra de desplazamiento si el contenido excede la altura máxima */
+}
+
+  .modal-dialog-custom {
+  max-width: 90%; /* O cualquier otro valor que prefieras */
+  margin: 30px auto; /* Centra el modal horizontalmente */
+}
+
+/* Puedes también asegurarte de que el modal no sea más ancho que la pantalla */
+@media (min-width: 992px) {
+  .modal-dialog-custom {
+    max-width: 80%; /* O cualquier otro valor que prefieras */
+  }
+} 
+
+
+/* Estilo para la tabla y el encabezado */
+#ProductosModal .modal-body {
+  overflow-y: auto; /* Habilita el desplazamiento vertical */
+}
+
+#ProductosModal table {
+  width: 100%; /* Asegura que la tabla ocupe todo el ancho del contenedor */
+  border-collapse: collapse; /* Opcional: para que los bordes de la tabla se vean mejor */
+}
+
+#ProductosModal thead th {
+  position: sticky;
+  top: 0; /* Ajusta esto si hay algún otro elemento fijo en la parte superior, como un menú de navegación */
+  background: #17a2b8; /* O el color de fondo que desees, para evitar que se vea contenido a través del encabezado */
+  color: white;
+  z-index: 10; /* Asegura que el encabezado se muestre por encima del contenido al desplazarse */
+}
+
+#ProductosModal thead {
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4); /* Opcional: agrega sombra para un efecto de elevación */
+}
+
+.th-header {
+  background-color:#17a2b8; /* Cambia esto por el color de fondo que prefieras */
+  color: white; /* Color del texto */
+}
+
+.resultados-busqueda {
+    position: absolute;
+    top: 100%; /* Asegúrate de que top esté configurado para posicionarlo debajo del input */
+    left: 0;
+    width: 100%;
+    background-color: white;
+    color: black;
+
+    /* Otros estilos... */
+}
+
+.resultados-busqueda div:hover {
+    background-color: #f0f0f0;
+} 
+
+.form-group {
+    display: flex;
+    flex-direction: column; /* Apila los elementos verticalmente */
+    margin-bottom: 10px; /* Añade un poco de espacio entre los grupos */
+    position: relative;
+    color: white;
+}
+
+.form-group label {
+    margin-bottom: 5px; /* Añade un poco de espacio entre la etiqueta y el campo de entrada */
+}
+
+/* Opcional: Añadir media queries para ajustar para pantallas más pequeñas */
+@media (max-width: 600px) {
+    .form-group {
+        width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
+    }
+}
+
+.filtroProveedor{
+    color: black;
 }
 </style>
 {% endblock %}
