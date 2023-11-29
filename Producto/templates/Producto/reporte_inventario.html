@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+{% load humanize %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Inventario</title>
+    <style>
+        /* Aquí van tus estilos CSS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+        }
+        .header {
+            background-color: #f8f8f8;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: none;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .total {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: right;
+        }
+        .productoid {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .codigo {
+            text-align: left; /* Alineación a la derecha para los montos */
+        }
+        .nombreprod {
+            text-align: left; /* Alineación a la derecha para los montos */
+        }
+        .stock {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+
+        .totalcant {
+            text-align: center; /* Alineación a la derecha para los montos */
+            border-top: 1px solid black;
+        }
+        .totales{
+            text-align: center;
+            border-top: 1px solid black;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Reporte de Inventario</h1>
+        <p>Lista de productos al día {{ fecha_hoy}}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="text-align: center">Id Prod.</th>
+                <th style="text-align: left">Codigo</th>
+                <th style="text-align: left">Producto</th>
+                <th style="text-align: center">Existencia</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for producto in productos %}
+            <tr>
+                <td class="productoid" style="border:none">{{ producto.producto_id }}</td>
+                <td class="codigo" style="border:none">{{ producto.codigo }}</td>
+                <td class="nombreprod" style="border:none">{{ producto.nombre }}</td>
+                <td class="stock" style="border:none">{{ producto.stock|floatformat:2|intcomma }}</td> <!-- Formato de fecha -->
+            </tr>
+            {% endfor %}
+            <tr>
+                <td  colspan="3"  class="totales" >Total</td> 
+                <td class="totalcant">{{ total_stock|floatformat:2|intcomma }}</td> 
+            </tr> 
+        </tbody>
+    </table>
+
+</body>
+</html>

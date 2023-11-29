@@ -12,6 +12,9 @@
     <button id="botonAbrirModal">Abrir Reporte</button>
 </div>
 
+<button id="botonImprimirPDFSinFiltros">Imprimir Reporte</button>
+
+
 <div class="form-container">
     <form method="get" action="{% url 'Producto:listar_productos' %}" id="search-form">
         <div>
@@ -294,7 +297,7 @@ document.getElementById('consultar').addEventListener('click', function() {
               stock: filtroStock
           });
       
-          window.open(`/reporte-ventas-pdf/?${params.toString()}`);
+          window.open(`/reporte-inventario-financiero-pdf/?${params.toString()}`);
         });
 
 
@@ -331,6 +334,11 @@ document.getElementById('consultar').addEventListener('click', function() {
         }
     });
 });
+
+document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', function() {
+    window.open('/reporte-inventario-pdf/');
+});
+
 
 
 </script>

@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import reporte_inventariofinanciero_pdf, reporte_inventario_pdf
 
 app_name = 'Producto'
 
@@ -21,5 +22,7 @@ urlpatterns = [
     path('ruta/busqueda/productos/', views.buscar_productos, name='buscar_productos'),
     path('reporte-inventario', views.reporte_inventario, name='reporte_inventario'),
     path('buscar-producto2/', views.buscar_producto2, name='buscar_producto2'),
+    path('reporte-inventario-financiero-pdf/', reporte_inventariofinanciero_pdf, name='reporte_inventraio_financiero_pdf'),
+    path('reporte-inventario-pdf/', reporte_inventario_pdf, name='reporte_inventraio_pdf'),
 
 ]
