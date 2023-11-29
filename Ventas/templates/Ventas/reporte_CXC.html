@@ -3,7 +3,16 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Estado de Cuenta por Cobrar</title>
+    <header>
+        <h1>Estado de Cuenta al día:  {{ fecha_hoy|date:"d/m/Y" }}</h1>
+        {% if filtro_vendedor %}
+            <p>Consulta por Vendedor: {{ filtro_vendedor }}</p>
+        {% elif filtro_cliente %}
+            <p>Consulta por Cliente: {{ filtro_cliente }}</p>
+        {% else %}
+            <p>Consulta General</p>
+        {% endif %}
+    </header>
     <style>
         @page {
             size: A4 landscape;
@@ -55,9 +64,6 @@
     </style>
 </head>
 <body>
-    <div class="modal-header">
-        <h3>ESTADO DE CUENTA POR COBRAR AL DÍA: {{ fecha_hoy|date:"d/m/Y" }}</h3>
-    </div>
     <table>
         <thead>
             <tr >

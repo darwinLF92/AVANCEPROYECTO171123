@@ -26,17 +26,26 @@
             margin-top: 20px;
         }
         th, td {
-            border: 1px solid #ddd;
+            border: none;
             padding: 8px;
             text-align: left;
         }
         th {
             background-color: #f0f0f0;
         }
+
+        .tcobros {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: left;
+            border-top: 1px solid black;
+        }
+
         .total {
             margin-top: 20px;
             font-weight: bold;
             text-align: right;
+            border-top: 1px solid black;
         }
         .idcobro {
             text-align: center; /* Alineación a la derecha para los montos */
@@ -84,8 +93,8 @@
     <table>
         <thead>
             <tr>
-                <th>ID Cobro</th>
-                <th>ID Venta</th>
+                <th>Recibo</th>
+                <th>No. Venta</th>
                 <th>F. Venta</th>
                 <th>F. Cobro</th>
                 <th>Dif. Días</th>
@@ -108,7 +117,7 @@
             </tr>
             {% endfor %}
             <tr>
-                <td colspan="7">Total Cobros</td> 
+                <td class="tcobros" colspan="7">Total Cobros</td> 
                 <td class="total">{{ monto_total|floatformat:2|intcomma }}</td> 
             </tr> 
         </tbody>

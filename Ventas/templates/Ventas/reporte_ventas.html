@@ -1,67 +1,142 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
 {% load humanize %}
-{% block content %}
-  <h2>Cuentas por Cobrar</h2>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Ventas</title>
+    <style>
+        /* Aquí van tus estilos CSS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+        }
+        .header {
+            background-color: #f8f8f8;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: none;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .total {
+            margin-top: 20px;
+            font-weight: bold;
+            text-align: right;
+        }
+        .productoid {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .cantidad {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .nombreprod {
+            text-align: left; /* Alineación a la derecha para los montos */
+        }
+        .costototal {
+            text-align: right; /* Alineación a la derecha para los montos */
+        }
+        .ventatotal {
+            text-align: right; /* Alineación a la derecha para los montos */
+        }
+        .rentabruta {
+            text-align: right; /* Alineación a la derecha para los montos */
+        }
+        .porcentaje {
+            text-align: center; /* Alineación a la derecha para los montos */
+        }
+        .totales {
+            text-align: left; /* Alineación a la derecha para los montos */
+            border-top: 1px solid black;
+        }
 
-  <table>
-      <thead>
-          <tr>
-              <th>DOC</th>
-              <th>FISICO</th>
-              <th>CREACION</th>
-              <th>VENCE</th>
-              <th>DIASV</th>
-              <th>MONTO</th>
-              <th>COBRAR</th>
-              <th>SIN VENCER</th>
-              <th>31-60 DIAS</th>
-              <th>61-90 DIAS</th>
-              <th>91-120 DIAS</th>
-              <th>+121 DIAS</th>
-              <th>T. DIAS</th>
-          </tr>
-      </thead>
-      <tbody>
-          {% for cliente in clientes %}
-              <!-- Fila del nombre del cliente -->
-              <tr>
-                <td colspan="13"><strong>CLIENTE: {{ cliente.nombre }}</strong></td>
-              </tr>
-              {% for venta in cliente.ventas_credito %}
-              <!-- Fila de cada venta -->
-              <tr>
-                <td>{{ venta.id }}</td>
-                <td>{{ venta.tipo_documento }}</td>
-                <td>{{ venta.fecha_creacion }}</td>
-                <td>{{ venta.fecha_vencimiento }}</td>
-                <td>{{ venta.dias_vencidos }}</td>
-                <td>{{ venta.total|intcomma }}</td>
-                <td>{{ venta.saldo_pendiente|intcomma }}</td>
-                <td>{% if venta.dias_vencidos < 0 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
-                <td>{% if venta.dias_vencidos >= 0 and venta.dias_vencidos <= 30 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
-                <td>{% if venta.dias_vencidos > 30 and venta.dias_vencidos <= 60 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
-                <td>{% if venta.dias_vencidos > 60 and venta.dias_vencidos <= 90 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
-                <td>{% if venta.dias_vencidos > 90 %}{{ venta.saldo_pendiente|intcomma|default:"0.00" }}{% else %}0.00{% endif %}</td>
-                <td>{{ venta.total_dias }}</td>
-              </tr>
-              </tr>
-              {% endfor %}
-              <!-- Fila de totales para el cliente -->
-              <tr>
-                
-                <td colspan="5"><strong>Totales para {{ cliente.nombre }}</strong></td>
-                <td><strong>{{ cliente.total_monto|floatformat:"2"|intcomma }}</strong></td>
-                <td><strong>{{ cliente.total_cobrar|floatformat:"2"|intcomma }}</strong></td>
-                <td><strong>{{ cliente.total_sin_vencer|floatformat:"2"|intcomma }}</strong></td>
-                <td><strong>{{ cliente.total_31_60|floatformat:"2"|intcomma }}</strong></td>
-                <td><strong>{{ cliente.total_61_90|floatformat:"2"|intcomma }}</strong></td>
-                <td><strong>{{ cliente.total_91_120|floatformat:"2"|intcomma }}</strong></td>
-                <td><strong>{{ cliente.total_121_mas|floatformat:"2"|intcomma }}</strong></td>
-              </tr>
-              <tr>
-                <td colspan="13">&nbsp;</td>
+        .totalcant {
+            text-align: center; /* Alineación a la derecha para los montos */
+            border-top: 1px solid black;
+        }
+        .totalcostos {
+            text-align: right; /* Alineación a la derecha para los montos */
+            border-top: 1px solid black;
+        }
+        .totalventas {
+            text-align: right; /* Alineación a la derecha para los montos */
+            border-top: 1px solid black;
+        }
+        .totalrenta {
+            text-align: right; /* Alineación a la derecha para los montos */
+            border-top: 1px solid black;
+        }
+        .totalporcentaje {
+            text-align: center; /* Alineación a la derecha para los montos */
+            border-top: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Reporte de Ventas</h1>
+        {% if fecha_inicio == fecha_fin %}
+        <p>Lista de ventas del día {{ fecha_inicio}}</p>
+        {% else %}
+        <p>Lista de ventas del {{ fecha_inicio }} al {{ fecha_fin }}</p>
+        {% endif %}
+        {% if filtro_cliente %}
+            <p>Consulta por: "Cliente - {{ filtro_cliente }}"</p>
+        {% elif filtro_vendedor %}
+            <p>Consulta por: "Vendedor - {{ filtro_vendedor }}"</p>
+        {% else %}
+            <p>Consulta General</p>
+        {% endif %}
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+              <th>Id Prod.</th>
+              <th>Cantidad</th>
+              <th>Producto</th>
+              <th>Ventas</th>
+              <th>Costos</th>
+              <th>Renta Bruta</th>
+              <th>% Renta</th>
             </tr>
-          {% endfor %}
-      </tbody>
-  </table>
-{% endblock %}
+        </thead>
+        <tbody>
+            {% for venta in ventas %}
+            <tr>
+                <td class="productoid" style="border:none">{{ venta.producto_id }}</td>
+                <td class="cantidad" style="border:none">{{ venta.cantidad }}</td>
+                <td class="nombreprod" style="border:none">{{ venta.nombre_producto }}</td>
+                <td class="costototal" style="border:none">{{ venta.ventas_total|floatformat:2|intcomma }}</td> <!-- Formato de fecha -->
+                <td class="ventatotal" style="border:none">{{ venta.costo_total|floatformat:2|intcomma }}</td> 
+                <td class="rentabruta" style="border:none">{{ venta.renta_bruta|floatformat:2|intcomma }}</td>
+                <td class="porcentaje" style="border:none">{{ venta.porcentaje_renta|floatformat:2|intcomma }}%</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td class="totales" >Totales</td> 
+                <td class="totalcant">{{ total_cant|floatformat:2|intcomma }}</td> 
+                <td colspan="2" class="totalcostos">{{ total_costos|floatformat:2|intcomma }}</td> 
+                <td class="totalventas" >{{ total_ventas|floatformat:2|intcomma }}</td> 
+                <td class="totalrenta" >{{ total_renta|floatformat:2|intcomma }}</td> 
+                <td class="totalporcentaje">{{ porcentaje_total|floatformat:2|intcomma }}%</td> 
+            </tr> 
+        </tbody>
+    </table>
+
+</body>
+</html>

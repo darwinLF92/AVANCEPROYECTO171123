@@ -1,7 +1,7 @@
 from django.urls import path
 from . import views
 from .views import VentasCreditoPorClienteView, DetalleVentasCreditoClienteView, generar_recibo, CobrosListView, procesar_cobro, ListaVentasView
-from .views import imprimir_venta, reporte_cuentasxcobrar_pdf, reporte_cuentasxcobrar, reporte_cobros_pdf
+from .views import imprimir_venta, reporte_cuentasxcobrar_pdf, reporte_cuentasxcobrar, reporte_cobros_pdf, reporte_ventas_pdf
 
 
 
@@ -28,4 +28,7 @@ urlpatterns = [
     path('reporte-cobros', views.reporte_cobros, name='reporte_cobros'),
     path('anular-cobro/<int:cobro_id>/', views.anular_cobro, name='anular_cobro'),
     path('reporte-cobros-pdf/', reporte_cobros_pdf, name='reporte_cobros_pdf'),
+    path('reporte-ventas', views.reporte_ventas, name='reporte_ventas'),
+    path('reporte-ventas-pdf/', reporte_ventas_pdf, name='reporte_ventas_pdf'),
+    path('buscar-cliente2/', views.buscar_cliente2, name='buscar_cliente2'),
 ]

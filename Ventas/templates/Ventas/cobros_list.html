@@ -73,36 +73,47 @@
 
 <!--modal de cuentas por cobrar-->
 <div id="CobrosModal" class="modal bd-example-modal-lg">
-    <div class="modal-dialog modal-dialog-custom"> 
+  <div class="modal-dialog modal-dialog-custom"> 
       <div class="modal-content">
-        <div class="modal-header bg-info">
-          <h3 class="modal-title text-dark">ESTADO DE CUENTA POR COBRAR</h3>
-        </div>
-        <br>
-        
-        <div class="modal-body">
-          <!-- El contenido del modal se cargará aquí -->
-        </div>
-        <div class="modal-footer bg-dark">
-            <div>
-                <input type="date" id="fechaInicio" name="fechaInicio" value="{{ request.GET.fechainicio|default:today }}">
-                <input type="date" id="fechaFin" name="fechaFin" value="{{ request.GET.fechafin|default:today }}">                               
-        </div>
-          <div>
-            <input type="text" id="filtroCliente" placeholder="Filtrar por cliente...">
-            <select id="filtroVendedor">
-              <option value="">Seleccionar Vendedor</option>
-              <!-- Opciones de vendedores cargadas dinámicamente o estáticamente -->
-              <option value="" disabled selected>Consulta General</option>
-            </select>
+          <div class="modal-header bg-info">
+              <h3 class="modal-title text-dark">CONSULTA DE COBROS</h3>
           </div>
-          <button type="button" id="consultar" class="btn btn-primary">CONSULTAR</button>
-          <button type="button" id="botonImprimirPDF" class="btn btn-danger" data-dismiss="modal">Imprimir</button>
-          <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+          <br>
+          <div class="modal-body">
+              <!-- Contenido del modal -->
+          </div>
+          <div class="modal-footer bg-dark">
+              <div class="form-group">
+                <label for="fechaInicio">Fecha Inicio:</label>
+                <input type="date" id="fechaInicio" name="fechaInicio" value="{{ request.GET.fechainicio|default:today }}">                                
+            </div>
+            <div class="form-group">
+              <label for="fechaInicio">Fecha Fin:</label>
+              <input type="date" id="fechaFin" name="fechaFin" value="{{ request.GET.fechafin|default:today }}">                          
+          </div>
+
+          <div class="form-group">
+            <label for="filtroCliente">Cliente:</label>
+            <input type="text" id="filtroCliente" placeholder="Filtrar por cliente...">
+            <div class="resultados-busqueda" style="position: absolute; z-index: 1000;"></div>                        
         </div>
+
+        <div class="form-group">
+            <label for="filtroVendedor">Vendedor:</label>
+            <select id="filtroVendedor">
+                <option value="">Seleccionar Vendedor</option>
+                <!-- Opciones de vendedores -->
+                <option value="" disabled selected>Consulta General</option>
+            </select>
       </div>
-    </div>
+              <button type="button" id="consultar" class="btn btn-primary">CONSULTAR</button>
+              <button type="button" id="botonImprimirPDF" class="btn btn-danger" data-dismiss="modal">Imprimir</button>
+              <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+          </div>
+      </div>
   </div>
+</div>
+
 
   <script>
     // Función para formatear números con comas y dos decimales
@@ -257,6 +268,41 @@ document.getElementById('consultar').addEventListener('click', function() {
   
       window.open(`/reporte-cobros-pdf/?${params.toString()}`);
     });
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const inputCliente = document.getElementById('filtroCliente');
+    const resultadosBusqueda = document.querySelector('.resultados-busqueda');
+
+    inputCliente.addEventListener('input', function() {
+        const query = this.value;
+        if (query.length < 2) {
+            resultadosBusqueda.innerHTML = '';
+            return;
+        }
+
+        fetch(`/buscar-cliente2?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(clientes => {
+                resultadosBusqueda.innerHTML = '';
+                clientes.forEach(cliente => {
+                    const div = document.createElement('div');
+                    div.textContent = cliente.nombre;
+                    div.addEventListener('click', function() {
+                        inputCliente.value = this.textContent;
+                        resultadosBusqueda.innerHTML = '';
+                    });
+                    resultadosBusqueda.appendChild(div);
+                });
+            });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (e.target !== inputCliente) {
+            resultadosBusqueda.innerHTML = '';
+        }
+    });
+});
   </script>
   
 
@@ -393,5 +439,41 @@ document.getElementById('consultar').addEventListener('click', function() {
   background-color:#17a2b8; /* Cambia esto por el color de fondo que prefieras */
   color: white; /* Color del texto */
 }
-    </style>
+
+.resultados-busqueda {
+    position: absolute;
+    top: 100%; /* Asegúrate de que top esté configurado para posicionarlo debajo del input */
+    left: 0;
+    width: 100%;
+    background-color: white;
+    color: black;
+
+    /* Otros estilos... */
+}
+
+.resultados-busqueda div:hover {
+    background-color: #f0f0f0;
+} 
+
+.form-group {
+    display: flex;
+    flex-direction: column; /* Apila los elementos verticalmente */
+    margin-bottom: 10px; /* Añade un poco de espacio entre los grupos */
+    position: relative;
+    color: white;
+}
+
+.form-group label {
+    margin-bottom: 5px; /* Añade un poco de espacio entre la etiqueta y el campo de entrada */
+}
+
+/* Opcional: Añadir media queries para ajustar para pantallas más pequeñas */
+@media (max-width: 600px) {
+    .form-group {
+        width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
+    }
+}
+
+
+</style>
 {% endblock %}

@@ -24,10 +24,9 @@ from django.db.models import Prefetch, Sum, Case, When, IntegerField
 from datetime import timedelta
 from django.db.models import ExpressionWrapper, fields
 from django.db.models.functions import Now
-from django.db.models import Sum, Case, When, Value, IntegerField, F, ExpressionWrapper, fields
+from django.db.models import Sum, Case, When, Value, IntegerField, F, ExpressionWrapper, fields, Q, DecimalField
 from django.db.models.functions import Now, TruncDay, ExtractDay
 from django.db.models.functions import Coalesce
-from django.db.models import Q
 from django.template.loader import render_to_string
 from datetime import datetime, date
 from django.contrib import messages
@@ -626,11 +625,13 @@ def reporte_cuentasxcobrar_pdf(request):
         'clientes': clientes_data,
         'fecha_hoy': fecha_hoy,
         'resumen': resumen_data,
-        'vendedores': list(vendedores)
+        'vendedores': list(vendedores),
+        'filtro_cliente': filtro_cliente,
+        'filtro_vendedor': filtro_vendedor,
     }
 
     # Renderiza la plantilla HTML con los datos
-    html_string = render_to_string('Ventas/reporte.html', data)
+    html_string = render_to_string('Ventas/reporte_CXC.html', data)
 
     # Crea un objeto HTML de WeasyPrint
     html = HTML(string=html_string)
@@ -803,3 +804,160 @@ def anular_cobro(request, cobro_id):
 
     context = {'cobro': cobro}
     return render(request, 'ventas/anular_cobro.html', context)
+
+
+
+def reporte_ventas(request):
+
+    vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
+    filtro_cliente = request.GET.get('cliente', '')
+    filtro_vendedor = request.GET.get('vendedor', '')
+    fecha_inicio_str = request.GET.get('fechainiciov', '')
+    fecha_fin_str = request.GET.get('fechafinv', '')
+    fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+
+    fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date() if fecha_inicio_str else None
+    fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date() if fecha_fin_str else None
+
+    # Incluir solo los cobros que no están anulados
+    ventas_qs = Venta.objects.filter(anulada=False)
+
+    if filtro_cliente:
+        ventas_qs = ventas_qs.filter(cliente__nombre__icontains=filtro_cliente)
+    if filtro_vendedor:
+        ventas_qs = ventas_qs.filter(vendedor__nombre__icontains=filtro_vendedor)
+    if fecha_inicio:
+        ventas_qs = ventas_qs.filter(fecha_creacion__gte=fecha_inicio)
+    if fecha_fin:
+        ventas_qs = ventas_qs.filter(fecha_creacion__lte=fecha_fin)
+
+     # Agregando a nivel de producto
+    datos_agrupados = DetalleVenta.objects.filter(venta__in=ventas_qs).values(
+        'producto_id', 'producto__nombre'
+    ).annotate(
+        cantidad_total=Sum('cantidad'),
+        costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
+        ventas_total=Sum(F('cantidad') * (F('precio') - F('descuento'))),
+    ).annotate(
+        renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
+        porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
+    )
+
+    datos_ventas = [
+        {
+            'producto_id': dato['producto_id'],
+            'nombre_producto': dato['producto__nombre'],
+            'cantidad': dato['cantidad_total'],
+            'costo_total': dato['costo_total'],
+            'ventas_total': dato['ventas_total'],
+            'renta_bruta': dato['renta_bruta'],
+            'porcentaje_renta': dato['porcentaje_renta'],
+        }
+        for dato in datos_agrupados
+    ]
+
+    # Cálculos de totales
+    total_cant = sum(item['cantidad'] for item in datos_ventas)
+    total_costos = sum(item['costo_total'] for item in datos_ventas)
+    total_ventas = sum(item['ventas_total'] for item in datos_ventas)
+    total_renta = sum(item['renta_bruta'] for item in datos_ventas)
+    porcentaje_total = (total_ventas - total_costos) / total_ventas * 100 if total_ventas else 0
+
+    return JsonResponse({
+        'ventas': datos_ventas,
+        'total_cant': total_cant,
+        'total_costos': total_costos,
+        'total_ventas': total_ventas,
+        'total_renta': total_renta,
+        'porcentaje_total': porcentaje_total,
+        'fecha_hoy': fecha_hoy,
+        'vendedores': vendedores
+    })
+
+
+def reporte_ventas_pdf(request):
+    # Obtener lista de vendedores activos
+    vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
+    filtro_cliente = request.GET.get('cliente', '')
+    filtro_vendedor = request.GET.get('vendedor', '')
+    fecha_inicio_str = request.GET.get('fechainiciov', '') or datetime.now().strftime('%Y-%m-%d')
+    fecha_fin_str = request.GET.get('fechafinv', '') or datetime.now().strftime('%Y-%m-%d')
+   
+    # Convertir cadenas de fecha a objetos de fecha, si se proporcionan
+    fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date() if fecha_inicio_str else None
+    fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date() if fecha_fin_str else None
+
+    # Incluir solo los cobros que no están anulados
+    ventas_qs = Venta.objects.filter(anulada=False)
+
+    if filtro_cliente:
+        ventas_qs = ventas_qs.filter(cliente__nombre__icontains=filtro_cliente)
+    if filtro_vendedor:
+        ventas_qs = ventas_qs.filter(vendedor__nombre__icontains=filtro_vendedor)
+    if fecha_inicio:
+        ventas_qs = ventas_qs.filter(fecha_creacion__gte=fecha_inicio)
+    if fecha_fin:
+        ventas_qs = ventas_qs.filter(fecha_creacion__lte=fecha_fin)
+
+     # Agregando a nivel de producto
+    datos_agrupados = DetalleVenta.objects.filter(venta__in=ventas_qs).values(
+        'producto_id', 'producto__nombre'
+    ).annotate(
+        cantidad_total=Sum('cantidad'),
+        costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
+        ventas_total=Sum(F('cantidad') * (F('precio') - F('descuento'))),
+    ).annotate(
+        renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
+        porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
+    )
+
+    datos_ventas = [
+        {
+            'producto_id': dato['producto_id'],
+            'nombre_producto': dato['producto__nombre'],
+            'cantidad': dato['cantidad_total'],
+            'costo_total': dato['costo_total'],
+            'ventas_total': dato['ventas_total'],
+            'renta_bruta': dato['renta_bruta'],
+            'porcentaje_renta': dato['porcentaje_renta'],
+        }
+        for dato in datos_agrupados
+    ]
+
+    # Cálculos de totales
+    total_cant = sum(item['cantidad'] for item in datos_ventas)
+    total_costos = sum(item['costo_total'] for item in datos_ventas)
+    total_ventas = sum(item['ventas_total'] for item in datos_ventas)
+    total_renta = sum(item['renta_bruta'] for item in datos_ventas)
+    porcentaje_total = (total_ventas - total_costos) / total_ventas * 100 if total_ventas else 0
+
+    # Renderizar la plantilla HTML con los datos
+    html_string = render_to_string('Ventas/reporte_ventas.html', {
+        'ventas': datos_ventas,
+        'total_cant': total_cant,
+        'total_costos': total_costos,
+        'total_ventas': total_ventas,
+        'total_renta': total_renta,
+        'porcentaje_total': porcentaje_total,
+        'fecha_inicio': fecha_inicio_str,
+        'fecha_fin': fecha_fin_str,
+        'filtro_cliente': filtro_cliente,
+        'filtro_vendedor': filtro_vendedor,
+    })
+
+    # Crear un PDF usando WeasyPrint
+    html = HTML(string=html_string)
+    result = html.write_pdf()
+
+    # Crear una respuesta HTTP con el PDF
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="reporte_ventas.pdf"'
+
+    return response
+
+
+
+def buscar_cliente2(request):
+    termino_busqueda = request.GET.get('q', '')
+    clientes = Cliente.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
+    return JsonResponse(list(clientes), safe=False)
