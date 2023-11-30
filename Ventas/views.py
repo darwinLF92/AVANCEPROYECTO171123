@@ -452,12 +452,12 @@ def reporte_cuentasxcobrar(request):
     
     # Si se ha proporcionado un filtro de vendedor, obtener las ventas filtradas por vendedor
     if filtro_vendedor:
-        ventas_vendedor = Venta.objects.filter(vendedor__nombre__icontains=filtro_vendedor, saldo_pendiente__gt=0, tipo_pago='credito')
+        ventas_vendedor = Venta.objects.filter(vendedor__nombre__icontains=filtro_vendedor, saldo_pendiente__gt=0, anulada=False, tipo_pago='credito')
         # Filtrar la lista de clientes basada en las ventas del vendedor
         clientes = [cliente for cliente in clientes if cliente.clientee.filter(id__in=ventas_vendedor).exists()]
 
     for cliente in clientes:
-        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0).order_by('-id')
+        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0, anulada=False).order_by('-id')
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
@@ -557,12 +557,12 @@ def reporte_cuentasxcobrar_pdf(request):
     
     # Si se ha proporcionado un filtro de vendedor, obtener las ventas filtradas por vendedor
     if filtro_vendedor:
-        ventas_vendedor = Venta.objects.filter(vendedor__nombre__icontains=filtro_vendedor, saldo_pendiente__gt=0, tipo_pago='credito')
+        ventas_vendedor = Venta.objects.filter(vendedor__nombre__icontains=filtro_vendedor, saldo_pendiente__gt=0, anulada=False, tipo_pago='credito')
         # Filtrar la lista de clientes basada en las ventas del vendedor
         clientes = [cliente for cliente in clientes if cliente.clientee.filter(id__in=ventas_vendedor).exists()]
 
     for cliente in clientes:
-        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0).order_by('-id')
+        cliente.ventas_credito = cliente.clientee.filter(tipo_pago='credito', saldo_pendiente__gt=0, anulada=False).order_by('-id')
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
