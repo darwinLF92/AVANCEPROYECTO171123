@@ -373,28 +373,23 @@
 }
 
 
-function addProductList(id_producto, nombre_producto, precio_producto) {
+function addProductList(id_producto, nombre_producto, precio_producto, esPromocion = false) {
     var producto = {
         id: id_producto,
         nombre: nombre_producto,
-        cantidad: 1,  // Cantidad inicial
-        precio_venta: precio_producto,
-        descuento: 0,  // Descuento inicial
-        subtotal: precio_producto - 0,  // Subtotal inicial
+        cantidad: 1,
+        precio_venta: esPromocion ? 0 : precio_producto,
+        descuento: esPromocion ? precio_producto : 0,
+        subtotal: esPromocion ? 0 : precio_producto,
     };
-    
-    // Revisa si el producto ya está en el carrito y actualiza la cantidad si es necesario
-    var existingProduct = verts.items.products.find(p => p.id === id_producto);
-    if (existingProduct) {
-        existingProduct.cantidad += 1; // Incrementa la cantidad
-        existingProduct.subtotal = (existingProduct.cantidad * existingProduct.precio_venta) - existingProduct.descuento; // Actualiza el subtotal
-    } else {
-        verts.items.products.push(producto); // Añade el producto nuevo al carrito
-    }
+
+    // Añade el producto al carrito como una nueva línea
+    verts.items.products.push(producto);
     
     verts.list(); // Actualiza la lista
     verts.calculate(); // Actualiza el total
 }
+
 
 // Las funciones de actualización deben estar definidas para manejar cambios en cantidad y descuento
 function updateQuantity(input, index) {

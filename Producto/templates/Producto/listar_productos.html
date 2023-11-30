@@ -4,15 +4,13 @@
 <h1>Lista de Productos</h1>
 
 
-<div class="text-right">
-    <a href="{% url 'Producto:agregar_producto' %}" class="btn btn-custom">Crear Producto</a>
-</div>
 
-<div class="input-group-append">
-    <button id="botonAbrirModal">Abrir Reporte</button>
-</div>
+    <div class="botones-contenedor">
+        <button id="botonAbrirModal">Abrir Reporte</button>
+        <button id="botonImprimirPDFSinFiltros">Imprimir Inventario</button>
+    </div>
 
-<button id="botonImprimirPDFSinFiltros">Imprimir Reporte</button>
+
 
 
 <div class="form-container">
@@ -22,6 +20,11 @@
         </div>
         <button type="submit">BUSCAR</button>
         <button type="button" id="clear-button">Limpiar</button>
+
+        <div class="text-right">
+            <a href="{% url 'Producto:agregar_producto' %}" class="btn btn-custom">Crear Producto</a>
+        </div>
+
     </form>
 </div>
 
@@ -496,5 +499,53 @@ document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', 
 .filtroProveedor{
     color: black;
 }
+
+
+#botonAbrirModal {
+    background-color: #3498DB; /* Azul */
+    color: white;
+    border: 3px double #2E86C1; /* Doble borde más oscuro que el fondo */
+    border-radius: 15px; /* Bordes redondos */
+    padding: 5px 20px; /* Espacio interior */
+    font-size: 16px; /* Tamaño del texto */
+    text-align: center; /* Alineación del texto */
+    cursor: pointer; /* Cursor tipo mano al pasar por encima */
+    display: inline-block; /* Comportamiento en línea */
+    margin: 4px 2px; /* Margen alrededor del botón */
+    text-decoration: none; /* Sin subrayado */
+    transition: all 0.3s; /* Transición suave para hover y focus */
+}
+
+#botonAbrirModal:hover, #botonAbrirModal:focus {
+    background-color: #2980B9; /* Azul más oscuro para el hover */
+    color: #FFF; /* Texto blanco */
+    border: 3px double #2471A3; /* Doble borde aún más oscuro para el hover */
+}
+
+#botonImprimirPDFSinFiltros {
+    background-color: gray; /* Azul */
+    color: white;
+    border: 3px double gray; /* Doble borde más oscuro que el fondo */
+    border-radius: 15px; /* Bordes redondos */
+    padding: 5px 20px; /* Espacio interior */
+    font-size: 16px; /* Tamaño del texto */
+    text-align: center; /* Alineación del texto */
+    cursor: pointer; /* Cursor tipo mano al pasar por encima */
+    display: inline-block; /* Comportamiento en línea */
+    margin: 4px 2px; /* Margen alrededor del botón */
+    text-decoration: none; /* Sin subrayado */
+    transition: all 0.3s; /* Transición suave para hover y focus */
+}
+
+#botonImprimirPDFSinFiltros:hover, #botonImprimirPDFSinFiltros:focus {
+    background-color: red; /* Azul más oscuro para el hover */
+    color: #FFF; /* Texto blanco */
+    border: 3px double red; /* Doble borde aún más oscuro para el hover */
+}
+
+.botones-contenedor {
+    text-align: right; /* Alinea los botones a la derecha */
+}
+
 </style>
 {% endblock %}
