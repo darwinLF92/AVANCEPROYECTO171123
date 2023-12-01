@@ -55,7 +55,7 @@ class Venta(models.Model):
                 # Si la fecha de pago teórica es anterior a la fecha de vencimiento,
                 # no hay días vencidos.
                 return 0
-            return (fecha_actual - fecha_pago_teorica).days
+            return (fecha_actual - fecha_pago_teorica).days - 1
         else:
             return 0 
         
