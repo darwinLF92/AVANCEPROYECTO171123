@@ -428,6 +428,7 @@ def reporte_cuentasxcobrar(request):
     resumen_data = {
         'total_facturado': 0,
         'total_cobrar': 0,
+        'total_sin_vencer': 0,
         'total_1_30_dias': 0,
         'total_31_60_dias': 0,
         'total_61_90_dias': 0,
@@ -461,6 +462,7 @@ def reporte_cuentasxcobrar(request):
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
+        cliente.total_1_30 = 0
         cliente.total_31_60 = 0
         cliente.total_61_90 = 0
         cliente.total_91_120 = 0
@@ -473,16 +475,17 @@ def reporte_cuentasxcobrar(request):
             cliente.total_monto += venta.total
             cliente.total_cobrar += venta.saldo_pendiente
 
-            if dias_vencidos < 0:
+            if dias_vencidos <= 0:
                 cliente.total_sin_vencer += venta.saldo_pendiente
-            elif 0 <= dias_vencidos <= 30:
-                cliente.total_31_60 += venta.saldo_pendiente
-            elif 31 <= dias_vencidos <= 60:
-                cliente.total_61_90 += venta.saldo_pendiente
+            elif 1 <= dias_vencidos <= 60:
+                cliente.total_1_30 += venta.saldo_pendiente
             elif 61 <= dias_vencidos <= 90:
+                cliente.total_61_90 += venta.saldo_pendiente
+            elif 91 <= dias_vencidos <= 120:
                 cliente.total_91_120 += venta.saldo_pendiente
-            elif dias_vencidos > 90:
+            elif dias_vencidos > 120:
                 cliente.total_121_mas += venta.saldo_pendiente
+
 
             ventas_credito_data.append({
                 'id': venta.id,
@@ -501,7 +504,7 @@ def reporte_cuentasxcobrar(request):
             'total_monto': cliente.total_monto,
             'total_cobrar': cliente.total_cobrar,
             'total_sin_vencer': cliente.total_sin_vencer,
-            'total_31_60': cliente.total_31_60,
+            'total_1_30': cliente.total_1_30,
             'total_61_90': cliente.total_61_90,
             'total_91_120': cliente.total_91_120,
             'total_121_mas': cliente.total_121_mas,
@@ -510,8 +513,8 @@ def reporte_cuentasxcobrar(request):
 
         resumen_data['total_facturado'] += cliente.total_monto
         resumen_data['total_cobrar'] += cliente.total_cobrar
-        resumen_data['total_1_30_dias'] += cliente.total_sin_vencer
-        resumen_data['total_31_60_dias'] += cliente.total_31_60
+        resumen_data['total_sin_vencer'] += cliente.total_sin_vencer
+        resumen_data['total_1_30_dias'] += cliente.total_1_30
         resumen_data['total_61_90_dias'] += cliente.total_61_90
         resumen_data['total_91_120_dias'] += cliente.total_91_120
         resumen_data['total_mas_121_dias'] += cliente.total_121_mas
@@ -528,23 +531,25 @@ def reporte_cuentasxcobrar(request):
     return JsonResponse(response_data)
 
 def reporte_cuentasxcobrar_pdf(request):
-    # La lógica inicial es similar a reporte_ventas
     fecha_hoy = timezone.now().date()
     clientes_data = []
     vendedores = Vendedor.objects.filter(activo=True).values_list('nombre', flat=True)
-
     resumen_data = {
         'total_facturado': 0,
         'total_cobrar': 0,
+        'total_sin_vencer': 0,
         'total_1_30_dias': 0,
         'total_31_60_dias': 0,
         'total_61_90_dias': 0,
         'total_91_120_dias': 0,
         'total_mas_121_dias': 0,
     }
-    
-    filtro_cliente = request.GET.get('cliente', '')
-    filtro_vendedor = request.GET.get('vendedor', '')
+
+    # Capturar los parámetros de filtrado
+    filtro_cliente = request.GET.get('cliente')
+    filtro_vendedor = request.GET.get('vendedor')
+
+    # Filtrar clientes según los parámetros
     clientes_queryset = Cliente.objects.annotate(
         total_saldo_pendiente=Sum('clientee__saldo_pendiente')
     ).filter(total_saldo_pendiente__gt=0)
@@ -566,6 +571,7 @@ def reporte_cuentasxcobrar_pdf(request):
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
+        cliente.total_1_30 = 0
         cliente.total_31_60 = 0
         cliente.total_61_90 = 0
         cliente.total_91_120 = 0
@@ -578,16 +584,17 @@ def reporte_cuentasxcobrar_pdf(request):
             cliente.total_monto += venta.total
             cliente.total_cobrar += venta.saldo_pendiente
 
-            if dias_vencidos < 0:
+            if dias_vencidos <= 0:
                 cliente.total_sin_vencer += venta.saldo_pendiente
-            elif 0 <= dias_vencidos <= 30:
-                cliente.total_31_60 += venta.saldo_pendiente
-            elif 31 <= dias_vencidos <= 60:
-                cliente.total_61_90 += venta.saldo_pendiente
+            elif 1 <= dias_vencidos <= 60:
+                cliente.total_1_30 += venta.saldo_pendiente
             elif 61 <= dias_vencidos <= 90:
+                cliente.total_61_90 += venta.saldo_pendiente
+            elif 91 <= dias_vencidos <= 120:
                 cliente.total_91_120 += venta.saldo_pendiente
-            elif dias_vencidos > 90:
+            elif dias_vencidos > 120:
                 cliente.total_121_mas += venta.saldo_pendiente
+
 
             ventas_credito_data.append({
                 'id': venta.id,
@@ -606,7 +613,7 @@ def reporte_cuentasxcobrar_pdf(request):
             'total_monto': cliente.total_monto,
             'total_cobrar': cliente.total_cobrar,
             'total_sin_vencer': cliente.total_sin_vencer,
-            'total_31_60': cliente.total_31_60,
+            'total_1_30': cliente.total_1_30,
             'total_61_90': cliente.total_61_90,
             'total_91_120': cliente.total_91_120,
             'total_121_mas': cliente.total_121_mas,
@@ -615,8 +622,8 @@ def reporte_cuentasxcobrar_pdf(request):
 
         resumen_data['total_facturado'] += cliente.total_monto
         resumen_data['total_cobrar'] += cliente.total_cobrar
-        resumen_data['total_1_30_dias'] += cliente.total_sin_vencer
-        resumen_data['total_31_60_dias'] += cliente.total_31_60
+        resumen_data['total_sin_vencer'] += cliente.total_sin_vencer
+        resumen_data['total_1_30_dias'] += cliente.total_1_30
         resumen_data['total_61_90_dias'] += cliente.total_61_90
         resumen_data['total_91_120_dias'] += cliente.total_91_120
         resumen_data['total_mas_121_dias'] += cliente.total_121_mas

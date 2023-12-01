@@ -81,9 +81,11 @@
 <script>
   // Función para formatear números con comas y dos decimales
   const formatNumber = (value) => {
-    const number = typeof value === 'string' ? parseFloat(value) : value;
-    return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
+  if (value === undefined || value === null) return '0.00';
+  const number = typeof value === 'string' ? parseFloat(value) : value;
+  return number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
 
   // Función para actualizar el modal con datos filtrados
   function actualizarModal(filtroCliente, filtroVendedor) {
@@ -141,11 +143,11 @@
                         <td>${venta.dias_vencidos}</td>
                         <td>${formatNumber(venta.total)}</td>
                         <td>${formatNumber(venta.saldo_pendiente)}</td>
-                        <td>${venta.dias_vencidos < 0 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
-                        <td>${venta.dias_vencidos >= 0 && venta.dias_vencidos <= 30 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
-                        <td>${venta.dias_vencidos > 30 && venta.dias_vencidos <= 60 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
-                        <td>${venta.dias_vencidos > 60 && venta.dias_vencidos <= 90 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
-                        <td>${venta.dias_vencidos > 90 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos <= 0 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos >= 1 && venta.dias_vencidos <= 60 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos >= 61 && venta.dias_vencidos <= 90 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos >= 91 && venta.dias_vencidos <= 120 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
+                        <td>${venta.dias_vencidos > 121 ? formatNumber(venta.saldo_pendiente) : '0.00'}</td>
                         <td>${venta.total_dias}</td>
                     </tr>`;
             });
@@ -155,7 +157,7 @@
                   <td style="border:none;"><strong>${formatNumber(cliente.total_monto)}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_cobrar)}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_sin_vencer)}</strong></td>
-                  <td style="border:none;"><strong>${formatNumber(cliente.total_31_60)}</strong></td>
+                  <td style="border:none;"><strong>${formatNumber(cliente.total_1_30)}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_61_90)}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_91_120)}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_121_mas)}</strong></td>
@@ -187,8 +189,8 @@
                   <tr>
                       <td>${formatNumber(data.resumen.total_facturado)}</td>
                       <td>${formatNumber(data.resumen.total_cobrar)}</td>
+                      <td>${formatNumber(data.resumen.total_sin_vencer)}</td>
                       <td>${formatNumber(data.resumen.total_1_30_dias)}</td>
-                      <td>${formatNumber(data.resumen.total_31_60_dias)}</td>
                       <td>${formatNumber(data.resumen.total_61_90_dias)}</td>
                       <td>${formatNumber(data.resumen.total_91_120_dias)}</td>
                       <td>${formatNumber(data.resumen.total_mas_121_dias)}</td>

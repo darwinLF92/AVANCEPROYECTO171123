@@ -22,7 +22,7 @@
         }
         body, th, td {
         font-family: 'Arial', sans-serif;
-        font-size: 10pt;
+        font-size: 9pt;
         }
         .modal-header {
             background-color: #17a2b8;
@@ -105,15 +105,8 @@
                     <td>0.00</td>
                     {% endif %}
 
-                    <!-- Saldo Pendiente para 0-30 DÍAS -->
-                    {% if venta.dias_vencidos >= 0 and venta.dias_vencidos <= 30 %}
-                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
-                    {% else %}
-                    <td>0.00</td>
-                    {% endif %}
-
-                    <!-- Saldo Pendiente para 31-60 DÍAS -->
-                    {% if venta.dias_vencidos > 30 and venta.dias_vencidos <= 60 %}
+                    <!-- Saldo Pendiente para 1-60 DÍAS -->
+                    {% if venta.dias_vencidos > 1 and venta.dias_vencidos <= 60 %}
                     <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
                     {% else %}
                     <td>0.00</td>
@@ -126,8 +119,15 @@
                     <td>0.00</td>
                     {% endif %}
 
+                    <!-- Saldo Pendiente para 61-90 DÍAS -->
+                    {% if venta.dias_vencidos > 91 and venta.dias_vencidos <= 120 %}
+                    <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
+                    {% else %}
+                    <td>0.00</td>
+                    {% endif %}
+
                     <!-- Saldo Pendiente para +91 DÍAS -->
-                    {% if venta.dias_vencidos > 90 %}
+                    {% if venta.dias_vencidos > 121 %}
                     <td>{{ venta.saldo_pendiente |floatformat:2|intcomma   }}</td>
                     {% else %}
                     <td>0.00</td>
@@ -140,7 +140,7 @@
                     <td>{{ cliente.total_monto |floatformat:2|intcomma   }}</td>
                     <td>{{ cliente.total_cobrar |floatformat:2|intcomma   }}</td>
                     <td>{{ cliente.total_sin_vencer |floatformat:2|intcomma   }}</td>
-                    <td>{{ cliente.total_31_60 |floatformat:2|intcomma   }}</td>
+                    <td>{{ cliente.total_1_30 |floatformat:2|intcomma   }}</td>
                     <td>{{ cliente.total_61_90 |floatformat:2|intcomma   }}</td>
                     <td>{{ cliente.total_91_120 |floatformat:2|intcomma   }}</td>
                     <td>{{ cliente.total_121_mas |floatformat:2|intcomma   }}</td>
@@ -172,8 +172,8 @@
             <tr class="t_resumen">
                 <td>{{ resumen.total_facturado |floatformat:2|intcomma   }}</td>
                 <td>{{ resumen.total_cobrar |floatformat:2|intcomma   }}</td>
+                <td>{{ resumen.total_sin_vencer |floatformat:2|intcomma   }}</td>
                 <td>{{ resumen.total_1_30_dias |floatformat:2|intcomma  }}</td>
-                <td>{{ resumen.total_31_60_dias |floatformat:2|intcomma  }}</td>
                 <td>{{ resumen.total_61_90_dias |floatformat:2|intcomma  }}</td>
                 <td>{{ resumen.total_91_120_dias |floatformat:2|intcomma  }}</td>
                 <td>{{ resumen.total_mas_121_dias |floatformat:2|intcomma  }}</td>
