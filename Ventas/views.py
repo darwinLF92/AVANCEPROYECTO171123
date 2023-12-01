@@ -844,7 +844,7 @@ def reporte_ventas(request):
     ).annotate(
         cantidad_total=Sum('cantidad'),
         costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
-        ventas_total=Sum(F('cantidad') * (F('precio') - F('descuento'))),
+        ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
     ).annotate(
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
         porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
@@ -912,7 +912,7 @@ def reporte_ventas_pdf(request):
     ).annotate(
         cantidad_total=Sum('cantidad'),
         costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
-        ventas_total=Sum(F('cantidad') * (F('precio') - F('descuento'))),
+        ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
     ).annotate(
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
         porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
