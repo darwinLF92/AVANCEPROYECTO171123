@@ -351,6 +351,9 @@ class CobrosListView(ListView):
     
 from reportlab.lib.pagesizes import letter
 
+def format_currency(value):
+    return "{:,.2f}".format(value)
+
 def imprimir_venta(request, venta_id):
     venta = Venta.objects.get(pk=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
@@ -377,16 +380,16 @@ def imprimir_venta(request, venta_id):
     y_position = height - 183
     for detalle in detalles:
         precio_con_descuento = detalle.subtotal / detalle.cantidad if detalle.cantidad else 0
-        p.drawString(50, y_position, f"{detalle.cantidad}")
+        p.drawString(50, y_position, format_currency(detalle.cantidad))
         p.drawString(95, y_position, f"{detalle.producto.nombre}")
-        p.drawString(462, y_position, f"{precio_con_descuento}")              
-        p.drawString(520, y_position, f"{detalle.subtotal}")
+        p.drawString(462, y_position, format_currency(precio_con_descuento))              
+        p.drawString(520, y_position, format_currency(detalle.subtotal))
         y_position -= 18
     
     p.drawString(50, 98, f"{venta.comentarios}")
     
     # Totales y pie de página
-    p.drawString(520, 110, f"{venta.total}")
+    p.drawString(520, 110, format_currency(venta.total))
     
     p.showPage()
     p.save()

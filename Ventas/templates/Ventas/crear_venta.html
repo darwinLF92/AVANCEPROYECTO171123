@@ -328,12 +328,16 @@
 </script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', (event) => {
-    var hoy = new Date();
-    var fecha = hoy.toISOString().substr(0, 10);
-    document.getElementById('fecha_creacion').value = fecha;
-  });
-</script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+      // Obtén la fecha actual en el timezone deseado
+      var timeZoneOffset = new Date().getTimezoneOffset() * 60000; // Offset en milisegundos
+      var fecha = new Date(Date.now() - timeZoneOffset).toISOString().substr(0, 10);
+      
+      // Establece la fecha en el elemento HTML
+      document.getElementById('fecha_creacion').value = fecha;
+    });
+  </script>
+  
 
 <script>
  var verts = {
@@ -358,9 +362,9 @@
               tr.innerHTML = `<td><button onclick="removeProduct(${index})">Quitar</button></td>
                               <td>${product.nombre}</td>
                               <td><input type="number" value="${product.cantidad}" onchange="updateQuantity(this, ${index})"></td>
-                              <td>${product.precio_venta}</td>
-                              <td><input type="number" value="${product.descuento}" onchange="updateDiscount(this, ${index})"></td>
-                              <td>${product.subtotal}</td>`;
+                              <td>${parseFloat(product.precio_venta).toLocaleString('es-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td><input type="number" value="${parseFloat(product.descuento).toFixed(2)}" onchange="updateDiscount(this, ${index})"></td>
+                            <td>${parseFloat(product.subtotal).toLocaleString('es-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>`;
               tbody.appendChild(tr);
           });
       }
