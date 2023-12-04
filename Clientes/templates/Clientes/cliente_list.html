@@ -46,6 +46,10 @@
             <td>
                 <a href="{% url 'Clientes:cliente-edit' cliente.id %}" class="btn btn-primary btn-sm">Editar</a>
                 <a href="{% url 'Clientes:cliente-delete' cliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#historialModal" data-cliente-id="{{ cliente.id }}" data-cliente-nombre="{{ cliente.nombre }}">
+                    Historial
+                </button>
+                
             </td>
         </tr>
         {% empty %}
@@ -55,6 +59,61 @@
         {% endfor %}
     </tbody>
 </table>
+
+
+<div class="modal bd-example-modal-lg" id="historialModal" tabindex="-1" role="dialog" aria-labelledby="historialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-custom" role="document">
+        <div class="modal-content">
+            <!-- Encabezado del Modal -->
+            <div class="modal-header bg-info">
+                <h5 class="modal-title" id="historialModalLabel">Historial de Ventas del Cliente: </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body">
+                <!-- Tabla de Resultados -->
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>Fecha Venta</th>
+                            <th>ID Venta</th>
+                            <th>E. Fisico</th>
+                            <th>Cantidad</th>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historialResults">
+                        <!-- Los resultados de la búsqueda se insertarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer bg-dark">
+                                <!-- Formulario de Búsqueda por Rango de Fechas -->
+                <form id="historialSearchForm">
+                    <div class="form-group">
+                        <label for="fechaInicio">Fecha Inicio:</label>
+                        <input type="date" class="form-control" id="fechaInicio">
+                        </div>
+                    <div class="form-group">
+                        <label for="fechaFin">Fecha Fin:</label>
+                        <input type="date" class="form-control" id="fechaFin">
+                        </div>
+                <button type="submit" id="consultar" class="btn btn-primary">CONSULTAR</button>
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -82,6 +141,83 @@ $(document).ready(function() {
         $('#search-results').html('');
     });
 });
+</script>
+
+<script>
+$(document).ready(function() {
+    var clienteId;
+
+    // Establecer las fechas de inicio y fin al abrir el modal
+    $('#historialModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget); // Botón que activó el modal
+        clienteId = button.data('cliente-id'); // Captura el ID del cliente
+        var nombreCliente = button.data('cliente-nombre'); // Asumiendo que también pasas el nombre como data attribute
+
+        // Configurar el título del modal con el nombre del cliente
+        $('#historialModalLabel').text('Historial de Ventas del Cliente: ' + nombreCliente);
+
+        // Establecer la fecha de inicio y fin a la fecha actual
+        var hoy = new Date();
+        var fechaActual = hoy.toISOString().substring(0, 10); // Formato 'YYYY-MM-DD'
+        $('#fechaInicio').val(fechaActual);
+        $('#fechaFin').val(fechaActual);
+    });
+
+    // Manejar la búsqueda de historial de ventas
+    $('#historialSearchForm').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        var fechaInicio = $('#fechaInicio').val();
+        var fechaFin = $('#fechaFin').val();
+
+        $.ajax({
+            url: '/clientes/historial_ventas/',  // Asegúrate de usar la ruta correcta a tu vista
+            method: 'GET',
+            data: {
+                cliente_id: clienteId,
+                fecha_inicio: fechaInicio,
+                fecha_fin: fechaFin
+            },
+            success: function(response) {
+                var resultados = response.ventas;
+                var tabla = $('#historialResults');
+                tabla.empty(); // Limpiar resultados anteriores
+
+                // Verificar si hay resultados para mostrar
+                if (resultados.length === 0)
+                {
+                    var filaSinDatos = '<tr><td colspan="7" class="text-center">No hay registros para este cliente.</td></tr>';
+                    tabla.append(filaSinDatos);
+                } 
+                else 
+                {
+                    // Iterar sobre los resultados y agregar filas a la tabla
+                    $.each(resultados, function(i, venta) {
+                        var precio = parseFloat(venta.precio);
+                        var subtotal = parseFloat(venta.subtotal);
+
+                        var fila = '<tr>' +
+                            '<td>' + venta.fecha_venta + '</td>' +
+                            '<td>' + venta.id_venta + '</td>' +
+                            '<td>' + venta.comentarios + '</td>' +
+                            '<td>' + venta.cantidad + '</td>' +
+                            '<td>' + venta.producto + '</td>' +
+                            '<td>' + (isNaN(precio) ? 'N/A' : precio.toFixed(2)) + '</td>' +
+                            '<td>' + (isNaN(subtotal) ? 'N/A' : subtotal.toFixed(2)) + '</td>' +
+                            '</tr>';
+                        tabla.append(fila);
+                    });
+                }
+            },
+            error: function() {
+                alert('Error al cargar el historial de ventas');
+            }
+        });
+    });
+});
+
+    </script>
+    
+
 </script>
 
 <style>
@@ -135,5 +271,90 @@ $(document).ready(function() {
     color: #ffffff; /* Cambia el color del texto a blanco */
     /* Puedes ajustar otros estilos según tus preferencias */
 }
+
+/*css para el modal*/
+.modal-header {
+    background-color: #17a2b8; /* Replace with the actual color code */
+}
+
+.modal-title {
+    color: #000000; /* Replace with the actual color code */
+}
+
+
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+    background-color: #f5f5f5; /* Replace with the actual color code */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Replace with the actual color code */
+    border-color: #dc3545; /* Replace with the actual color code */
+}
+
+#historialModal .modal-body {
+  max-height: 500px; /* Altura máxima en píxeles */
+  overflow-y: auto; /* Muestra una barra de desplazamiento si el contenido excede la altura máxima */
+}
+
+  .modal-dialog-custom {
+  max-width: 90%; /* O cualquier otro valor que prefieras */
+  margin: 30px auto; /* Centra el modal horizontalmente */
+}
+
+/* Puedes también asegurarte de que el modal no sea más ancho que la pantalla */
+@media (min-width: 992px) {
+  .modal-dialog-custom {
+    max-width: 80%; /* O cualquier otro valor que prefieras */
+  }
+} 
+
+
+/* Estilo para la tabla y el encabezado */
+#historialModal .modal-body {
+  overflow-y: auto; /* Habilita el desplazamiento vertical */
+}
+
+#historialModal table {
+  width: 100%; /* Asegura que la tabla ocupe todo el ancho del contenedor */
+  border-collapse: collapse; /* Opcional: para que los bordes de la tabla se vean mejor */
+}
+
+#historialModal thead th {
+  position: sticky;
+  top: 0; /* Ajusta esto si hay algún otro elemento fijo en la parte superior, como un menú de navegación */
+  background: #17a2b8; /* O el color de fondo que desees, para evitar que se vea contenido a través del encabezado */
+  color: white;
+  z-index: 10; /* Asegura que el encabezado se muestre por encima del contenido al desplazarse */
+}
+
+#historialModal thead {
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4); /* Opcional: agrega sombra para un efecto de elevación */
+}
+
+.th-header {
+  background-color:#17a2b8; /* Cambia esto por el color de fondo que prefieras */
+  color: white; /* Color del texto */
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column; /* Apila los elementos verticalmente */
+    margin-bottom: 10px; /* Añade un poco de espacio entre los grupos */
+    position: relative;
+    color: white;
+}
+
+.form-group label {
+    margin-bottom: 5px; /* Añade un poco de espacio entre la etiqueta y el campo de entrada */
+}
+
+/* Opcional: Añadir media queries para ajustar para pantallas más pequeñas */
+@media (max-width: 600px) {
+    .form-group {
+        width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
+    }
+}
+
 </style>
 {% endblock %}
