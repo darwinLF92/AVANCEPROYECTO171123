@@ -42,6 +42,11 @@ class ListaVentasView(ListView):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
         context['today'] = today.strftime("%Y-%m-%d")  # Formato de fecha 'YYYY-MM-DD'
+
+        # Calcular el total de ventas
+        ventas = self.get_queryset()
+        total_ventas = ventas.aggregate(totalv=Sum('total'))['totalv'] if ventas else 0
+        context['total_ventas'] = total_ventas
         return context
 
     def get_queryset(self):
