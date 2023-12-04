@@ -124,7 +124,7 @@ class Cobro(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='cobros')
     vendedor = models.ForeignKey(Vendedor, on_delete=models.SET_NULL, null=True, related_name='cobros')
     fecha_cobro = models.DateField(auto_now_add=True)
-    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
     metodo_pago = models.CharField(max_length=13, choices=METODO_PAGO_CHOICES)
     anulado = models.BooleanField(default=False)
 
