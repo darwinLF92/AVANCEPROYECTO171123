@@ -84,7 +84,7 @@ class DetalleVenta(models.Model):
     cantidad = models.PositiveIntegerField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
     descuento = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     devolucion = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
 
