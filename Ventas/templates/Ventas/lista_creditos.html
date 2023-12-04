@@ -97,7 +97,7 @@
       </div>
       <div>
         <label>Monto Abono:</label>
-        <input type="number" id="montoAbono">
+        <input type="text" id="montoAbono" pattern="\d+(\.\d{2})?">
       </div>
       <div>
         <label>Método de Pago:</label>
@@ -233,20 +233,31 @@
 
 
 function realizarAbono() {
-  const montoAbono = parseFloat(document.getElementById('montoAbono').value);
-  const ventaCheckbox = document.querySelector('.ventaCheckbox:checked');
-  
-  if (ventaCheckbox) {
-    const datosAbono = [{
-      venta_id: ventaCheckbox.closest('tr').querySelector('td').textContent,
-      monto: montoAbono
-    }];
+    // Usar input type="text" y validar el formato del número aquí
+    const montoAbonoInput = document.getElementById('montoAbono');
+    const montoAbonoValue = montoAbonoInput.value;
 
-    enviarDatosCobro(datosAbono);
-  } else {
-    alert('No se ha seleccionado ninguna venta para el abono.');
+    // Validar que el monto del abono tiene un formato numérico correcto
+    if (!montoAbonoValue.match(/^\d+(\.\d{2})?$/)) {
+      alert("Por favor, ingrese un monto válido con hasta dos decimales, utilizando un punto como separador decimal.");
+      return;
+    }
+
+    const montoAbono = parseFloat(montoAbonoValue);
+    const ventaCheckbox = document.querySelector('.ventaCheckbox:checked');
+    
+    if (ventaCheckbox) {
+      const idVenta = ventaCheckbox.closest('tr').querySelector('td').textContent;
+      const datosAbono = [{
+        venta_id: idVenta,
+        monto: montoAbono  // Se envía como un número flotante
+      }];
+
+      enviarDatosCobro(datosAbono);
+    } else {
+      alert('No se ha seleccionado ninguna venta para el abono.');
+    }
   }
-}
 
 function enviarDatosCobro(datos) {
   const csrftoken = document.getElementById('csrfToken').value;

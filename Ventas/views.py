@@ -15,7 +15,7 @@ from django.views import View
 from django.urls import reverse_lazy
 import json
 from django.core.exceptions import ValidationError
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.views.generic.edit import CreateView
 from django.views.decorators.http import require_http_methods
 from reportlab.pdfgen import canvas
@@ -260,7 +260,8 @@ def procesar_cobro(request):
 
     for cobro_data in cobros:
         venta_id = cobro_data.get('venta_id')
-        monto = Decimal(cobro_data.get('monto'))
+        monto = Decimal(cobro_data.get('monto')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        print(f"Intentando guardar el monto: {monto}") 
 
         try:
             venta = Venta.objects.get(id=venta_id)
