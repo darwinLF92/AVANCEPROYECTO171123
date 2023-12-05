@@ -62,27 +62,14 @@ def cliente_search_view(request):
     else:
         clientes = Cliente.objects.filter(activo=True)
 
-    return render(request, 'Clientes/cliente_search_results.html', {'clientes': clientes, 'nombre': nombre})
-
+    return render(request, 'Clientes/cliente_list.html', {'clientes': clientes, 'nombre': nombre})
 
 def historial_ventas(request):
     cliente_id = request.GET.get('cliente_id')
     cliente = Cliente.objects.get(id=cliente_id) 
-    fecha_inicio = request.GET.get('fecha_inicio')
-    fecha_fin = request.GET.get('fecha_fin')
 
-    # Convertir fechas de string a objeto datetime
-    try:
-        fecha_inicio = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
-        fecha_fin = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
-    except (ValueError, TypeError):
-        fecha_inicio = None
-        fecha_fin = None
-
-    # Filtrar ventas por cliente, rango de fechas, y solo las activas
-    ventas = Venta.objects.filter(cliente_id=cliente_id, anulada=False)
-    if fecha_inicio and fecha_fin:
-        ventas = ventas.filter(fecha_creacion__range=[fecha_inicio, fecha_fin])
+    # Obtener todas las ventas para el cliente, solo las activas, ordenadas por ID más reciente
+    ventas = Venta.objects.filter(cliente_id=cliente_id, anulada=False).order_by('-id')
 
     # Serializar los datos de ventas para la respuesta
     ventas_data = []
@@ -100,4 +87,4 @@ def historial_ventas(request):
                 'subtotal': detalle.subtotal
             })
 
-    return JsonResponse({'ventas': ventas_data, 'nombre_cliente': cliente.nombre })
+    return JsonResponse({'ventas': ventas_data, 'nombre_cliente': cliente.nombre})

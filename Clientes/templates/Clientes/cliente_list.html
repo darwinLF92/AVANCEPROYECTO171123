@@ -44,13 +44,15 @@
             <td>{{ cliente.correo }}</td>
             <td>{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
             <td>
-                <a href="{% url 'Clientes:cliente-edit' cliente.id %}" class="btn btn-primary btn-sm">Editar</a>
-                <a href="{% url 'Clientes:cliente-delete' cliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
-                <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#historialModal" data-cliente-id="{{ cliente.id }}" data-cliente-nombre="{{ cliente.nombre }}">
-                    Historial
-                </button>
-                
+                <div class="acciones">
+                    <a href="{% url 'Clientes:cliente-edit' cliente.id %}" class="btn btn-primary btn-sm">Editar</a>
+                    <a href="{% url 'Clientes:cliente-delete' cliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                    <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#historialModal" data-cliente-id="{{ cliente.id }}" data-cliente-nombre="{{ cliente.nombre }}">
+                        Historial
+                    </button>
+                </div>                
             </td>
+            
         </tr>
         {% empty %}
         <tr>
@@ -97,15 +99,6 @@
             <div class="modal-footer bg-dark">
                                 <!-- Formulario de Búsqueda por Rango de Fechas -->
                 <form id="historialSearchForm">
-                    <div class="form-group">
-                        <label for="fechaInicio">Fecha Inicio:</label>
-                        <input type="date" class="form-control" id="fechaInicio">
-                        </div>
-                    <div class="form-group">
-                        <label for="fechaFin">Fecha Fin:</label>
-                        <input type="date" class="form-control" id="fechaFin">
-                        </div>
-                <button type="submit" id="consultar" class="btn btn-primary">CONSULTAR</button>
                 <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
                 </form>
 
@@ -118,36 +111,44 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(document).ready(function() {
+    var typingTimer;                // Timer identifier
+    var doneTypingInterval = 500;  // Time in ms (0.5 seconds)
+
     // Escuchar el evento de cambio en el campo de entrada de búsqueda
     $('#search-input').on('input', function() {
+        clearTimeout(typingTimer);
         var searchTerm = $(this).val();
 
-        // Realizar una solicitud AJAX para buscar clientes por nombre
-        $.ajax({
-            url: "{% url 'Clientes:cliente-search' %}",  // Cambia esto a la URL de tu vista de búsqueda
-            method: "GET",
-            data: {nombre: searchTerm},
-            success: function(data) {
-                // Actualizar el contenido del div de resultados con los datos recibidos
-                $('#search-results').html(data.html_result);
-            }
-        });
+        if (searchTerm) {
+            typingTimer = setTimeout(function() {
+                // Realizar una solicitud AJAX para buscar clientes por nombre
+                $.ajax({
+                    url: "{% url 'Clientes:cliente-search' %}",  // Asegúrate de usar la ruta correcta a tu vista de búsqueda
+                    method: "GET",
+                    data: { nombre: searchTerm },
+                    success: function(data) {
+                        // Actualizar el contenido del div de resultados con los datos recibidos
+                        $('#search-results').html(data.html_result);
+                    }
+                });
+            }, doneTypingInterval);
+        }
     });
 
     // Escuchar el clic en el botón de limpiar
     $('#clear-button').on('click', function() {
-        // Limpiar el campo de búsqueda y el div de resultados
         $('#search-input').val('');
         $('#search-results').html('');
     });
 });
 </script>
 
+
 <script>
 $(document).ready(function() {
     var clienteId;
 
-    // Establecer las fechas de inicio y fin al abrir el modal
+    // Escuchar cuando el modal se abre
     $('#historialModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget); // Botón que activó el modal
         clienteId = button.data('cliente-id'); // Captura el ID del cliente
@@ -156,45 +157,24 @@ $(document).ready(function() {
         // Configurar el título del modal con el nombre del cliente
         $('#historialModalLabel').text('Historial de Ventas del Cliente: ' + nombreCliente);
 
-        // Establecer la fecha de inicio y fin a la fecha actual
-        var hoy = new Date();
-        var fechaActual = hoy.toISOString().substring(0, 10); // Formato 'YYYY-MM-DD'
-        $('#fechaInicio').val(fechaActual);
-        $('#fechaFin').val(fechaActual);
-    });
-
-    // Manejar la búsqueda de historial de ventas
-    $('#historialSearchForm').off('submit').on('submit', function(e) {
-        e.preventDefault();
-        var fechaInicio = $('#fechaInicio').val();
-        var fechaFin = $('#fechaFin').val();
-
+        // Realizar la solicitud AJAX para cargar el historial
         $.ajax({
-            url: '/clientes/historial_ventas/',  // Asegúrate de usar la ruta correcta a tu vista
+            url: '/clientes/historial_ventas/', // Asegúrate de usar la ruta correcta a tu vista
             method: 'GET',
             data: {
-                cliente_id: clienteId,
-                fecha_inicio: fechaInicio,
-                fecha_fin: fechaFin
+                cliente_id: clienteId
             },
             success: function(response) {
                 var resultados = response.ventas;
                 var tabla = $('#historialResults');
                 tabla.empty(); // Limpiar resultados anteriores
 
-                // Verificar si hay resultados para mostrar
-                if (resultados.length === 0)
-                {
-                    var filaSinDatos = '<tr><td colspan="7" class="text-center">No hay registros para este cliente.</td></tr>';
-                    tabla.append(filaSinDatos);
-                } 
-                else 
-                {
-                    // Iterar sobre los resultados y agregar filas a la tabla
+                if (resultados.length === 0) {
+                    tabla.append('<tr><td colspan="7" class="text-center">No hay registros para este cliente.</td></tr>');
+                } else {
                     $.each(resultados, function(i, venta) {
                         var precio = parseFloat(venta.precio);
                         var subtotal = parseFloat(venta.subtotal);
-
                         var fila = '<tr>' +
                             '<td>' + venta.fecha_venta + '</td>' +
                             '<td>' + venta.id_venta + '</td>' +
@@ -202,7 +182,7 @@ $(document).ready(function() {
                             '<td>' + venta.cantidad + '</td>' +
                             '<td>' + venta.producto + '</td>' +
                             '<td>' + (isNaN(precio) ? 'N/A' : precio.toFixed(2)) + '</td>' +
-                            '<td>' + (isNaN(subtotal) ? 'N/A' : subtotal.toFixed(2)) + '</td>' +
+                            '<td>' + (isNaN(subtotal) ? 'N/A' : subtotal.toLocaleString('us', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + '</td>' +
                             '</tr>';
                         tabla.append(fila);
                     });
@@ -354,6 +334,25 @@ $(document).ready(function() {
     .form-group {
         width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
     }
+}
+
+/* Estilo para los botones dentro de la columna de acciones */
+.acciones {
+    display: flex;
+    justify-content: center; /* Centra los botones horizontalmente */
+    align-items: center; /* Centra los botones verticalmente */
+    gap: 5px; /* Espacio entre los botones */
+}
+
+/* Asegúrate de que todos los botones tengan el mismo tamaño */
+.acciones .btn {
+    flex: 1; /* Los botones crecerán igualmente para llenar el espacio */
+    text-align: center; /* Alinea el texto del botón al centro */
+}
+
+/* Ajusta el padding de los botones si es necesario para que se vean uniformes */
+.acciones .btn-sm {
+    padding: .25rem .5rem; /* Ajusta el relleno vertical y horizontal */
 }
 
 </style>
