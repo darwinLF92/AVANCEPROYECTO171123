@@ -10,23 +10,17 @@
         <button id="botonImprimirPDFSinFiltros">Imprimir Inventario</button>
     </div>
 
-
-
-
-<div class="form-container">
-    <form method="get" action="{% url 'Producto:listar_productos' %}" id="search-form">
-        <div>
-            <input type="text" name="nombre" id="search-input" placeholder="Buscar por nombre" value="{{ nombre }}">
-        </div>
-        <button type="submit">BUSCAR</button>
-        <button type="button" id="clear-button">Limpiar</button>
-
-        <div class="text-right">
-            <a href="{% url 'Producto:agregar_producto' %}" class="btn btn-custom">Crear Producto</a>
-        </div>
-
-    </form>
-</div>
+<div class="row">
+    <div class="col-md-6">
+      <h4>Buscar por nombre:</h4>
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" name="filtro_nombre" id="search-input" placeholder="Ingrese el nombre...">
+      </div>
+    </div>
+    <div class="col-md-6 text-right">
+        <a href="{% url 'Producto:agregar_producto' %}" class="btn btn-custom">Crear Producto</a>
+    </div>
+  </div>
 
 <div id="search-results">
     <!-- Los resultados de la búsqueda se mostrarán aquí -->
@@ -112,35 +106,6 @@
   </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-
-$(document).ready(function() {
-    // Escuchar el evento de cambio en el campo de entrada de búsqueda
-    $('#search-input').on('input', function() {
-        var searchTerm = $(this).val();
-
-        // Realizar una solicitud AJAX para buscar productos por nombre
-        $.ajax({
-            url: "{% url 'Producto:producto-search' %}",  // Asegúrate de cambiar esto a la URL de tu vista de búsqueda
-            method: "GET",
-            data: {nombre: searchTerm},
-            success: function(data) {
-                // Actualizar el cuerpo de la tabla con los datos recibidos
-                $('table.table tbody').html(data.html_result); // Asumiendo que 'data.html_result' contiene filas de tabla
-            }
-        });
-    });
-});
-
-    $('#clear-button').on('click', function() {
-    // Limpiar el campo de búsqueda y el div de resultados
-    $('#search-input').val('');
-    $('#search-results').html('');
-
-    // Disparar el clic en el botón de buscar para cargar todos los productos
-    $('#search-input').click();
-    });
-</script>
 
 <script>
     // Función para formatear números con comas y dos decimales
@@ -342,9 +307,26 @@ document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', 
     window.open('/reporte-inventario-pdf/');
 });
 
-
-
 </script>
+
+<script>
+    $(document).ready(function() {
+        $('#search-input').on('keyup', function() {
+            var filtro = $(this).val().toLowerCase();
+            $('tbody tr').each(function() {
+                var codigo = $(this).find('td:nth-child(1)').text().toLowerCase();
+                var nombre = $(this).find('td:nth-child(2)').text().toLowerCase();
+                
+                if (codigo.includes(filtro) || nombre.includes(filtro)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+    });
+    </script>
+    
 
 
 <style>
@@ -548,4 +530,28 @@ document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', 
 }
 
 </style>
+
+
+<style>
+    /*estilo para boton crear producto y buscar producto*/
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  
+    h4 {
+      margin-top: 10;
+      margin-left: 25px;
+    }
+  
+    /* Estilo para el botón "Abrir Reporte" */
+    .btn-custom {
+      margin-top: 10px;
+      margin-right: 25px;
+    }
+    .form-control{
+      margin-left: 25px;
+    }
+  </style>
 {% endblock %}
