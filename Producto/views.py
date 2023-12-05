@@ -76,9 +76,11 @@ def editar_producto(request, producto_id):
 
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-    producto.activo = False  # Suponiendo que tienes un campo "activo" en el modelo Producto
-    producto.save()
-    return redirect('Producto:listar_productos')
+    if request.method == 'POST':
+        producto.activo = False  # Suponiendo que tienes un campo "activo" en el modelo Producto
+        producto.save()
+        return redirect('Producto:listar_productos')
+    return render(request, 'Producto/eliminar_producto.html', {'producto': producto})
 
 
 @transaction.atomic  # Asegura que las operaciones sean atómicas
