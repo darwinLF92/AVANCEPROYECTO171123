@@ -1,0 +1,64 @@
+/* estilos para paginación */
+.pagination {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .pagination ul.pagination {
+    list-style: none;
+    display: inline-flex;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .pagination li {
+    text-align: center;
+    margin: 0 5px;
+    min-width: 36px;
+    height: 45px;
+    border-radius: 6px;
+  }
+  
+  .pagination a,
+  .pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 45px;
+    padding: 0 10px;
+    border-radius: 6px;
+    background-color: #ddd;
+    color: #333;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  
+  .pagination a:hover {
+    background-color: #aaa;
+    color: #fff;
+  }
+  
+  .pagination .current {
+    background-color: #4CAF50;
+    color: #fff;
+  }
+  
+  .pagination a.prev,
+  .pagination a.next {
+    background-color: #2980B9;
+    color: #fff;
+    height: 45px;
+  }
+  
+  .pagination a.prev:hover, 
+  .pagination a.next:hover {
+    background-color: #0d5cb6;
+  }
+  
+  .pagination i {
+    text-align: center;
+    margin: 0 5px;
+    margin-right: 1px;
+  }

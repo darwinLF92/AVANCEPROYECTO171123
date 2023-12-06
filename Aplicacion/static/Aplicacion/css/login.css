@@ -1,0 +1,102 @@
+/* Estilos para login.html */
+
+/* Contenedor principal */
+.container {
+    margin-top: 50px;
+    text-align: center; /* Centra el contenido del contenedor */
+}
+
+/* Formulario de inicio de sesión */
+.login-form {
+    background-color: #fff;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center; /* Centra el formulario en el contenedor */
+    position: relative; /* Para posicionar el logo */
+    max-width: 400px; /* Limita el ancho máximo del formulario */
+    margin: 0 auto; /* Centra el formulario horizontalmente */
+}
+
+/* Logo circular */
+.login-logo {
+    max-width: 100px;
+    margin: 0 auto 20px; /* Agrega espacio en la parte inferior del logo */
+    display: block;
+    border-radius: 50%; /* Forma circular */
+    overflow: hidden; /* Oculta partes cuadradas de la imagen */
+}
+
+/* Títulos */
+.login-heading {
+    font-size: 24px;
+}
+
+.login-subheading {
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+/* Etiquetas y campos del formulario */
+.form-group label {
+    font-weight: bold;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+    width: 100%;
+    margin-top: 5px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+/* Botón de inicio de sesión */
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    text-align: center;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+/* Enlace para regresar al menú principal */
+.return-link {
+    display: block;
+    margin-top: 20px;
+    text-decoration: none;
+    color: #007bff;
+}
+
+.return-link:hover {
+    text-decoration: underline;
+}
+
+/* Establece los márgenes y rellenos en cero para el cuerpo y el HTML */
+html, body {
+    background: #E4E9F7;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    font-size: 16px; /* Establece un tamaño de fuente base para un mejor escalado */
+}
+
+/* Hace que el contenedor principal sea 100% de altura en dispositivos más pequeños */
+@media (max-width: 767px) {
+    .container {
+        height: 100%;
+    }
+
+    .login-form {
+        max-width: none; /* Elimina el límite de ancho en dispositivos más pequeños */
+        margin-top: 10%; /* Ajusta el margen superior */
+    }
+}

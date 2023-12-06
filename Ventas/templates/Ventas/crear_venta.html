@@ -1,11 +1,46 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<style>
+    .custom-container {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        padding: 20px;
+        margin-top: 50px;
+      }
+  
+      .custom-title {
+        color: #0069D9;
+        font-size: 36px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+    .container {
+        background-color: #fff; /* Fondo blanco para el formulario */
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+        max-width: 1000px;
+        margin: auto;
+        margin-top: 50px;
+    }
+</style>
+
+<div class="container custom-container">
+    <div class="row">
+      <div class="col-12">
+        <h2 class="custom-title">Nueva Venta</h2>
+      </div>
+    </div>
+  </div>
 
 <br>
-
 <!-- Utiliza contenedores y filas de Bootstrap para una estructura coherente -->
 <div class="container">
+
   <!-- Sección de selección de tipo de documento y fecha -->
   <div class="row">
     <!-- Tipo de Documento -->

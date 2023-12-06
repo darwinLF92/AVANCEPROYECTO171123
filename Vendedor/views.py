@@ -2,12 +2,13 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
 from .forms import VendedorForm
 from .models import Vendedor
+from django.http import JsonResponse
 
 class ListaVendedoresView(View):
     def get(self, request):
-        # Filtrar para obtener solo los vendedores activos
-        vendedores_activos = Vendedor.objects.filter(activo=True)
-        return render(request, 'lista_vendedores.html', {'vendedores': vendedores_activos})
+        # Obtener todos los vendedores, ya sean activos o inactivos
+        vendedores = Vendedor.objects.all()
+        return render(request, 'lista_vendedores.html', {'vendedores': vendedores})
 
 
 
@@ -61,7 +62,11 @@ class EditarVendedorView(View):
 
 class CambiarEstadoVendedorView(View):
     def post(self, request, pk):
-        vendedor = get_object_or_404(Vendedor, pk=pk)
-        vendedor.activo = not vendedor.activo
-        vendedor.save()
-        return redirect('Vendedor:lista_vendedores')
+        try:
+            vendedor = get_object_or_404(Vendedor, pk=pk)
+            vendedor.activo = not vendedor.activo
+            vendedor.save()
+            return JsonResponse({'success': True, 'message': 'El estado del vendedor ha sido cambiado correctamente.'})
+        except Exception as e:
+            # Manejar cualquier excepción y proporcionar un mensaje de error
+            return JsonResponse({'success': False, 'message': f'Error al cambiar el estado del vendedor: {str(e)}'})

@@ -1,6 +1,10 @@
-{% extends 'base.html' %}
+<head>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/forms.css' %}">    
+</head>
 
 {% block content %}
+<div class="container"> 
 <!-- Verificar si se está editando un vendedor existente -->
 {% if editando %}
 <h2>Editando Vendedor: {{ vendedor_nombre }}</h2>
@@ -32,8 +36,8 @@
   </div>
 
   <button type="submit" class="btn btn-primary">Guardar</button>
-  <a href="{% url 'Vendedor:lista_vendedores' %}" class="btn btn-secondary">Cancelar</a>
 </form>
+</div>
 {% endblock %}
 
 {% block javascript %}

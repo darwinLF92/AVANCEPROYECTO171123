@@ -52,10 +52,12 @@
                 <td>{{ venta.cliente.nombre }}</td>
                 <td>{{ venta.total|floatformat:2|intcomma }}</td>
                 <td>{{ venta.comentarios }}</td>
-                <td><a href="{% url 'Ventas:detalle_venta' venta.id %}">Ver Detalles</a>
-                <a href="{% url 'Ventas:confirmar_eliminar_venta' venta.id %}">Eliminar</a>
-                <a href="{% url 'Ventas:anular_venta' venta.id %}">Devolución</a>
-                <a href="{% url 'Ventas:imprimir_venta' venta.id %}">Imprimir Venta</a></td>
+                <td>
+                    <a href="#" class="devolucion-btn btn btn-info" data-userid="{{ venta.id }}" >Devolución</a>
+                    <a href="{% url 'Ventas:imprimir_venta' venta.id %}" class="btn btn-success" >Imprimir Venta</a>
+                    <a href="#" class="detalle-btn btn btn-warning" data-userid="{{ venta.id }}" >Ver Detalles</a>
+                    <a href="{% url 'Ventas:confirmar_eliminar_venta' venta.id %}" class="eliminar-btn btn btn-danger" data-userid="{{ venta.id }}" >Eliminar</a>
+                </td>
 
             </tr>
             {% empty %}
@@ -65,6 +67,53 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="pagination">
+        <ul class="pagination">
+            {% if ventas.has_previous %}
+                <li class="waves-effect">
+                    <a href="?page=1" class="start">
+                        << Inicio
+                    </a>
+                </li>
+                <li class="waves-effect">
+                    <a href="?page={{ ventas.previous_page_number }}" class="prev">
+                        < Atrás
+                    </a>
+                </li>
+            {% endif %}
+      
+            {% for i in ventas.paginator.page_range %}
+                {% if ventas.number == i %}
+                    <li class="active">
+                        <span>{{ i }}</span>
+                    </li>
+                {% elif i > ventas.number|add:'-3' and i < ventas.number|add:'3' %}
+                    <li class="waves-effect">
+                        <a href="?page={{ i }}">{{ i }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+      
+            {% if ventas.has_next %}
+                {% if ventas.number|add:'3' < ventas.paginator.num_pages %}
+                    <li class="waves-effect">
+                        <span>...</span>
+                    </li>
+                {% endif %}
+                <li class="waves-effect">
+                    <a href="?page={{ ventas.next_page_number }}" class="next">
+                        Siguiente >
+                    </a>
+                </li>
+                <li class="waves-effect">
+                    <a href="?page={{ ventas.paginator.num_pages }}" class="last">
+                        Última Página >>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+      </div>
 
 
     <div id="VentasModal" class="modal bd-example-modal-lg">
@@ -109,6 +158,80 @@
           </div>
         </div>
       </div>
+
+      <div id="myModal" class="modal bd-example-modal-lg">
+        <!-- Contenido del modal se agregará dinámicamente aquí -->
+      </div>
+
+      <script>
+        $(document).ready(function() {
+        // Al hacer clic en "devolucion"
+        $(".devolucion-btn").click(function () {
+            var ventaId = $(this).data('userid');
+            var formularioSrc = "{% url 'Ventas:anular_venta' 0 %}".replace('0', ventaId);
+  
+                  // SweetAlert para mostrar el modal
+            Swal.fire({
+                title: 'Anular Venta',
+                html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal-container',
+                    popup: 'swal-popup my-custom-modal-class',
+                },
+            });
+          return false;
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+          });   
+
+        // Al hacer clic en "ver detalle"
+        $(".detalle-btn").click(function () {
+            var ventaId = $(this).data('userid');
+            var formularioSrc = "{% url 'Ventas:detalle_venta' 0 %}".replace('0', ventaId);
+  
+                  // SweetAlert para mostrar el modal
+            Swal.fire({
+                title: 'Detalle de Ventas',
+                html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal-container',
+                    popup: 'swal-popup my-custom-modal-class',
+                },
+            });
+          return false;
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+          });
+
+        // Al hacer clic en "eliminar-btn"
+        $(".eliminar-btn").click(function () {
+            var ventaId = $(this).data('userid');
+            var formularioSrc = "{% url 'Ventas:confirmar_eliminar_venta' 0 %}".replace('0', ventaId);
+            
+            
+                  // SweetAlert para mostrar el modal
+            Swal.fire({
+                title: 'Eliminar Venta',
+                icon: 'warning',
+                html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+                showCloseButton: true,
+                showConfirmButton: false,
+                customClass: {
+                    container: 'swal-container',
+                    popup: 'swal-popup my-custom-modal-class',
+                },
+            });
+          return false;
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+          });
+
+        });
+      </script>
     
       <script>
         // Función para formatear números con comas y dos decimales

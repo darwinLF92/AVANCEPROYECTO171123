@@ -1,10 +1,50 @@
-{% extends 'base.html' %}  <!-- Extiende tu plantilla base -->
+
+{% load static %}
 
 {% block content %}
-  <h2>¿Estás seguro de que quieres eliminar esta venta?</h2>
-  <form method="post">
-      {% csrf_token %}
-      <button type="submit">Confirmar Eliminación</button>
-  </form>
-  <a href="{% url 'Ventas:lista_ventas' %}">Cancelar</a>
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f8f9fa;
+    }
+
+    .confirmation-container {
+      text-align: center;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+    }
+
+    h2 {
+      color: #343a40;
+    }
+
+    button {
+      background-color: #dc3545;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background-color: #c82333;
+    }
+  </style>
+
+  <div class="confirmation-container">
+    <h2>¿Estás seguro de que quieres eliminar esta venta?</h2>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Confirmar Eliminación</button>
+    </form>
+  </div>
 {% endblock %}

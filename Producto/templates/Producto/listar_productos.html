@@ -1,6 +1,66 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    /* Estilo Responsive para el campo de busqueda y botones */
+    /* Estilos predeterminados para pantallas más grandes */
+.form-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.form-container form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.form-container input,
+.form-container button {
+    padding: 5px;
+    margin: 5px;
+    border: 1px solid #ccc;
+}
+
+/* Estilos para pantallas más pequeñas (ancho máximo de 600px) */
+@media (max-width: 600px) {
+    .form-container {
+        flex-direction: column; /* Apila los elementos verticalmente en pantallas más pequeñas */
+    }
+
+    .form-container form {
+        flex-direction: column; /* Apila los elementos verticalmente en pantallas más pequeñas */
+    }
+
+    .form-container input,
+    .form-container button {
+        width: 100%; /* Ocupa todo el ancho disponible en pantallas más pequeñas */
+    }
+}
+
+/*tablas y botones*/
+/* Estilos predeterminados para pantallas más grandes */
+.table th,
+.table td {
+    text-align: center;
+}
+
+/* Estilos para pantallas más pequeñas (ancho máximo de 600px) */
+@media (max-width: 600px) {
+    .table th,
+    .table td {
+        text-align: left; /* Alinea el texto a la izquierda en pantallas más pequeñas */
+    }
+
+    .table td a {
+        display: block; /* Hace que los enlaces sean bloques para que ocupen todo el ancho disponible */
+        margin-bottom: 5px; /* Añade espacio entre los botones */
+    }
+}
+
+</style>
 <h1>Lista de Productos</h1>
 
 
@@ -22,7 +82,7 @@
         <button type="button" id="clear-button">Limpiar</button>
 
         <div class="text-right">
-            <a href="{% url 'Producto:agregar_producto' %}" class="btn btn-custom">Crear Producto</a>
+            <a href="#" id="crearProducto" class="btn btn-success">Crear Producto</a>
         </div>
 
     </form>
@@ -54,13 +114,61 @@
             <td>{{ producto.precio_venta }}</td>
             <td>{{ producto.stock }}</td>
             <td>
-                <a href="{% url 'Producto:editar_producto' producto.id %}" class="btn btn-primary">Editar</a>
-                <a href="{% url 'Producto:eliminar_producto' producto.id %}" class="btn btn-danger">Eliminar</a>
+                <a href="#" class="btn btn-warning" data-userid="{{ producto.id }}" >Editar </a>  
+                <a href="{% url 'Producto:eliminar_producto' producto.id %}" class="eliminar-btn btn btn-danger">Eliminar</a>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<div class="pagination">
+    <ul class="pagination">
+        {% if productos.has_previous %}
+            <li class="waves-effect">
+                <a href="?page=1" class="start">
+                    << Inicio
+                </a>
+            </li>
+            <li class="waves-effect">
+                <a href="?page={{ productos.previous_page_number }}" class="prev">
+                    < Atrás
+                </a>
+            </li>
+        {% endif %}
+
+        {% for i in productos.paginator.page_range %}
+            {% if productos.number == i %}
+                <li class="active">
+                    <span>{{ i }}</span>
+                </li>
+            {% elif i > productos.number|add:'-3' and i < productos.number|add:'3' %}
+                <li class="waves-effect">
+                    <a href="?page={{ i }}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if productos.has_next %}
+            {% if productos.number|add:'3' < productos.paginator.num_pages %}
+                <li class="waves-effect">
+                    <span>...</span>
+                </li>
+            {% endif %}
+            <li class="waves-effect">
+                <a href="?page={{ productos.next_page_number }}" class="next">
+                    Siguiente >
+                </a>
+            </li>
+            <li class="waves-effect">
+                <a href="?page={{ productos.paginator.num_pages }}" class="last">
+                    Última Página >>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</div>
+
 
 <div id="ProductosModal" class="modal bd-example-modal-lg">
     <div class="modal-dialog modal-dialog-custom"> 
@@ -112,7 +220,115 @@
   </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+
 <script>
+$(document).ready(function(){
+        // Al hacer clic en "Crear Nuevo Producto"
+    $("#crearProducto").click(function () {
+            // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
+            $("body").addClass("modal-open");
+    
+            // Crear el fondo desenfocado
+            var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
+            $("body").append(fondoDesenfocado);
+    
+            // Crea y muestra la ventana flotante
+            var formulario = "{% url 'Producto:agregar_producto' %}";
+            
+            var ventanaFlotante = `<div id="ventanaFlotante">
+                                      <a href="#" id="cerrarVentana">Cerrar</a>
+                                      <iframe src="${formulario}" width="330" height="480" frameborder="0"></iframe>
+                                  </div>`;
+            $("body").append(ventanaFlotante);
+    
+            // Al hacer clic en "Cerrar"
+            $("#cerrarVentana").click(function () {
+                // Remover la clase 'modal-open' al cerrar la ventana flotante
+                $("body").removeClass("modal-open");
+    
+                // Remover el fondo desenfocado y la ventana flotante
+                $("#fondoDesenfocado, #ventanaFlotante").remove();
+    
+                // recarga la página completa después de cerrar la ventana flotante
+                location.reload();
+            });
+    
+            return false;
+        });
+ 
+
+
+            // Al hacer clic en "Editar"
+    $(".btn-warning").click(function () {
+        var productoId = $(this).data('userid');
+        var formulario = "{% url 'Producto:editar_producto' 0 %}".replace('0', productoId);
+  
+        // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
+        $("body").addClass("modal-open");
+  
+        // Crear el fondo desenfocado
+        var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
+        $("body").append(fondoDesenfocado);
+  
+        // Crear y mostrar la ventana flotante
+        var ventanaFlotante = `<div id="ventanaFlotante">
+                                  <a href="#" id="cerrarVentana">Cerrar</a>
+                                  <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
+                              </div>`;
+        $("body").append(ventanaFlotante);
+  
+        // Al hacer clic en "Cerrar"
+        $("#cerrarVentana").click(function () {
+          // Remover la clase 'modal-open' al cerrar la ventana flotante
+          $("body").removeClass("modal-open");
+  
+          // Remover el fondo desenfocado y la ventana flotante
+          $("#fondoDesenfocado, #ventanaFlotante").remove();
+  
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+        });
+  
+        return false;
+      });
+
+        // Al hacer clic en "Eliminar"
+    $(".eliminar-btn").click(function (event) {
+        // Detener el comportamiento predeterminado del enlace
+        event.preventDefault();
+
+        // Obtener el nombre del producto de la fila actual
+        var productName = $(this).closest('tr').find('td:eq(1)').text();
+
+        // Obtener la URL de eliminación del atributo href
+        var deleteUrl = $(this).attr('href');
+
+        // Mostrar ventana de confirmación SweetAlert2 con el nombre del producto
+        Swal.fire({
+            title: '¿Estás seguro?',
+            html: `Estás a punto de eliminar el producto:<br><strong>${productName}</strong><br>No podrás revertir esto.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, eliminarlo'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Redirigir a la URL de eliminación si se confirma
+                window.location.href = deleteUrl;
+            }
+        });
+    });
+    
+
+        // Recargar el tamaño de la ventana flotante cuando cambia el tamaño de la ventana
+        $(window).resize(function () {
+            var newMaxWidth = Math.min(0.9 * $(window).width(), 600);
+            $("#ventanaFlotante").css("max-width", newMaxWidth + "px");
+        });
+    });
+
 
 $(document).ready(function() {
     // Escuchar el evento de cambio en el campo de entrada de búsqueda
@@ -375,7 +591,7 @@ document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', 
 }
 
 .form-container button {
-    background-color: #f60; /* Color de fondo del botón similar al de la imagen */
+    background-color: #2980B9; /* Color de fondo del botón similar al de la imagen */
     color: white;
     border: none;
 }

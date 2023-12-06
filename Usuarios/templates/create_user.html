@@ -1,13 +1,114 @@
-{% extends 'base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css">
+  <style>
+    /*  estilos personalizados */
+    body {
+      background-color: #E4E9F7;
+      /* color de fondo */
+    }
 
-{% block title %}Crear Usuario{% endblock %}
+    .container {
+      margin-top: 30px;
+      /* margen superior */
+    }
 
-{% block content %}
-  <h1>Crear Usuario</h1>
+    h1 {
+      color: #26a69a;
+      /* color del encabezado  */
+    }
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Crear</button>
-  </form>
-{% endblock %}
+    .card {
+      width: 80%;
+      /* ancho de la tarjeta */
+      margin: auto;
+      /* Centra la tarjeta en la página */
+    }
+
+    .input-field {
+      margin-bottom: 15px;
+      /* espacio entre los campos de entrada */
+    }
+
+    button {
+      background-color: #26a69a;
+      /* Cambia el color del botón  */
+    }
+  </style>
+</head>
+
+<body>
+
+  {% if error_message %}
+  <div id="modalError" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p>{{ error_message }}</p>
+      <a href="{% url 'Usuarios:create_user' %}" class="waves-effect waves-light btn-flat blue white-text">Volver al
+        Formulario</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="container">
+    <h1 class="center-align">Crear Usuario</h1>
+
+    <div class="card">
+      <div class="card-content">
+        <form method="post" class="col s12">
+          {% csrf_token %}
+          <div class="row">
+            <div class="input-field col s12">
+              <i class="prefix fas fa-user"></i>
+              {{ form.username.label_tag }}
+              {{ form.username }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field col s12">
+              <i class="prefix fas fa-envelope"></i>
+              {{ form.email.label_tag }}
+              {{ form.email }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field col s12">
+              <i class="prefix fas fa-lock"></i>
+              {{ form.password1.label_tag }}
+              {{ form.password1 }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="input-field col s12">
+              <i class="prefix fas fa-lock"></i>
+              {{ form.password2.label_tag }}
+              {{ form.password2 }}
+            </div>
+          </div>
+          <div class="row center-align">
+            <button id="crearBtn" class="btn waves-effect waves-light" type="submit" {% if success or error_message%}style="display: none;" {% endif %}>
+              Crear Usuario
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if success %}
+    <div id="modalSuccess" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p>{{ message }}</p>
+        <a href="{% url 'Usuarios:create_user' %}" class="waves-effect waves-light btn-flat blue white-text">Crear Nuevo Usuario</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+<script src="{% static 'js/Success.js' %}"></script>
+</body>
+</html>

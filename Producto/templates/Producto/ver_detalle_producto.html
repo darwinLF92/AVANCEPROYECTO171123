@@ -1,10 +1,21 @@
-{% extends "base.html" %}
+<head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tables.css' %}">
+    <style>
+        .body{
+            background-color: #E4E9F7;
+        }
+    </style>   
+</head>
 
 {% block content %}
-<h1>Detalle del Producto: {{ producto.nombre }}</h1>
-
-<h2>Componentes</h2>
-<table class="table">
+<body class="body">
+    <div class="contenido-flotante">
+        <h1>Detalle del Producto: {{ producto.nombre }}</h1>
+        
+        <h2>Componentes</h2>
+        <table class="table">
     <thead>
         <tr>
             <th>Nombre de Materia Prima</th>
@@ -26,7 +37,6 @@
         {% endfor %}
     </tbody>
 </table>
-
-<a href="{% url 'Producto:listar_productos_fabricacion' %}">Volver a la lista de productos</a>
-
+</div>
+</body>
 {% endblock %}

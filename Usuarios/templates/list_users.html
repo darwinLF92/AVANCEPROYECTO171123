@@ -1,61 +1,144 @@
 {% extends 'base.html' %}
-
 {% block title %}Lista de Usuarios{% endblock %}
-
 {% block content %}
 <style>
-body {
-  font-family: Arial, sans-serif;
-}
+  body {
+    font-family: Arial, sans-serif;
+  }
 
-h1 {
-  color: #333;
-  border-bottom: 2px solid #666;
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-}
+  h1 {
+    color: #333;
+    border-bottom: 2px solid #666;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
 
-a {
-  color: #007BFF;
-  text-decoration: none;
-  margin-right: 10px;
-}
+  /* Estilos para el botón "Crear Nuevo Usuario" */
+  #crearUsuario {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
 
-a:hover {
-  text-decoration: underline;
-}
+  #crearUsuario:hover {
+    background-color: #00b306;
+  }
 
-/* Estilos para la tabla */
-table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 20px;
-}
 
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px 12px;
-}
+  table {
+    background-color: azure;
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+  }
 
-th {
-  background-color: #f2f2f2;
-  color: black;
-}
+  th,
+  td {
+    text-align: center;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+  }
 
-tbody tr:hover {
-  background-color: #f5f5f5;
-}
+  th {
+    background-color: #f2f2f2;
+    color: black;
+  }
 
-td {
-  vertical-align: middle;
-}
+  tbody tr:hover {
+    background-color: #f5f5f5;
+  }
+
+  td {
+    vertical-align: middle;
+  }
+
+  /* Estilos para el fondo desenfocado */
+  body.modal-open {
+    overflow: hidden;
+    /* Evita el desplazamiento del fondo desenfocado */
+  }
+
+  .editar-btn {
+    background-color: #FFD700;
+    /* Amarillo */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    text-decoration: none;
+  }
+
+  .eliminar-btn {
+    background-color: #FF0000;
+    /* Rojo */
+    color: white;
+    padding: 5px 10px;
+    border-radius: 3px;
+    text-decoration: none;
+  }
+
+  /* Estilos para el fondo desenfocado */
+  #fondoDesenfocado {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.2);
+    /* ajusta la opacidad del fondo */
+    backdrop-filter: blur(5px);
+    /* Aplica el desenfoque al fondo detrás de la ventana flotante */
+    z-index: 9998;
+    /* Z-index inferior a la ventana flotante */
+  }
+
+  /* Estilos de la ventana flotante */
+  #ventanaFlotante {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #E4E9F7;
+    padding: 20px;
+    border: 2px solid #333;
+    z-index: 9999;
+  }
+
+  /* Estilos para el botón "Cerrar" */
+  #cerrarVentana {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 10px;
+    background-color: #007BFF;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  #cerrarVentana:hover {
+    background-color: #b30009;
+  }
 </style>
 
-  <h1>Lista de Usuarios</h1>
+<h1>Lista de Usuarios</h1>
 
-  <a href="{% url 'Usuarios:create_user' %}">Crear Nuevo Usuario</a>
+<!-- Cambios en el enlace para activar la ventana flotante -->
+<a href="#" id="crearUsuario">
+    <!-- 'left' alinea el ícono a la derecha del texto -->
+  <span class="left"> Crear Nuevo Usuario </span>
+    <!-- Utiliza las clase 'icon-prefix' y 'bx bx-user-plus' para el ícono de Boxicons -->
+    <i class='icon-prefix bx bx-user-plus' style="padding: 3px; border-radius: 5px;"></i>
+</a>
 
-  <table>
+<div class="table-container-users">
+  <table class="responsive-table">
     <thead>
       <tr>
         <th>Nombre de Usuario</th>
@@ -66,20 +149,168 @@ td {
     </thead>
     <tbody>
       {% for user in users %}
-        <tr>
-          <td>{{ user.username }}</td>
-          <td>{{ user.email }}</td>
-          <td>
-            {% for perm in user.user_permissions.all %}
-              {{ perm.name }}<br>
-            {% endfor %}
-          </td>
-          <td>
-            <a href="{% url 'Usuarios:edit_user' user.id %}">Editar</a> |
-            <a href="{% url 'Usuarios:delete_user' user.id %}">Eliminar</a>
-          </td>
-        </tr>
+      <tr>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+          {% for perm in user.user_permissions.all %}
+          {{ perm.name }}<br>
+          {% endfor %}
+        </td>
+        <td>
+          <a href="#" class="editar-btn" data-userid="{{ user.id }}">Editar</a>
+          <a href="#" class="eliminar-btn" data-userid="{{ user.id }}">Eliminar</a>
+        </td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
+
+
+<!-- Script para manejar la ventana flotante -->
+<script>
+  $(document).ready(function () {
+    // Al hacer clic en "Crear Nuevo Usuario"
+    $("#crearUsuario").click(function () {
+      // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
+      $("body").addClass("modal-open");
+
+      // Crear el fondo desenfocado
+      var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
+      $("body").append(fondoDesenfocado);
+
+      // Crea y muestra la ventana flotante
+      var formulario = "{% url 'Usuarios:create_user' %}";
+      var ventanaFlotante = `<div id="ventanaFlotante">
+                                <a href="#" id="cerrarVentana">Cerrar</a>
+                                <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
+                              </div>`;
+      $("body").append(ventanaFlotante);
+
+      // Al hacer clic en "Cerrar"
+      $("#cerrarVentana").click(function () {
+        // Remover la clase 'modal-open' al cerrar la ventana flotante
+        $("body").removeClass("modal-open");
+
+        // Remover el fondo desenfocado y la ventana flotante
+        $("#fondoDesenfocado, #ventanaFlotante").remove();
+
+        // recarga la página completa después de cerrar la ventana flotante
+        location.reload();
+      });
+
+      return false;
+    });
+
+    // Al hacer clic en "Editar"
+    $(".editar-btn").click(function () {
+      var userId = $(this).data('userid');
+      var formulario = "{% url 'Usuarios:edit_user' 0 %}".replace('0', userId);
+
+      // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
+      $("body").addClass("modal-open");
+
+      // Crear el fondo desenfocado
+      var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
+      $("body").append(fondoDesenfocado);
+
+      // Crear y mostrar la ventana flotante
+      var ventanaFlotante = `<div id="ventanaFlotante">
+                                <a href="#" id="cerrarVentana">Cerrar</a>
+                                <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
+                            </div>`;
+      $("body").append(ventanaFlotante);
+
+      // Al hacer clic en "Cerrar"
+      $("#cerrarVentana").click(function () {
+        // Remover la clase 'modal-open' al cerrar la ventana flotante
+        $("body").removeClass("modal-open");
+
+        // Remover el fondo desenfocado y la ventana flotante
+        $("#fondoDesenfocado, #ventanaFlotante").remove();
+
+        // Recargar la página completa después de cerrar la ventana flotante
+        location.reload();
+      });
+
+      return false;
+    });
+
+    // Al hacer clic en "Eliminar"
+    $(".eliminar-btn").click(function () {
+      var userId = $(this).data('userid');
+      var formulario = "{% url 'Usuarios:delete_user' 0 %}".replace('0', userId);
+
+      // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
+      $("body").addClass("modal-open");
+
+      // Crear el fondo desenfocado
+      var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
+      $("body").append(fondoDesenfocado);
+
+      // Crear y mostrar la ventana flotante
+      var ventanaFlotante = `<div id="ventanaFlotante">
+                                <a href="#" id="cerrarVentana">Cerrar</a>
+                                <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
+                            </div>`;
+      $("body").append(ventanaFlotante);
+
+      // Al hacer clic en "Cerrar"
+      $("#cerrarVentana").click(function () {
+        // Remover la clase 'modal-open' al cerrar la ventana flotante
+        $("body").removeClass("modal-open");
+
+        // Remover el fondo desenfocado y la ventana flotante
+        $("#fondoDesenfocado, #ventanaFlotante").remove();
+
+        // Recargar la página completa después de cerrar la ventana flotante
+        location.reload();
+      });
+
+      return false;
+    });
+
+    // Al enviar el formulario dentro de la ventana flotante
+    $(document).on("submit", "iframe form", function () {
+      // Obtener la referencia del formulario
+      var form = $(this);
+
+      // Realizar la petición AJAX
+      $.ajax({
+        type: form.attr('method'),
+        url: form.attr('action'),
+        data: form.serialize(),
+        success: function (response) {
+          // Manejar la respuesta del servidor
+          if (response.success) {
+            // Mostrar el modal de éxito
+            $("#ventanaFlotante").append(response);
+            $("#modalSuccess").show();
+          } else {
+            // Mostrar el modal de error
+            $("#ventanaFlotante").append(response);
+            $("#modalError").show();
+          }
+
+          // Cerrar la ventana flotante después de un tiempo (puedes ajustar el tiempo según tus necesidades)
+          setTimeout(function () {
+            // Remover la clase 'modal-open' al cerrar la ventana flotante
+            $("body").removeClass("modal-open");
+
+            // Remover el fondo desenfocado y la ventana flotante
+            $("#fondoDesenfocado, #ventanaFlotante").remove();
+          }, 2000); // Cerrar después de 3 segundos (ejemplo)
+        },
+        error: function (response) {
+          // Manejar errores o mostrar mensajes adicionales según sea necesario
+          console.error('Error al enviar el formulario:', response);
+        }
+      });
+      // Evitar que el formulario se envíe de forma tradicional
+      return false;
+    });
+
+  });
+</script>
 {% endblock %}

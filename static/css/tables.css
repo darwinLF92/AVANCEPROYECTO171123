@@ -1,0 +1,126 @@
+.body {
+  font-family: Arial, sans-serif;
+  background-color: #E4E9F7;
+}
+
+h1 {
+  color: #333;
+  border-bottom: 2px solid #666;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+table {
+  background-color: azure;
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 20px;
+}
+
+th,
+td {
+  text-align: center;
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+}
+
+th {
+  background-color: #f2f2f2;
+  color: black;
+}
+
+tbody tr:hover {
+  background-color: #f5f5f5;
+}
+
+td {
+  vertical-align: middle;
+}
+
+/* Estilos para el fondo desenfocado */
+#fondoDesenfocado {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(5px);
+  z-index: 9998;
+}
+
+/* Estilos de la ventana flotante */
+#ventanaFlotante {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #E4E9F7;
+  padding: 20px;
+  border: 2px solid #333;
+  z-index: 9999;
+  max-width: 90%; /* Ancho máximo del 90% del viewport width */
+  box-sizing: border-box; /* Incluir el padding y el borde en el ancho total */
+}
+
+/* Estilos para el botón "Cerrar" */
+#cerrarVentana {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 10px;
+  background-color: #007BFF;
+  color: #fff;
+  text-decoration: none;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#cerrarVentana:hover {
+  background-color: #b30009;
+}
+
+/* Media Query para pantallas más pequeñas (ej. dispositivos móviles) */
+@media only screen and (max-width: 768px) {
+  #ventanaFlotante {
+    padding: 10px; /* Reducir el padding en pantallas más pequeñas */
+  }
+
+  #cerrarVentana {
+    top: 5px;
+    right: 5px;
+    padding: 8px;
+  }
+
+  table {
+    font-size: 14px; /* Ajustar tamaño de fuente de la tabla para dispositivos más pequeños */
+  }
+
+  th,
+  td {
+    padding: 6px 8px;
+  }
+}
+
+/* Estilos responsivos */
+@media screen and (max-width: 600px) {
+  table {
+    font-size: 12px;
+  }
+
+  th,
+  td {
+    padding: 6px 8px;
+  }
+
+  #ventanaFlotante {
+    padding: 10px;
+  }
+      /* Nuevos estilos para la clase contenido-flotante en pantallas más pequeñas */
+      .contenido-flotante {
+        max-width: 80%; /* Ajustado para una mayor adaptabilidad en pantallas más pequeñas */
+        margin: 0 auto;
+      }
+}

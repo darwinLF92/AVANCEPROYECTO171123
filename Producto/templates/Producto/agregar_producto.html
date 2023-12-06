@@ -1,4 +1,7 @@
-{% extends 'base.html' %}
+<head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">    
+</head>
 
 {% block content %}
 <div class="container mt-5">
@@ -20,7 +23,6 @@
             </div>
         {% endfor %}
         <button type="submit" class="btn btn-primary">Guardar</button>
-        <a href="{% url 'Producto:listar_productos' %}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
 {% endblock %}

@@ -12,19 +12,35 @@ from .models import Proveedor
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import FileResponse, JsonResponse, HttpResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 def listar_productos(request):
     nombre = request.GET.get('nombre', '')
 
-    # Filtrar los clientes por nombre si se proporciona un valor de búsqueda
+    # Filtrar los productos por nombre si se proporciona un valor de búsqueda
     if nombre:
         productos = Producto.objects.filter(activo=True, nombre__icontains=nombre)
     else:
-        # Si no se proporciona un valor de búsqueda, mostrar todos los clientes activos
+        # Si no se proporciona un valor de búsqueda, mostrar todos los productos activos
         productos = Producto.objects.filter(activo=True)
-    
-    return render(request, 'Producto/listar_productos.html', {'productos': productos, 'nombre': nombre})
+
+        # Número de elementos por página
+    elementos_por_pagina = 10
+    # Paginación
+    paginator = Paginator(productos, elementos_por_pagina)  # Muestra 10 productos por página
+
+    page = request.GET.get('page')
+    try:
+        productos_paginados = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la página no es un número entero, muestra la primera página
+        productos_paginados = paginator.page(1)
+    except EmptyPage:
+        # Si la página está fuera de rango (por ejemplo, 9999), muestra la última página
+        productos_paginados = paginator.page(paginator.num_pages)
+
+    return render(request, 'Producto/listar_productos.html', {'productos': productos_paginados, 'nombre': nombre})
 
 
 
@@ -36,8 +52,29 @@ def get_productos(request):
 
 #para ver la lista de productos marcados como fabricacion
 def listar_productos_fabricacion(request):
+    # Obtén todos los productos para fabricación activos
     productos_para_fabricacion = Producto.objects.filter(activo=True, para_fabricacion=True)
-    return render(request, 'Producto/lista_productos_prod.html', {'productos': productos_para_fabricacion})
+
+    # Número de productos por página
+    productos_por_pagina = 10  # Puedes ajustar esto según tus necesidades
+
+    # Configura el paginador
+    paginator = Paginator(productos_para_fabricacion, productos_por_pagina)
+
+    # Obtiene el número de página actual desde la solicitud GET
+    page = request.GET.get('page')
+
+    try:
+        # Obtiene los productos para la página actual
+        productos = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la página no es un número entero, muestra la primera página
+        productos = paginator.page(1)
+    except EmptyPage:
+        # Si la página está fuera de rango (por ejemplo, 9999), muestra la última página
+        productos = paginator.page(paginator.num_pages)
+
+    return render(request, 'Producto/lista_productos_prod.html', {'productos': productos})
 
 
 def agregar_producto(request):

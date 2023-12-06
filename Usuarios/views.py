@@ -18,8 +18,12 @@ def create_user(request):
     if request.method == 'POST':
         form = UserRegisterForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('Usuarios:list_users')
+            user = form.save()
+            # Devolver una respuesta HTML indicando éxito
+            return render(request, 'create_user.html', {'success': True, 'message': f'Usuario {user.username} creado satisfactoriamente'})
+        else:
+            # Devolver una respuesta HTML indicando un error en el formulario
+            return render(request, 'create_user.html', {'form': form, 'error_message': 'Error en el formulario'})
     else:
         form = UserRegisterForm()
     return render(request, 'create_user.html', {'form': form})
@@ -33,7 +37,11 @@ def edit_user(request, user_id):
         form = UserEditForm(request.POST, instance=user_instance)  # Asumiendo que tienes un formulario UserEditForm
         if form.is_valid():
             form.save()
-            return redirect('Usuarios:list_users')
+            return render(request, 'edit_user.html', {'success': True, 'message': f'Usuario {form.instance.username} Editado satisfactoriamente'})
+            # return redirect('Usuarios:list_users')
+        else:
+            # Devolver una respuesta HTML indicando un error en el formulario 
+            return render(request, 'edit_user.html', {'form': form, 'error_message': 'Error inesperado, intente nuevamente'})  
     else:
         form = UserEditForm(instance=user_instance)
     return render(request, 'edit_user.html', {'form': form})
@@ -47,7 +55,10 @@ def edit_user(request, user_id):
         form = UserEditForm(request.POST, instance=user_instance)  # Asumiendo que tienes un formulario UserEditForm
         if form.is_valid():
             form.save()
-            return redirect('Usuarios:list_users')
+            return render(request, 'edit_user.html', {'success': True, 'message': f'Usuario {form.instance.username} Editado satisfactoriamente'})
+        else:
+            # Devolver una respuesta HTML indicando un error en el formulario 
+            return render(request, 'edit_user.html', {'form': form, 'error_message': 'Error inesperado, intente nuevamente, debe de seleccionar al menos un permiso'})  
     else:
         form = UserEditForm(instance=user_instance)
     return render(request, 'edit_user.html', {'form': form})
@@ -59,5 +70,6 @@ def delete_user(request, user_id):
     user_instance = get_object_or_404(User, id=user_id)
     if request.method == 'POST':
         user_instance.delete()
-        return redirect('Usuarios:list_users')
+        return render(request, 'delete_user_confirm.html', {'success': True, 'message': f'Usuario {user_instance.username} Eliminado satisfactoriamente'})
+        # return redirect('Usuarios:list_users')
     return render(request, 'delete_user_confirm.html', {'user': user_instance})
