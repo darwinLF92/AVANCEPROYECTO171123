@@ -170,7 +170,7 @@
                   htmlContent += `
                   <tr class="no-border">
                           <td>${venta.producto_id}</td>
-                          <td>${venta.cantidad}</td>
+                          <td>${formatNumber(venta.cantidad)}</td>
                           <td>${venta.nombre_producto}</td>
                           <td>${formatNumber(venta.ventas_total)}</td>
                           <td>${formatNumber(venta.costo_total)}</td>
@@ -181,10 +181,10 @@
       
               htmlContent += `
               <tr class="border-top">
-                    <td colspan="2" style="border:none; text-align: center;"><strong>Totales:</strong></td>
-                    <td style="border:none;"><strong>${formatNumber(data.total_cant)}</strong></td>
-                    <td style="border:none;"><strong>${formatNumber(data.total_costos)}</strong></td>
+                    <td style="border:none; text-align: center;"><strong>Totales:</strong></td>
+                    <td colspan="2"  style="border:none;"><strong>${formatNumber(data.total_cant)}</strong></td>
                     <td style="border:none;"><strong>${formatNumber(data.total_ventas)}</strong></td>
+                    <td style="border:none;"><strong>${formatNumber(data.total_costos)}</strong></td> 
                     <td style="border:none;"><strong>${formatNumber(data.total_renta)}</strong></td>
                     <td style="border:none;"><strong>${formatNumber(data.porcentaje_total, true)}</strong></td>
                   </tr>`;

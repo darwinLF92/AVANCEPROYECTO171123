@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 <h1>Lista de Productos</h1>
 
@@ -44,12 +44,15 @@
             <td>{{ producto.codigo }}</td>
             <td>{{ producto.nombre }}</td>
             <td>{{ producto.descripcion }}</td>
-            <td>{{ producto.precio_compra|floatformat:2 }}</td>
-            <td>{{ producto.precio_venta }}</td>
-            <td>{{ producto.stock }}</td>
+            <td>{{ producto.precio_compra|floatformat:2|intcomma }}</td>
+            <td>{{ producto.precio_venta|floatformat:2|intcomma }}</td>
+            <td>{{ producto.stock|floatformat:2|intcomma }}</td>
             <td>
                 <a href="{% url 'Producto:editar_producto' producto.id %}" class="btn btn-primary">Editar</a>
                 <a href="{% url 'Producto:eliminar_producto' producto.id %}" class="btn btn-danger">Eliminar</a>
+                <button class="btn btn-secondary btn-stock" data-toggle="modal" data-target="#stockModal" 
+                data-id="{{ producto.id }}" data-nombre="{{ producto.nombre }}" data-stock="{{ producto.stock }}">+/-</button>
+
             </td>
         </tr>
         {% endfor %}
@@ -105,7 +108,45 @@
     </div>
   </div>
 
+  <div id="stockModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stockModalLabel">Actualizar Stock</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="stockProducto">
+                    <div><h3>Existencias de: </h3><span id="nombreProducto"></span></div>
+                    <div style="text-align:right; font-weight:bold;"><h3>Stock Actual: <span id="stockActual"></span> Unidades</h3></div>
+                </div>
+                
+                <form id="formActualizarStock">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="cantidadAumentar">Aumentar</label>
+                        <input type="number" class="form-control" id="cantidadAumentar" placeholder="Ingrese cantidad a aumentar" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label for="cantidadDisminuir">Disminuir</label>
+                        <input type="number" class="form-control" id="cantidadDisminuir" placeholder="Ingrese cantidad a disminuir" step="0.01">
+                    </div>
+                    <input type="hidden" id="idProducto" name="producto_id">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-aceptar" onclick="actualizarStockProducto()">Aceptar</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 
 <script>
     // Función para formatear números con comas y dos decimales
@@ -327,8 +368,95 @@ document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', 
     });
     </script>
     
+    <script>
+        // Función para preparar y mostrar el modal con los datos del producto
+        function prepararModal(id, nombre, stock) {
+
+            stock = parseFloat(stock); // Convierte stock a número
+    if (isNaN(stock)) {
+        stock = 0; // En caso de que no sea un número, establece un valor por defecto
+    }
+        $('#idProducto').val(id);
+        $('#nombreProducto').text(nombre);
+
+    // Formatea el número para que incluya comas como separadores de miles
+        var formattedStock = stock.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+        });
+        $('#stockActual').text(formattedStock);
+        $('#stockModal').modal('show');
+        }
+        
+    
+      // Función para actualizar el stock del producto
+function actualizarStockProducto() {
+    var productoId = $('#idProducto').val();
+    var cantidadAumentar = parseFloat($('#cantidadAumentar').val()) || 0;
+    var cantidadDisminuir = parseFloat($('#cantidadDisminuir').val()) || 0;
+
+    console.log("Aumentar: ", cantidadAumentar, " Disminuir: ", cantidadDisminuir); // Depuración
+
+    $.ajax({
+        url: '/actualizar-stock/',
+        type: 'POST',
+        data: {
+            'producto_id': productoId,
+            'cantidad_aumentar': cantidadAumentar,
+            'cantidad_disminuir': cantidadDisminuir,
+            'csrfmiddlewaretoken': $('input[name="csrfmiddlewaretoken"]').val()
+        },
+        dataType: 'json',
+        success: function (data) {
+            console.log(data); 
+            if (data.status === 'success') {
+                // Actualizar el stock en la tabla sin necesidad de recargar la página
+                var filaActualizada = $('td').filter(function () {
+                    return $(this).text() === productoId;
+                }).closest('tr');
+
+                console.log(filaActualizada); // Depura la fila actualizada
+
+                // Calcula el nuevo stock y actualiza la interfaz de usuario
+                var stockActual = parseFloat(filaActualizada.find('td:eq(5)').text());
+                var nuevoStock = stockActual + cantidadAumentar - cantidadDisminuir;
+                actualizarFilaDeTabla(productoId, nuevoStock);
+
+                // Cerrar el modal después de actualizar el stock
+                $('#stockModal').modal('hide');
+
+                // Recargar la página para reflejar los cambios
+                location.reload();
+            } else {
+                alert(data.mensaje);
+            }
+        }
+    });
+}
 
 
+    function actualizarFilaDeTabla(productoId, nuevoStock) {
+    var filaActualizada = $('td').filter(function () {
+        return $(this).text() === productoId;
+    }).closest('tr');
+
+    filaActualizada.find('td:eq(5)').text(nuevoStock.toFixed(2));
+}
+  
+        $(document).ready(function() {
+            $('.btn-stock').on('click', function() {
+                var id = $(this).data('id');
+                var nombre = $(this).data('nombre');
+                var stock = $(this).data('stock');
+                prepararModal(id, nombre, stock);
+            });
+    
+            // Enlaza la función actualizarStockProducto al botón de "Aceptar" en tu modal
+            $('#botonAceptarActualizarStock').on('click', actualizarStockProducto);
+        });
+    </script>
+    
+        
 <style>
 
 .form-container {
@@ -554,4 +682,87 @@ document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', 
       margin-left: 25px;
     }
   </style>
+
+<style>
+    /*css para el modal de actualizar stock*/
+    .modal-header {
+        background-color: blue; /* Color de fondo oscuro para el encabezado */
+        color: white; /* Texto blanco */
+    }
+
+    .modal-title{
+        color: white;
+    }
+
+    #stockModal .modal-body {
+        background-color: #333; /* Color de fondo oscuro para el cuerpo */
+        color: #fff; /* Texto blanco */
+        max-height: 400px; /* Altura máxima del cuerpo del modal */
+        overflow-y: auto; /* Permite el desplazamiento si el contenido excede esta altura */
+    }
+
+    .modal-footer {
+        background-color: #1a1a1a; /* Color de fondo oscuro para el pie */
+        border-top: 0; /* Eliminar el borde superior */
+    }
+
+    .modal-content {
+        border-radius: 0; /* Bordes cuadrados */
+    }
+
+    #stockModal .modal-dialog {
+        margin-top: 10%; /* Espaciado superior */
+        max-width: 600px; /* Máximo ancho que el modal puede tener */
+        min-width: 300px; /* Mínimo ancho que el modal puede tener */
+        width: auto; /* Esto hará que el ancho del modal se ajuste al contenido hasta el máximo establecido */
+    }
+
+    #stockModal .form-group label {
+        color: #fff; /* Texto blanco */
+    }
+
+    #stockModal .form-control {
+        background-color: #555; /* Color de fondo para los campos de entrada */
+        color: #fff; /* Color de texto para los campos de entrada */
+        border: 0; /* Sin bordes */
+        box-shadow: none; /* Sin sombra */
+        width: 90%; /* Hace que los campos de entrada se expandan al máximo ancho del contenedor */
+        box-sizing: border-box; /* Asegura que el padding y border estén incluidos en el ancho total */
+    }
+
+    #stockModal .form-control::placeholder {
+        color: #bbb; /* Color de texto para el placeholder */
+    }
+
+    #stockModal .form-control:focus {
+        background-color: #666; /* Color de fondo al enfocar */
+    }
+
+    .btn-secondary {
+        background-color: #666; /* Color de fondo para botón secundario */
+        border-color: #666; /* Color de borde para botón secundario */
+    }
+
+    .btn-aceptar {
+    background-color: #4CAF50; /* Nuevo color de fondo */
+    color: #FFFFFF; /* Nuevo color de texto */
+    /* Agrega aquí cualquier otra personalización de estilo que desees */
+    }
+
+    .btn-aceptar:hover {
+    background-color: #45a049; /* Color de fondo al pasar el mouse */
+    /* Puedes agregar también personalizaciones para el estado hover si lo deseas */
+    }
+
+    .close {
+        color: #fff; /* Color del botón de cerrar */
+        opacity: 1; /* Hacerlo totalmente opaco */
+    }
+
+    #stockProducto > div:last-child {
+    text-align: right;
+    font-weight: bold;
+}
+
+</style>
 {% endblock %}

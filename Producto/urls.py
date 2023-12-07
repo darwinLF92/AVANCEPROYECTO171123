@@ -24,5 +24,6 @@ urlpatterns = [
     path('buscar-producto2/', views.buscar_producto2, name='buscar_producto2'),
     path('reporte-inventario-financiero-pdf/', reporte_inventariofinanciero_pdf, name='reporte_inventraio_financiero_pdf'),
     path('reporte-inventario-pdf/', reporte_inventario_pdf, name='reporte_inventraio_pdf'),
+    path('actualizar-stock/', views.actualizar_stock, name='actualizar_stock'),
 
 ]

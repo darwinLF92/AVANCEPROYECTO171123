@@ -213,55 +213,57 @@
   // Aquí puedes agregar las funciones para confirmar cobro y confirmar abono
   // Estas funciones deberían manejar la lógica para procesar el cobro o el abono
   function realizarCobroSeleccionado() {
-  const ventasSeleccionadas = document.querySelectorAll('.ventaCheckbox:checked');
-  const datosCobro = Array.from(ventasSeleccionadas).map(checkbox => {
-    const idVenta = checkbox.closest('tr').querySelector('td').textContent;
-    const totalVenta = parseFloat(checkbox.dataset.total);
-    return {
-      venta_id: idVenta,
-      monto: totalVenta // Asegúrate de que este es el monto correcto que quieres cobrar por cada venta
-    };
-  });
+    const metodoPago = document.getElementById('metodoPagoCobro').value;
+    const ventasSeleccionadas = document.querySelectorAll('.ventaCheckbox:checked');
+    const datosCobro = Array.from(ventasSeleccionadas).map(checkbox => {
+        const idVenta = checkbox.closest('tr').querySelector('td').textContent;
+        const totalVenta = parseFloat(checkbox.dataset.total);
+        return {
+            venta_id: idVenta,
+            monto: totalVenta
+        };
+    });
 
-  // Aquí se suma el total de todos los montos de las ventas seleccionadas
-  const totalCobrar = datosCobro.reduce((acc, current) => acc + current.monto, 0);
+    // Aquí se suma el total de todos los montos de las ventas seleccionadas
+    const totalCobrar = datosCobro.reduce((acc, current) => acc + current.monto, 0);
+    document.getElementById('totalCobrarModal').value = totalCobrar.toFixed(2);
 
-  // Actualiza el valor en el modal si es necesario
-  document.getElementById('totalCobrarModal').value = totalCobrar.toFixed(2);
-
-  enviarDatosCobro(datosCobro);
+    enviarDatosCobro(datosCobro, metodoPago);
 }
 
 
+
 function realizarAbono() {
-    // Usar input type="text" y validar el formato del número aquí
+    const metodoPago = document.getElementById('metodoPagoAbono').value;
     const montoAbonoInput = document.getElementById('montoAbono');
     const montoAbonoValue = montoAbonoInput.value;
 
-    // Validar que el monto del abono tiene un formato numérico correcto
     if (!montoAbonoValue.match(/^\d+(\.\d{2})?$/)) {
-      alert("Por favor, ingrese un monto válido con hasta dos decimales, utilizando un punto como separador decimal.");
-      return;
+        alert("Por favor, ingrese un monto válido con hasta dos decimales, utilizando un punto como separador decimal.");
+        return;
     }
 
     const montoAbono = parseFloat(montoAbonoValue);
     const ventaCheckbox = document.querySelector('.ventaCheckbox:checked');
     
     if (ventaCheckbox) {
-      const idVenta = ventaCheckbox.closest('tr').querySelector('td').textContent;
-      const datosAbono = [{
-        venta_id: idVenta,
-        monto: montoAbono  // Se envía como un número flotante
-      }];
+        const idVenta = ventaCheckbox.closest('tr').querySelector('td').textContent;
+        const datosAbono = [{
+            venta_id: idVenta,
+            monto: montoAbono
+        }];
 
-      enviarDatosCobro(datosAbono);
+        enviarDatosCobro(datosAbono, metodoPago);
     } else {
-      alert('No se ha seleccionado ninguna venta para el abono.');
+        alert('No se ha seleccionado ninguna venta para el abono.');
     }
-  }
+}
 
-function enviarDatosCobro(datos) {
+
+function enviarDatosCobro(datos, metodoPago) {
   const csrftoken = document.getElementById('csrfToken').value;
+
+  const datosConMetodoPago = datos.map(dato => ({ ...dato, metodo_pago: metodoPago }));
 
   fetch('/Ventas/ruta-para-procesar-cobro', {
     method: 'POST',
@@ -269,7 +271,7 @@ function enviarDatosCobro(datos) {
       'Content-Type': 'application/json',
       'X-CSRFToken': csrftoken,
     },
-    body: JSON.stringify({ cobros: datos }),
+    body: JSON.stringify({ cobros: datosConMetodoPago }),
   })
   .then(response => response.json())
     .then(data => {

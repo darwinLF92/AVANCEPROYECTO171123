@@ -261,6 +261,7 @@ def procesar_cobro(request):
     for cobro_data in cobros:
         venta_id = cobro_data.get('venta_id')
         monto = Decimal(cobro_data.get('monto')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        metodo_pago = cobro_data.get('metodo_pago')
         print(f"Intentando guardar el monto: {monto}") 
 
         try:
@@ -273,7 +274,7 @@ def procesar_cobro(request):
                 venta=venta,
                 vendedor=venta.vendedor,
                 monto=monto,
-                metodo_pago='efectivo'  # O según corresponda
+                metodo_pago=metodo_pago
             )
             ultimo_cobro_id = cobro.id
         except Venta.DoesNotExist:
@@ -288,20 +289,22 @@ def procesar_cobro(request):
         return JsonResponse({"success": True, "recibo_url": recibo_url})
 
 def generar_recibo(request, pk_cobro):
-    # Obtener el cobro y la venta asociada
     cobro = get_object_or_404(Cobro, pk=pk_cobro)
     venta = cobro.venta
+    detalles_venta = venta.detalles.all()
 
-    # También puedes obtener otros cobros relacionados a la misma venta, si es necesario
     otros_cobros = Cobro.objects.filter(venta=venta).exclude(pk=pk_cobro).select_related('vendedor')
+
+    total_abonado = otros_cobros.aggregate(Sum('monto'))['monto__sum'] or 0
 
     context = {
         'venta': venta,
+        'detalles_venta': detalles_venta,
         'cobro_actual': cobro,
         'otros_cobros': otros_cobros,
+        'total_abonado': total_abonado,
     }
 
-    # Renderizar la plantilla del recibo
     return render(request, 'Ventas/recibo.html', context)
 
 class CobroCreateView(CreateView):

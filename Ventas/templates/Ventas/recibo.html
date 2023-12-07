@@ -1,34 +1,110 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
+<style>
+  body, h1, h2, h3, h4, h5, h6, p, div {
+    font-family: 'Courier New', Courier, monospace;
+  }
+  .recibo {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .recibo-header, .recibo-body, .recibo-footer {
+    display: block;
+    width: 100%;
+    clear: both;
+  }
+  .recibo-section {
+    margin-bottom: 10px;
+  }
+  .text-right {
+    text-align: right;
+  }
+  .text-center {
+    text-align: center;
+  }
+  .text-left {
+    text-align: left;
+  }
+  .line {
+    border-bottom: 1px dashed #000;
+    margin-top: 5px;
+    margin-bottom: 5px;
+  }
+</style>
+
 <div class="recibo">
-    <h1>Recibo de Venta</h1>
-    <p>ID de Venta: {{ venta.id }}</p>
-    <p>Fecha de Venta: {{ venta.fecha_creacion }}</p>
-    <p>Cliente: {{ venta.cliente.nombre }}</p>
-    <p>Total de Venta: {{ venta.total }}</p>
-    <p>Saldo Actual: {{ venta.saldo_pendiente }}</p>
 
-    <h2>Detalle del Cobro Actual</h2>
-    <div class="detalle-cobro">
-        <p>Fecha de Cobro: {{ cobro_actual.fecha_cobro }}</p>
-        <p>Método de Pago: {{ cobro_actual.get_metodo_pago_display }}</p>
-        <p>Monto: {{ cobro_actual.monto }}</p>
+    <div class="recibo-number">
+        <p>Nº Recibo: {{ cobro_actual.id }}</p> <!-- Asumiendo que el id del cobro es el número de recibo -->
+      </div>
+  <div class="recibo-header text-center">
+    <h1>NUTRAL</h1>
+    <p>KM 14.5, PUERTA PARADA, CARRETERA AL SALVADOR, BODEGA 117 SANTA CATARINA</p>
+    <p>7942-5564 (Control Interno)</p>
+  </div>
+
+  <div class="line"></div>
+
+  <div class="recibo-body">
+    <div class="recibo-section">
+      <div class="text-left">
+        <p>Nombre: {{ venta.cliente.nombre }}</p>
+        <p>No. de Crédito: {{ venta.id }}</p>
+        <p>No. de Documento: {{ venta.id }}</p> <!-- Asumiendo que el No. de documento es el ID de la venta -->
         <p>Vendedor: {{ cobro_actual.vendedor.nombre }}</p>
+      </div>
+      <div class="text-right">
+        <p>Fecha Venta: {{ venta.fecha_creacion|date:"d-m-Y" }}</p>
+      </div>
     </div>
 
-    <h2>Otros Cobros Relacionados</h2>
-    {% for cobro in otros_cobros %}
-    <div class="detalle-cobro">
-        <p>Fecha de Cobro: {{ cobro.fecha_cobro }}</p>
-        <p>Método de Pago: {{ cobro.get_metodo_pago_display }}</p>
-        <p>Monto: {{ cobro.monto }}</p>
-        <p>Vendedor: {{ cobro.vendedor.nombre }}</p>
+    <div class="line"></div>
+
+    <div class="recibo-section">
+      <p class="text-left">Descripción de Artículos Máx/10 visible</p>
+      {% for detalle in detalles_venta %}
+      <div class="text-left">
+        <p>{{ detalle.cantidad }} x {{ detalle.producto.nombre }} @ {{ detalle.precio|floatformat:2|intcomma }} = {{ detalle.subtotal|floatformat:2|intcomma }}</p>
+      </div>
+      {% empty %}
+      <p>No hay artículos para mostrar.</p>
+      {% endfor %}
     </div>
-    {% empty %}
-    <p>No hay otros cobros relacionados para esta venta.</p>
-    {% endfor %}
+
+    <div class="line"></div>
+
+    <div class="recibo-section">
+        <div class="text-right">
+          <p>Total del Crédito: {{ venta.total|floatformat:2|intcomma }}</p>
+          <p>--------------Abonos Anteriores---------------</p>
+          {% for cobro in otros_cobros %}
+          <p>Abono {{ forloop.counter }}: {{ cobro.monto|floatformat:2|intcomma }} ({{ cobro.fecha_cobro|date:"d-m-Y" }})</p>
+          {% endfor %}
+          <p>Abonos Totales: {{ total_abonado|floatformat:2|intcomma }}</p>
+        </div>
+      </div>
+
+    <div class="line"></div>
+
+    <div class="recibo-section">
+      <div class="text-right">
+        <p>Fecha de Cobro Actual: {{ cobro_actual.fecha_cobro|date:"d-m-Y" }}</p>
+        <p>Saldo Anterior: {{ venta.saldo_pendiente|add:cobro_actual.monto|floatformat:2|intcomma }}</p>
+        <p>Abono/Pago {{ cobro_actual.get_metodo_pago_display }}: {{ cobro_actual.monto|floatformat:2|intcomma }}</p>
+        <p>Saldo Restante: {{ venta.saldo_pendiente|floatformat:2|intcomma }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="recibo-footer">
+    <div class="text-center">
+      <p>------------------------------------</p>
+      <p>Firma y Sello</p>
+    </div>
+  </div>
 </div>
 
 {% endblock %}
-

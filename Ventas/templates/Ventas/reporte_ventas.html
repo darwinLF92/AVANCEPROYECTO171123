@@ -119,7 +119,7 @@
             {% for venta in ventas %}
             <tr>
                 <td class="productoid" style="border:none">{{ venta.producto_id }}</td>
-                <td class="cantidad" style="border:none">{{ venta.cantidad }}</td>
+                <td class="cantidad" style="border:none">{{ venta.cantidad|floatformat:2|intcomma }}</td>
                 <td class="nombreprod" style="border:none">{{ venta.nombre_producto }}</td>
                 <td class="costototal" style="border:none">{{ venta.ventas_total|floatformat:2|intcomma }}</td> <!-- Formato de fecha -->
                 <td class="ventatotal" style="border:none">{{ venta.costo_total|floatformat:2|intcomma }}</td> 
@@ -130,8 +130,8 @@
             <tr>
                 <td class="totales" >Totales</td> 
                 <td class="totalcant">{{ total_cant|floatformat:2|intcomma }}</td> 
-                <td colspan="2" class="totalcostos">{{ total_costos|floatformat:2|intcomma }}</td> 
-                <td class="totalventas" >{{ total_ventas|floatformat:2|intcomma }}</td> 
+                <td colspan="2" class="totalventas" >{{ total_ventas|floatformat:2|intcomma }}</td> 
+                <td class="totalcostos">{{ total_costos|floatformat:2|intcomma }}</td> 
                 <td class="totalrenta" >{{ total_renta|floatformat:2|intcomma }}</td> 
                 <td class="totalporcentaje">{{ porcentaje_total|floatformat:2|intcomma }}%</td> 
             </tr> 

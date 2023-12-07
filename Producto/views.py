@@ -17,11 +17,11 @@ from django.http import FileResponse, JsonResponse, HttpResponse
 def listar_productos(request):
     nombre = request.GET.get('nombre', '')
 
-    # Filtrar los clientes por nombre si se proporciona un valor de búsqueda
+    # Filtrar los productos por nombre si se proporciona un valor de búsqueda
     if nombre:
         productos = Producto.objects.filter(activo=True, nombre__icontains=nombre)
     else:
-        # Si no se proporciona un valor de búsqueda, mostrar todos los clientes activos
+        # Si no se proporciona un valor de búsqueda, mostrar todos los productos activos
         productos = Producto.objects.filter(activo=True)
     
     return render(request, 'Producto/listar_productos.html', {'productos': productos, 'nombre': nombre})
@@ -447,5 +447,22 @@ def reporte_inventario_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="reporte_inventario.pdf"'
 
     return response
+
+def actualizar_stock(request):
+    if request.method == 'POST':
+        producto_id = request.POST.get('producto_id')
+        cantidad_aumentar = float(request.POST.get('cantidad_aumentar', 0))
+        cantidad_disminuir = float(request.POST.get('cantidad_disminuir', 0))
+
+        producto = Producto.objects.get(id=producto_id)
+        producto.stock += Decimal(cantidad_aumentar)
+        producto.stock -= Decimal(cantidad_disminuir)
+        producto.save()
+
+        return JsonResponse({'status': 'success', 'mensaje': 'Stock actualizado correctamente.'})
+    else:
+        return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido.'})
+
+
 
 
