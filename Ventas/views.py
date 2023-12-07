@@ -30,6 +30,7 @@ from django.db.models.functions import Coalesce
 from django.template.loader import render_to_string
 from datetime import datetime, date
 from django.contrib import messages
+import tempfile
 
 
 
@@ -980,3 +981,33 @@ def buscar_cliente2(request):
     termino_busqueda = request.GET.get('q', '')
     clientes = Cliente.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
     return JsonResponse(list(clientes), safe=False)
+
+
+def generar_recibo_pdf(request, pk_cobro):
+    # Toma los mismos pasos para obtener los datos del recibo como lo harías normalmente
+    cobro = get_object_or_404(Cobro, pk=pk_cobro)
+    venta = cobro.venta
+    detalles_venta = venta.detalles.all()
+    otros_cobros = Cobro.objects.filter(venta=venta).exclude(pk=pk_cobro).select_related('vendedor')
+
+    # Calcula la suma de todos los cobros excepto el actual
+    total_abonado = otros_cobros.aggregate(Sum('monto'))['monto__sum'] or 0
+
+    # Renderiza el HTML para el recibo
+    html_string = render_to_string('Ventas/recibo_pdf.html', {
+        'venta': venta,
+        'detalles_venta': detalles_venta,
+        'cobro_actual': cobro,
+        'otros_cobros': otros_cobros,
+        'total_abonado': total_abonado,
+    })
+    
+     # Crear un PDF usando WeasyPrint
+    html = HTML(string=html_string)
+    result = html.write_pdf()
+
+    # Crear una respuesta HTTP con el PDF
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="recibo.pdf"'
+
+    return response
