@@ -462,6 +462,8 @@ def actualizar_stock(request):
         return JsonResponse({'status': 'success', 'mensaje': 'Stock actualizado correctamente.'})
     else:
         return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido.'})
+    
+
 
 
 

@@ -118,16 +118,18 @@ class AddVentaView(ListView):
                 }
                 venta = Venta(**venta_data)
                 venta.save()
-
+            
                 # Procesar y guardar los detalles de la venta
                 verts_items = json.loads(request.POST.get('verts', '[]'))
                 for item in verts_items:
+                    producto = Producto.objects.get(id=item['id'])
                     detalle_data = {
                         'venta': venta,
                         'producto': Producto.objects.get(id=item['id']),
                         'cantidad': int(item['cantidad']),
                         'precio': Decimal(item['precio_venta']),
                         'descuento': Decimal(item['descuento']),
+                        'precio_compra_en_venta': producto.precio_compra,
                         'subtotal': Decimal(item['subtotal']),
                         # ... otros campos necesarios ...
                     }
@@ -142,7 +144,7 @@ class AddVentaView(ListView):
                 if 'error' not in data:
                     data['status'] = 'success'
                     data['venta_id'] = venta.id
-
+                print("precio_compra_en_venta:", detalle_data['precio_compra_en_venta'])
             except Exception as e:
                 data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
         else:
@@ -850,13 +852,14 @@ def reporte_ventas(request):
         ventas_qs = ventas_qs.filter(fecha_creacion__gte=fecha_inicio)
     if fecha_fin:
         ventas_qs = ventas_qs.filter(fecha_creacion__lte=fecha_fin)
+        
 
      # Agregando a nivel de producto
     datos_agrupados = DetalleVenta.objects.filter(venta__in=ventas_qs).values(
         'producto_id', 'producto__nombre'
     ).annotate(
         cantidad_total=Sum('cantidad'),
-        costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
+        costo_total=Sum(F('cantidad') * F('precio_compra_en_venta')),
         ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
     ).annotate(
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
@@ -924,7 +927,7 @@ def reporte_ventas_pdf(request):
         'producto_id', 'producto__nombre'
     ).annotate(
         cantidad_total=Sum('cantidad'),
-        costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
+        costo_total=Sum(F('cantidad') * F('precio_compra_en_venta')),
         ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
     ).annotate(
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),

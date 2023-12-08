@@ -83,6 +83,7 @@ class DetalleVenta(models.Model):
     stock = models.PositiveIntegerField(default=0)
     cantidad = models.PositiveIntegerField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_compra_en_venta = models.DecimalField(max_digits=10, decimal_places=4, default=0.00)
     descuento = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     devolucion = models.BooleanField(default=False)
