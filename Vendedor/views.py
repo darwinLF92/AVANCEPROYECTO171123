@@ -13,37 +13,34 @@ class ListaVendedoresView(View):
 
 
 class CrearVendedorView(View):
-    def get(self, request, vendedor_id=None):
-        context = {}
-        if vendedor_id:
-            vendedor = get_object_or_404(Vendedor, pk=vendedor_id)
-            form = VendedorForm(instance=vendedor)
-            context['editando'] = True
-            context['vendedor_nombre'] = vendedor.nombre  # Asegúrate de que el modelo Vendedor tenga el campo 'nombre'
-        else:
-            form = VendedorForm()
-            context['editando'] = False
+    template_name = 'crear_vendedor.html'
+    success_template_name = 'create_user.html'
 
-        context['form'] = form
-        return render(request, 'crear_vendedor.html', context)
-    
-    def post(self, request, vendedor_id=None):
-        context = {}
-        if vendedor_id:
-            vendedor = get_object_or_404(Vendedor, pk=vendedor_id)
-            form = VendedorForm(request.POST, instance=vendedor)
-            context['editando'] = True
-            context['vendedor_nombre'] = vendedor.nombre
+    def get_context_data(self, vendedor=None):
+        context = {'form': VendedorForm(instance=vendedor)}
+        if vendedor:
+            context.update({
+                'editando': True,
+                'vendedor_nombre': vendedor.nombre,
+            })
         else:
-            form = VendedorForm(request.POST)
             context['editando'] = False
+        return context
+
+    def get(self, request, vendedor_id=None):
+        vendedor = get_object_or_404(Vendedor, pk=vendedor_id) if vendedor_id else None
+        return render(request, self.template_name, self.get_context_data(vendedor))
+
+    def post(self, request, vendedor_id=None):
+        vendedor = get_object_or_404(Vendedor, pk=vendedor_id) if vendedor_id else None
+        form = VendedorForm(request.POST, instance=vendedor)
 
         if form.is_valid():
             form.save()
-            return redirect('Vendedor:lista_vendedores')
-
-        context['form'] = form
-        return render(request, 'crear_vendedor.html', context)
+            message = f'Vendedor {vendedor.nombre} creado satisfactoriamente' if vendedor else 'Vendedor creado satisfactoriamente'
+            return render(request, self.template_name, {'form': VendedorForm(), 'success': True, 'message': message})
+        else:
+            return render(request, self.template_name, {'form': form, 'error_message': 'Error en el formulario'})
     
     
 class EditarVendedorView(View):
