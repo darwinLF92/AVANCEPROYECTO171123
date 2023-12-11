@@ -4,45 +4,7 @@
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/tables.css' %}">
 <style>
-  /* Estilos adicionales para centrar el modal */
-  .modal {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 1;
-    width: 80%; /* Ajusta el ancho del modal según sea necesario */
-    max-width: 600px; /* Máximo ancho del modal */
-    background-color: #E4E9F7;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-  }
-
-  .modal-content {
-    width: 100%;
-    height: 100%;
-  }
-
-  .cerrar-modal {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 10px;
-    background-color: #007BFF;
-    color: #fff;
-    text-decoration: none;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-
-  .cerrar-modal:hover {
-    background-color: #b30009;
-  }
-
+  /* Estilos adicionales para el modal */
   /* CSS global */
   .swal-popup.my-custom-modal-class {
     background-color: #E4E9F7 !important;
@@ -136,41 +98,13 @@
 
 <script>
   $(document).ready(function() {
-    function abrirVentanaFlotante(formularioSrc, ancho, alto) {
-      // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
-      $("body").addClass("modal-open");
+    // Al hacer clic en "Aumentar"
+    $(".aumentar-btn").click(function () {
+      var productoId = $(this).data('userid');
+      var formularioSrc = "{% url 'Producto:aumentar_stock' 0 %}".replace('0', productoId);
 
-      // Crear el fondo desenfocado
-      var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
-      $("body").append(fondoDesenfocado);
-
-      // Crear y mostrar la ventana flotante
-      var ventanaFlotante = `<div id="ventanaFlotante">
-                                <a href="#" id="cerrarVentana">Cerrar</a>
-                                <iframe src="${formularioSrc}" width="${ancho}" height="${alto}" frameborder="0"></iframe>
-                              </div>`;
-      $("body").append(ventanaFlotante);
-
-      // Al hacer clic en "Cerrar"
-      $("#cerrarVentana").click(function () {
-        // Remover la clase 'modal-open' al cerrar la ventana flotante
-        $("body").removeClass("modal-open");
-
-        // Remover el fondo desenfocado y la ventana flotante
-        $("#fondoDesenfocado, #ventanaFlotante").remove();
-
-        // Recargar la página completa después de cerrar la ventana flotante
-        location.reload();
-      });
-    }
-
-        // Al hacer clic en "Aumentar"
-        $(".aumentar-btn").click(function () {
-          var productoId = $(this).data('userid');
-          var formularioSrc = "{% url 'Producto:aumentar_stock' 0 %}".replace('0', productoId);
-
-                // SweetAlert para mostrar el modal
-      Swal.fire({
+      // SweetAlert para mostrar el modal
+      const swalInstance = Swal.fire({
         title: 'Aumentar',
         html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
         showCloseButton: true,
@@ -179,11 +113,13 @@
           container: 'swal-container',
           popup: 'swal-popup my-custom-modal-class',
         },
+        didClose: () => {
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+        },
       });
         return false;
-        // Recargar la página completa después de cerrar la ventana flotante
-        location.reload();
-        });
+    });
 
     // Al hacer clic en "Ver Detalle"
     $(".ver-detalle-btn").click(function () {
@@ -211,7 +147,7 @@
       var formularioSrc = "{% url 'Producto:editar_componentes' 0 %}".replace('0', productoId);
 
       // SweetAlert para mostrar el modal
-      Swal.fire({
+      const swalInstance = Swal.fire({
         title: 'Editar Componentes',
         html: `<iframe src="${formularioSrc}" width="100%" height="880vh" frameborder="0" style="max-width: 100%;"></iframe>`,
         showCloseButton: true,
@@ -220,8 +156,11 @@
           container: 'swal-container',
           popup: 'swal-popup my-custom-modal-class',
         },
+        didClose: () => {
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+        },
       });
-
       return false;
     });
   });

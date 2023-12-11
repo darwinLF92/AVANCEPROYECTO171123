@@ -3,6 +3,13 @@
 {% block content %}
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/tables.css' %}">
+<style>
+  /* Estilos adicionales para el modal */
+  /* CSS global */
+  .swal-popup.my-custom-modal-class {
+    background-color: #E4E9F7 !important;
+  }
+</style>
   <h1>Lista de Vendedores</h1>
 
   <a href="#" id="crearVendedor" class="btn btn-success">Crear Vendedor</a>
