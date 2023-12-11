@@ -151,8 +151,8 @@ def aumentar_stock(request, producto_id):
                     cantidad=cantidad_a_fabricar,
                     # La fecha de registro se añade automáticamente con auto_now_add=True en el modelo
                 )
-
-                return redirect('Producto:listar_productos_fabricacion')
+                
+                return render(request, 'Producto/aumentar_stock.html', {'success': True, 'message': f'Producto aumentado satisfactoriamente'})
             else:
                 # Manejar la falta de componentes mostrando un mensaje al usuario
                 # Podrías añadir un mensaje al contexto para informar qué componentes no tienen stock suficiente
@@ -219,7 +219,9 @@ def editar_componentes_producto(request, producto_id):
             producto.precio_compra = costo_total_produccion
             producto.save()
 
-            return redirect('Producto:listar_productos_fabricacion')
+            
+            return render(request, 'Producto/editar_componentes_producto.html', {'success': True, 'message': f'Componente editado satisfactoriamente'})
+            
     else:
         formset = ComponenteProductoFormSet(instance=producto, prefix='componentes')
 

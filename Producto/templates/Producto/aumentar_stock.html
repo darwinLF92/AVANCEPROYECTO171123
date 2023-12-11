@@ -18,12 +18,25 @@
         </div>
         <button type="submit" class="btn btn-primary">Aumentar Stock</button>
     </form>
-    
-    {% if error %}
-    <div class="alert alert-danger" role="alert">
-        {{ error }}
+
+{% if success %}
+<div id="modalSuccess" class="modal">
+  <div class="modal-content">
+      <p>{{ message }}</p>
     </div>
-    {% endif %}
-    </div>
-    {% endblock %}
+</div>
+{% endif %}
+
+{% if error %}
+<div id="modalError" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <p>{{ error }}</p>
+  </div>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="{% static 'js/Success.js' %}"></script>
+{% endblock %}
     
