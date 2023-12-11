@@ -82,7 +82,8 @@ def agregar_producto(request):
         form = ProductoForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('Producto:listar_productos')
+            
+            return render(request, 'Producto/agregar_producto.html', {'success': True, 'message': f'Producto creado satisfactoriamente'})
         else:
             # Si el formulario de producto no es válido, muestra los errores en la misma página.
             return render(request, 'Producto/agregar_producto.html', {'form': form})
@@ -102,7 +103,7 @@ def editar_producto(request, producto_id):
             # Guarda el producto editado en la base de datos
             form.save()
             # Redirige a la lista de productos o a la vista de detalles del producto
-            return redirect('Producto:listar_productos')
+            return render(request, 'Producto/agregar_producto.html', {'success': True, 'message': f'Producto editado satisfactoriamente'})
     else:
         # Crea el formulario con los datos del producto que se va a editar
         form = ProductoForm(instance=producto)

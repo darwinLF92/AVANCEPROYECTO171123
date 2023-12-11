@@ -114,7 +114,7 @@
             <td>{{ producto.precio_venta }}</td>
             <td>{{ producto.stock }}</td>
             <td>
-                <a href="#" class="btn btn-warning" data-userid="{{ producto.id }}" >Editar </a>  
+                <a href="#" class="editar-btn btn btn-warning" data-userid="{{ producto.id }}" >Editar </a>  
                 <a href="{% url 'Producto:eliminar_producto' producto.id %}" class="eliminar-btn btn btn-danger">Eliminar</a>
             </td>
         </tr>
@@ -224,72 +224,49 @@
 
 <script>
 $(document).ready(function(){
-        // Al hacer clic en "Crear Nuevo Producto"
+    // Al hacer clic en "Crear Nuevo Producto"
     $("#crearProducto").click(function () {
-            // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
-            $("body").addClass("modal-open");
-    
-            // Crear el fondo desenfocado
-            var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
-            $("body").append(fondoDesenfocado);
-    
-            // Crea y muestra la ventana flotante
-            var formulario = "{% url 'Producto:agregar_producto' %}";
-            
-            var ventanaFlotante = `<div id="ventanaFlotante">
-                                      <a href="#" id="cerrarVentana">Cerrar</a>
-                                      <iframe src="${formulario}" width="330" height="480" frameborder="0"></iframe>
-                                  </div>`;
-            $("body").append(ventanaFlotante);
-    
-            // Al hacer clic en "Cerrar"
-            $("#cerrarVentana").click(function () {
-                // Remover la clase 'modal-open' al cerrar la ventana flotante
-                $("body").removeClass("modal-open");
-    
-                // Remover el fondo desenfocado y la ventana flotante
-                $("#fondoDesenfocado, #ventanaFlotante").remove();
-    
-                // recarga la página completa después de cerrar la ventana flotante
-                location.reload();
-            });
-    
-            return false;
-        });
- 
+      var formularioSrc = "{% url 'Producto:agregar_producto' %}";
+  
+      // SweetAlert para mostrar el modal
+      const swalInstance = Swal.fire({
+          title: 'Crear Producto',
+          html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+          showCloseButton: true,
+          showConfirmButton: false,
+          customClass: {
+              container: 'swal-container',
+              popup: 'swal-popup my-custom-modal-class',
+          },
+          didClose: () => {
+              // Recargar la página completa después de cerrar la ventana flotante
+              location.reload();
+          },
+      });
+  
+      return false;
+  });
 
-
-            // Al hacer clic en "Editar"
-    $(".btn-warning").click(function () {
+    // Al hacer clic en "Editar"
+    $(".editar-btn").click(function () {
         var productoId = $(this).data('userid');
         var formulario = "{% url 'Producto:editar_producto' 0 %}".replace('0', productoId);
   
-        // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
-        $("body").addClass("modal-open");
-  
-        // Crear el fondo desenfocado
-        var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
-        $("body").append(fondoDesenfocado);
-  
-        // Crear y mostrar la ventana flotante
-        var ventanaFlotante = `<div id="ventanaFlotante">
-                                  <a href="#" id="cerrarVentana">Cerrar</a>
-                                  <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
-                              </div>`;
-        $("body").append(ventanaFlotante);
-  
-        // Al hacer clic en "Cerrar"
-        $("#cerrarVentana").click(function () {
-          // Remover la clase 'modal-open' al cerrar la ventana flotante
-          $("body").removeClass("modal-open");
-  
-          // Remover el fondo desenfocado y la ventana flotante
-          $("#fondoDesenfocado, #ventanaFlotante").remove();
-  
-          // Recargar la página completa después de cerrar la ventana flotante
-          location.reload();
+        // SweetAlert para mostrar el modal
+        const swalInstance = Swal.fire({
+          title: 'Editar Producto',
+          html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+          showCloseButton: true,
+          showConfirmButton: false,
+          customClass: {
+              container: 'swal-container',
+              popup: 'swal-popup my-custom-modal-class',
+          },
+          didClose: () => {
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
+          },
         });
-  
         return false;
       });
 
