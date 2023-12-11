@@ -1,5 +1,6 @@
-<!DOCTYPE html>
+{% load static %}
 <head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10">
   <title>Confirmar Eliminación de Usuario</title>
 
   <style>
@@ -68,5 +69,7 @@
     </div>
   </div>
   {% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="{% static 'js/Success.js' %}"></script>
 </body>
-</html>

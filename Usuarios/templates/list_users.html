@@ -173,103 +173,72 @@
   $(document).ready(function () {
     // Al hacer clic en "Crear Nuevo Usuario"
     $("#crearUsuario").click(function () {
-      // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
-      $("body").addClass("modal-open");
-
-      // Crear el fondo desenfocado
-      var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
-      $("body").append(fondoDesenfocado);
-
-      // Crea y muestra la ventana flotante
-      var formulario = "{% url 'Usuarios:create_user' %}";
-      var ventanaFlotante = `<div id="ventanaFlotante">
-                                <a href="#" id="cerrarVentana">Cerrar</a>
-                                <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
-                              </div>`;
-      $("body").append(ventanaFlotante);
-
-      // Al hacer clic en "Cerrar"
-      $("#cerrarVentana").click(function () {
-        // Remover la clase 'modal-open' al cerrar la ventana flotante
-        $("body").removeClass("modal-open");
-
-        // Remover el fondo desenfocado y la ventana flotante
-        $("#fondoDesenfocado, #ventanaFlotante").remove();
-
-        // recarga la página completa después de cerrar la ventana flotante
-        location.reload();
+      var formularioSrc = "{% url 'Usuarios:create_user' %}";
+  
+      // SweetAlert para mostrar el modal
+      const swalInstance = Swal.fire({
+          title: 'Crear Usuario',
+          html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+          showCloseButton: true,
+          showConfirmButton: false,
+          customClass: {
+              container: 'swal-container',
+              popup: 'swal-popup my-custom-modal-class',
+          },
+          didClose: () => {
+              // Recargar la página completa después de cerrar la ventana flotante
+              location.reload();
+          },
       });
-
+  
       return false;
-    });
+  });
 
     // Al hacer clic en "Editar"
-    $(".editar-btn").click(function () {
-      var userId = $(this).data('userid');
-      var formulario = "{% url 'Usuarios:edit_user' 0 %}".replace('0', userId);
-
-      // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
-      $("body").addClass("modal-open");
-
-      // Crear el fondo desenfocado
-      var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
-      $("body").append(fondoDesenfocado);
-
-      // Crear y mostrar la ventana flotante
-      var ventanaFlotante = `<div id="ventanaFlotante">
-                                <a href="#" id="cerrarVentana">Cerrar</a>
-                                <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
-                            </div>`;
-      $("body").append(ventanaFlotante);
-
-      // Al hacer clic en "Cerrar"
-      $("#cerrarVentana").click(function () {
-        // Remover la clase 'modal-open' al cerrar la ventana flotante
-        $("body").removeClass("modal-open");
-
-        // Remover el fondo desenfocado y la ventana flotante
-        $("#fondoDesenfocado, #ventanaFlotante").remove();
-
-        // Recargar la página completa después de cerrar la ventana flotante
-        location.reload();
-      });
-
-      return false;
-    });
+        $(".editar-btn").click(function () {
+          var userId = $(this).data('userid');
+          var formulario = "{% url 'Usuarios:edit_user' 0 %}".replace('0', userId);
+  
+          // SweetAlert para mostrar el modal
+          const swalInstance = Swal.fire({
+            title: 'Editar Usuario',
+            html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup my-custom-modal-class',
+            },
+            didClose: () => {
+              // Recargar la página completa después de cerrar la ventana flotante
+              location.reload();
+            },
+          });
+          return false;
+        });
 
     // Al hacer clic en "Eliminar"
     $(".eliminar-btn").click(function () {
       var userId = $(this).data('userid');
       var formulario = "{% url 'Usuarios:delete_user' 0 %}".replace('0', userId);
 
-      // Agregar la clase 'modal-open' al cuerpo para aplicar el desenfoque
-      $("body").addClass("modal-open");
-
-      // Crear el fondo desenfocado
-      var fondoDesenfocado = '<div id="fondoDesenfocado"></div>';
-      $("body").append(fondoDesenfocado);
-
-      // Crear y mostrar la ventana flotante
-      var ventanaFlotante = `<div id="ventanaFlotante">
-                                <a href="#" id="cerrarVentana">Cerrar</a>
-                                <iframe src="${formulario}" width="425" height="460" frameborder="0"></iframe>
-                            </div>`;
-      $("body").append(ventanaFlotante);
-
-      // Al hacer clic en "Cerrar"
-      $("#cerrarVentana").click(function () {
-        // Remover la clase 'modal-open' al cerrar la ventana flotante
-        $("body").removeClass("modal-open");
-
-        // Remover el fondo desenfocado y la ventana flotante
-        $("#fondoDesenfocado, #ventanaFlotante").remove();
-
-        // Recargar la página completa después de cerrar la ventana flotante
-        location.reload();
-      });
-
-      return false;
-    });
+          // SweetAlert para mostrar el modal
+          const swalInstance = Swal.fire({
+            title: 'Eliminar Usuario',
+            html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup my-custom-modal-class',
+            },
+            didClose: () => {
+              // Recargar la página completa después de cerrar la ventana flotante
+              location.reload();
+            },
+          });
+          return false;
+        })
 
     // Al enviar el formulario dentro de la ventana flotante
     $(document).on("submit", "iframe form", function () {

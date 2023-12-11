@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
@@ -9,7 +10,7 @@
   <style>
     /*  estilos personalizados */
     body {
-      background-color: #E4E9F7;
+      background-color: #f8f9fa;
       /* color de fondo */
     }
 
@@ -19,15 +20,15 @@
     }
 
     h1 {
-      color: #26a69a;
-      /* color del encabezado  */
+      color: #007bff;
+      text-align: center;
     }
 
     .card {
-      width: 80%;
-      /* ancho de la tarjeta */
+      width: 70%;
       margin: auto;
-      /* Centra la tarjeta en la página */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
     }
 
     .input-field {
@@ -56,7 +57,7 @@
   {% endif %}
 
   <div class="container">
-    <h1 class="center-align">Crear Usuario</h1>
+    
 
     <div class="card">
       <div class="card-content">
@@ -109,6 +110,7 @@
     </div>
     {% endif %}
   </div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 <script src="{% static 'js/Success.js' %}"></script>
 </body>
 </html>
