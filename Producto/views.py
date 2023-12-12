@@ -114,9 +114,11 @@ def editar_producto(request, producto_id):
 
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
-    producto.activo = False  # Suponiendo que tienes un campo "activo" en el modelo Producto
-    producto.save()
-    return redirect('Producto:listar_productos')
+    if request.method == 'POST':
+        producto.activo = False  # Suponiendo que tienes un campo "activo" en el modelo Producto
+        producto.save()
+        return redirect('Producto:listar_productos')
+    return render(request, 'Producto/eliminar_producto.html', {'producto': producto})
 
 
 @transaction.atomic  # Asegura que las operaciones sean atómicas
@@ -485,5 +487,24 @@ def reporte_inventario_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="reporte_inventario.pdf"'
 
     return response
+
+def actualizar_stock(request):
+    if request.method == 'POST':
+        producto_id = request.POST.get('producto_id')
+        cantidad_aumentar = float(request.POST.get('cantidad_aumentar', 0))
+        cantidad_disminuir = float(request.POST.get('cantidad_disminuir', 0))
+
+        producto = Producto.objects.get(id=producto_id)
+        producto.stock += Decimal(cantidad_aumentar)
+        producto.stock -= Decimal(cantidad_disminuir)
+        producto.save()
+
+        return JsonResponse({'status': 'success', 'mensaje': 'Stock actualizado correctamente.'})
+    else:
+        return JsonResponse({'status': 'error', 'mensaje': 'Método no permitido.'})
+    
+
+
+
 
 

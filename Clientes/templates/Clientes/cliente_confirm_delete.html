@@ -50,10 +50,10 @@
 
 {% block content %}
 <div class="container">
-<h2>¿Estás seguro de que quieres desactivar al cliente "{{ cliente.nombre }}"?</h2>
+<h2>¿Estás seguro de que quieres elimnar al cliente "{{ cliente.nombre }}"?</h2>
 <form method="post">
     {% csrf_token %}
-    <button type="submit">Sí, desactivar</button>
+    <button type="submit">Sí, eliminar</button>
 </form>
 
 {% if success %}

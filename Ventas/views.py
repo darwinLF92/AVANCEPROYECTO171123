@@ -15,7 +15,7 @@ from django.views import View
 from django.urls import reverse_lazy
 import json
 from django.core.exceptions import ValidationError
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from django.views.generic.edit import CreateView
 from django.views.decorators.http import require_http_methods
 from reportlab.pdfgen import canvas
@@ -31,6 +31,7 @@ from django.template.loader import render_to_string
 from datetime import datetime, date
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+import tempfile
 
 
 
@@ -60,6 +61,10 @@ class ListaVentasView(ListView):
             ventas = paginator.page(paginator.num_pages)
 
         context['ventas'] = ventas
+        # Calcular el total de ventas
+        ventas = self.get_queryset()
+        total_ventas = ventas.aggregate(totalv=Sum('total'))['totalv'] if ventas else 0
+        context['total_ventas'] = total_ventas
         return context
 
     def get_queryset(self):
@@ -130,16 +135,18 @@ class AddVentaView(ListView):
                 }
                 venta = Venta(**venta_data)
                 venta.save()
-
+            
                 # Procesar y guardar los detalles de la venta
                 verts_items = json.loads(request.POST.get('verts', '[]'))
                 for item in verts_items:
+                    producto = Producto.objects.get(id=item['id'])
                     detalle_data = {
                         'venta': venta,
                         'producto': Producto.objects.get(id=item['id']),
                         'cantidad': int(item['cantidad']),
                         'precio': Decimal(item['precio_venta']),
                         'descuento': Decimal(item['descuento']),
+                        'precio_compra_en_venta': producto.precio_compra,
                         'subtotal': Decimal(item['subtotal']),
                         # ... otros campos necesarios ...
                     }
@@ -154,7 +161,7 @@ class AddVentaView(ListView):
                 if 'error' not in data:
                     data['status'] = 'success'
                     data['venta_id'] = venta.id
-
+                print("precio_compra_en_venta:", detalle_data['precio_compra_en_venta'])
             except Exception as e:
                 data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
         else:
@@ -274,7 +281,9 @@ def procesar_cobro(request):
 
     for cobro_data in cobros:
         venta_id = cobro_data.get('venta_id')
-        monto = Decimal(cobro_data.get('monto'))
+        monto = Decimal(cobro_data.get('monto')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        metodo_pago = cobro_data.get('metodo_pago')
+        print(f"Intentando guardar el monto: {monto}") 
 
         try:
             venta = Venta.objects.get(id=venta_id)
@@ -286,7 +295,7 @@ def procesar_cobro(request):
                 venta=venta,
                 vendedor=venta.vendedor,
                 monto=monto,
-                metodo_pago='efectivo'  # O según corresponda
+                metodo_pago=metodo_pago
             )
             ultimo_cobro_id = cobro.id
         except Venta.DoesNotExist:
@@ -301,20 +310,22 @@ def procesar_cobro(request):
         return JsonResponse({"success": True, "recibo_url": recibo_url})
 
 def generar_recibo(request, pk_cobro):
-    # Obtener el cobro y la venta asociada
     cobro = get_object_or_404(Cobro, pk=pk_cobro)
     venta = cobro.venta
+    detalles_venta = venta.detalles.all()
 
-    # También puedes obtener otros cobros relacionados a la misma venta, si es necesario
     otros_cobros = Cobro.objects.filter(venta=venta).exclude(pk=pk_cobro).select_related('vendedor')
+
+    total_abonado = otros_cobros.aggregate(Sum('monto'))['monto__sum'] or 0
 
     context = {
         'venta': venta,
+        'detalles_venta': detalles_venta,
         'cobro_actual': cobro,
         'otros_cobros': otros_cobros,
+        'total_abonado': total_abonado,
     }
 
-    # Renderizar la plantilla del recibo
     return render(request, 'Ventas/recibo.html', context)
 
 class CobroCreateView(CreateView):
@@ -370,6 +381,9 @@ class CobrosListView(ListView):
     
 from reportlab.lib.pagesizes import letter
 
+def format_currency(value):
+    return "{:,.2f}".format(value)
+
 def imprimir_venta(request, venta_id):
     venta = Venta.objects.get(pk=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
@@ -396,16 +410,16 @@ def imprimir_venta(request, venta_id):
     y_position = height - 183
     for detalle in detalles:
         precio_con_descuento = detalle.subtotal / detalle.cantidad if detalle.cantidad else 0
-        p.drawString(50, y_position, f"{detalle.cantidad}")
+        p.drawString(50, y_position, format_currency(detalle.cantidad))
         p.drawString(95, y_position, f"{detalle.producto.nombre}")
-        p.drawString(462, y_position, f"{precio_con_descuento}")              
-        p.drawString(520, y_position, f"{detalle.subtotal}")
+        p.drawString(462, y_position, format_currency(precio_con_descuento))              
+        p.drawString(520, y_position, format_currency(detalle.subtotal))
         y_position -= 18
     
     p.drawString(50, 98, f"{venta.comentarios}")
     
     # Totales y pie de página
-    p.drawString(520, 110, f"{venta.total}")
+    p.drawString(520, 110, format_currency(venta.total))
     
     p.showPage()
     p.save()
@@ -447,6 +461,7 @@ def reporte_cuentasxcobrar(request):
     resumen_data = {
         'total_facturado': 0,
         'total_cobrar': 0,
+        'total_sin_vencer': 0,
         'total_1_30_dias': 0,
         'total_31_60_dias': 0,
         'total_61_90_dias': 0,
@@ -480,6 +495,7 @@ def reporte_cuentasxcobrar(request):
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
+        cliente.total_1_30 = 0
         cliente.total_31_60 = 0
         cliente.total_61_90 = 0
         cliente.total_91_120 = 0
@@ -492,16 +508,17 @@ def reporte_cuentasxcobrar(request):
             cliente.total_monto += venta.total
             cliente.total_cobrar += venta.saldo_pendiente
 
-            if dias_vencidos < 0:
+            if dias_vencidos <= 0:
                 cliente.total_sin_vencer += venta.saldo_pendiente
-            elif 0 <= dias_vencidos <= 30:
-                cliente.total_31_60 += venta.saldo_pendiente
-            elif 31 <= dias_vencidos <= 60:
-                cliente.total_61_90 += venta.saldo_pendiente
+            elif 1 <= dias_vencidos <= 60:
+                cliente.total_1_30 += venta.saldo_pendiente
             elif 61 <= dias_vencidos <= 90:
+                cliente.total_61_90 += venta.saldo_pendiente
+            elif 91 <= dias_vencidos <= 120:
                 cliente.total_91_120 += venta.saldo_pendiente
-            elif dias_vencidos > 90:
+            elif dias_vencidos > 120:
                 cliente.total_121_mas += venta.saldo_pendiente
+
 
             ventas_credito_data.append({
                 'id': venta.id,
@@ -520,7 +537,7 @@ def reporte_cuentasxcobrar(request):
             'total_monto': cliente.total_monto,
             'total_cobrar': cliente.total_cobrar,
             'total_sin_vencer': cliente.total_sin_vencer,
-            'total_31_60': cliente.total_31_60,
+            'total_1_30': cliente.total_1_30,
             'total_61_90': cliente.total_61_90,
             'total_91_120': cliente.total_91_120,
             'total_121_mas': cliente.total_121_mas,
@@ -529,8 +546,8 @@ def reporte_cuentasxcobrar(request):
 
         resumen_data['total_facturado'] += cliente.total_monto
         resumen_data['total_cobrar'] += cliente.total_cobrar
-        resumen_data['total_1_30_dias'] += cliente.total_sin_vencer
-        resumen_data['total_31_60_dias'] += cliente.total_31_60
+        resumen_data['total_sin_vencer'] += cliente.total_sin_vencer
+        resumen_data['total_1_30_dias'] += cliente.total_1_30
         resumen_data['total_61_90_dias'] += cliente.total_61_90
         resumen_data['total_91_120_dias'] += cliente.total_91_120
         resumen_data['total_mas_121_dias'] += cliente.total_121_mas
@@ -547,23 +564,25 @@ def reporte_cuentasxcobrar(request):
     return JsonResponse(response_data)
 
 def reporte_cuentasxcobrar_pdf(request):
-    # La lógica inicial es similar a reporte_ventas
     fecha_hoy = timezone.now().date()
     clientes_data = []
     vendedores = Vendedor.objects.filter(activo=True).values_list('nombre', flat=True)
-
     resumen_data = {
         'total_facturado': 0,
         'total_cobrar': 0,
+        'total_sin_vencer': 0,
         'total_1_30_dias': 0,
         'total_31_60_dias': 0,
         'total_61_90_dias': 0,
         'total_91_120_dias': 0,
         'total_mas_121_dias': 0,
     }
-    
-    filtro_cliente = request.GET.get('cliente', '')
-    filtro_vendedor = request.GET.get('vendedor', '')
+
+    # Capturar los parámetros de filtrado
+    filtro_cliente = request.GET.get('cliente')
+    filtro_vendedor = request.GET.get('vendedor')
+
+    # Filtrar clientes según los parámetros
     clientes_queryset = Cliente.objects.annotate(
         total_saldo_pendiente=Sum('clientee__saldo_pendiente')
     ).filter(total_saldo_pendiente__gt=0)
@@ -585,6 +604,7 @@ def reporte_cuentasxcobrar_pdf(request):
         cliente.total_monto = 0
         cliente.total_cobrar = 0
         cliente.total_sin_vencer = 0
+        cliente.total_1_30 = 0
         cliente.total_31_60 = 0
         cliente.total_61_90 = 0
         cliente.total_91_120 = 0
@@ -597,16 +617,17 @@ def reporte_cuentasxcobrar_pdf(request):
             cliente.total_monto += venta.total
             cliente.total_cobrar += venta.saldo_pendiente
 
-            if dias_vencidos < 0:
+            if dias_vencidos <= 0:
                 cliente.total_sin_vencer += venta.saldo_pendiente
-            elif 0 <= dias_vencidos <= 30:
-                cliente.total_31_60 += venta.saldo_pendiente
-            elif 31 <= dias_vencidos <= 60:
-                cliente.total_61_90 += venta.saldo_pendiente
+            elif 1 <= dias_vencidos <= 60:
+                cliente.total_1_30 += venta.saldo_pendiente
             elif 61 <= dias_vencidos <= 90:
+                cliente.total_61_90 += venta.saldo_pendiente
+            elif 91 <= dias_vencidos <= 120:
                 cliente.total_91_120 += venta.saldo_pendiente
-            elif dias_vencidos > 90:
+            elif dias_vencidos > 120:
                 cliente.total_121_mas += venta.saldo_pendiente
+
 
             ventas_credito_data.append({
                 'id': venta.id,
@@ -625,7 +646,7 @@ def reporte_cuentasxcobrar_pdf(request):
             'total_monto': cliente.total_monto,
             'total_cobrar': cliente.total_cobrar,
             'total_sin_vencer': cliente.total_sin_vencer,
-            'total_31_60': cliente.total_31_60,
+            'total_1_30': cliente.total_1_30,
             'total_61_90': cliente.total_61_90,
             'total_91_120': cliente.total_91_120,
             'total_121_mas': cliente.total_121_mas,
@@ -634,8 +655,8 @@ def reporte_cuentasxcobrar_pdf(request):
 
         resumen_data['total_facturado'] += cliente.total_monto
         resumen_data['total_cobrar'] += cliente.total_cobrar
-        resumen_data['total_1_30_dias'] += cliente.total_sin_vencer
-        resumen_data['total_31_60_dias'] += cliente.total_31_60
+        resumen_data['total_sin_vencer'] += cliente.total_sin_vencer
+        resumen_data['total_1_30_dias'] += cliente.total_1_30
         resumen_data['total_61_90_dias'] += cliente.total_61_90
         resumen_data['total_91_120_dias'] += cliente.total_91_120
         resumen_data['total_mas_121_dias'] += cliente.total_121_mas
@@ -849,14 +870,15 @@ def reporte_ventas(request):
         ventas_qs = ventas_qs.filter(fecha_creacion__gte=fecha_inicio)
     if fecha_fin:
         ventas_qs = ventas_qs.filter(fecha_creacion__lte=fecha_fin)
+        
 
      # Agregando a nivel de producto
     datos_agrupados = DetalleVenta.objects.filter(venta__in=ventas_qs).values(
         'producto_id', 'producto__nombre'
     ).annotate(
         cantidad_total=Sum('cantidad'),
-        costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
-        ventas_total=Sum(F('cantidad') * (F('precio') - F('descuento'))),
+        costo_total=Sum(F('cantidad') * F('precio_compra_en_venta')),
+        ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
     ).annotate(
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
         porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
@@ -923,8 +945,8 @@ def reporte_ventas_pdf(request):
         'producto_id', 'producto__nombre'
     ).annotate(
         cantidad_total=Sum('cantidad'),
-        costo_total=Sum(F('cantidad') * F('producto__precio_compra')),
-        ventas_total=Sum(F('cantidad') * (F('precio') - F('descuento'))),
+        costo_total=Sum(F('cantidad') * F('precio_compra_en_venta')),
+        ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
     ).annotate(
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
         porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
@@ -980,3 +1002,33 @@ def buscar_cliente2(request):
     termino_busqueda = request.GET.get('q', '')
     clientes = Cliente.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
     return JsonResponse(list(clientes), safe=False)
+
+
+def generar_recibo_pdf(request, pk_cobro):
+    # Toma los mismos pasos para obtener los datos del recibo como lo harías normalmente
+    cobro = get_object_or_404(Cobro, pk=pk_cobro)
+    venta = cobro.venta
+    detalles_venta = venta.detalles.all()
+    otros_cobros = Cobro.objects.filter(venta=venta).exclude(pk=pk_cobro).select_related('vendedor')
+
+    # Calcula la suma de todos los cobros excepto el actual
+    total_abonado = otros_cobros.aggregate(Sum('monto'))['monto__sum'] or 0
+
+    # Renderiza el HTML para el recibo
+    html_string = render_to_string('Ventas/recibo_pdf.html', {
+        'venta': venta,
+        'detalles_venta': detalles_venta,
+        'cobro_actual': cobro,
+        'otros_cobros': otros_cobros,
+        'total_abonado': total_abonado,
+    })
+    
+     # Crear un PDF usando WeasyPrint
+    html = HTML(string=html_string)
+    result = html.write_pdf()
+
+    # Crear una respuesta HTTP con el PDF
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="recibo.pdf"'
+
+    return response

@@ -3,19 +3,18 @@
 {% block content %}
 <h1>Lista de Clientes</h1>
 
-<div class="text-right">
-    <a href="#" id="crearCliente" class="btn btn-custom">Crear Cliente <i class='icon-prefix bx bx-user-plus' style="padding: 3px; border-radius: 5px;"></i></a>
-</div>
 
-<div class="form-container">
-    <form method="get" action="{% url 'Clientes:cliente-list' %}" id="search-form">
-        <div>
-            <input type="text" name="nombre" id="search-input" placeholder="Buscar por nombre" value="{{ nombre }}">
-        </div>
-        <button type="submit">BUSCAR</button>
-        <button type="button" id="clear-button">Limpiar</button>
-    </form>
-</div>
+<div class="row">
+    <div class="col-md-6">
+      <h4>Buscar por nombre:</h4>
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" name="filtro_nombre" id="search-input" placeholder="Ingrese el nombre...">
+      </div>
+    </div>
+    <div class="col-md-6 text-right">
+        <a href="#" id="crearCliente" class="btn btn-custom">Crear Cliente <i class='icon-prefix bx bx-user-plus' style="padding: 3px; border-radius: 5px;"></i></a>
+    </div>
+  </div>
 
 <div id="search-results">
     <!-- Los resultados de la búsqueda se mostrarán aquí -->
@@ -44,9 +43,15 @@
             <td>{{ cliente.correo }}</td>
             <td>{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
             <td>
-                <a href="#" class="editar-btn btn btn-warning btn-sm" data-userid="{{ cliente.id }}">Editar</a>
-                <a href="#" class="eliminar-btn btn btn-danger btn-sm" data-userid="{{ cliente.id }}">Eliminar</a>
+                <div class="acciones">
+                    <a href="#" class="editar-btn btn btn-warning btn-sm" data-userid="{{ cliente.id }}">Editar</a>
+                    <a href="#" class="eliminar-btn btn btn-danger btn-sm" data-userid="{{ cliente.id }}">Eliminar</a>
+                    <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#historialModal" data-cliente-id="{{ cliente.id }}" data-cliente-nombre="{{ cliente.nombre }}">
+                        Historial
+                    </button>
+                </div>                
             </td>
+            
         </tr>
         {% empty %}
         <tr>
@@ -103,32 +108,102 @@
     </ul>
   </div>
 
+<div class="modal bd-example-modal-lg" id="historialModal" tabindex="-1" role="dialog" aria-labelledby="historialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-custom" role="document">
+        <div class="modal-content">
+            <!-- Encabezado del Modal -->
+            <div class="modal-header bg-info">
+                <h5 class="modal-title" id="historialModalLabel">Historial de Ventas del Cliente: </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            
+            <!-- Cuerpo del Modal -->
+            <div class="modal-body">
+                <!-- Tabla de Resultados -->
+                <table class="table mt-3">
+                    <thead>
+                        <tr>
+                            <th>Fecha Venta</th>
+                            <th>ID Venta</th>
+                            <th>E. Fisico</th>
+                            <th>Cantidad</th>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historialResults">
+                        <!-- Los resultados de la búsqueda se insertarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pie del Modal -->
+            <div class="modal-footer bg-dark">
+                                <!-- Formulario de Búsqueda por Rango de Fechas -->
+                <form id="historialSearchForm">
+                <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar<i class="fas fa-window-close"></i></button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
 $(document).ready(function() {
-    // Escuchar el evento de cambio en el campo de entrada de búsqueda
-    $('#search-input').on('input', function() {
-        var searchTerm = $(this).val();
+    var clienteId;
 
-        // Realizar una solicitud AJAX para buscar clientes por nombre
+    // Escuchar cuando el modal se abre
+    $('#historialModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget); // Botón que activó el modal
+        clienteId = button.data('cliente-id'); // Captura el ID del cliente
+        var nombreCliente = button.data('cliente-nombre'); // Asumiendo que también pasas el nombre como data attribute
+
+        // Configurar el título del modal con el nombre del cliente
+        $('#historialModalLabel').text('Historial de Ventas del Cliente: ' + nombreCliente);
+
+        // Realizar la solicitud AJAX para cargar el historial
         $.ajax({
-            url: "{% url 'Clientes:cliente-search' %}",  // Cambia esto a la URL de tu vista de búsqueda
-            method: "GET",
-            data: {nombre: searchTerm},
-            success: function(data) {
-                // Actualizar el contenido del div de resultados con los datos recibidos
-                $('#search-results').html(data.html_result);
+            url: '/clientes/historial_ventas/', // Asegúrate de usar la ruta correcta a tu vista
+            method: 'GET',
+            data: {
+                cliente_id: clienteId
+            },
+            success: function(response) {
+                var resultados = response.ventas;
+                var tabla = $('#historialResults');
+                tabla.empty(); // Limpiar resultados anteriores
+
+                if (resultados.length === 0) {
+                    tabla.append('<tr><td colspan="7" class="text-center">No hay registros para este cliente.</td></tr>');
+                } else {
+                    $.each(resultados, function(i, venta) {
+                        var precio = parseFloat(venta.precio);
+                        var subtotal = parseFloat(venta.subtotal);
+                        var fila = '<tr>' +
+                            '<td>' + venta.fecha_venta + '</td>' +
+                            '<td>' + venta.id_venta + '</td>' +
+                            '<td>' + venta.comentarios + '</td>' +
+                            '<td>' + venta.cantidad + '</td>' +
+                            '<td>' + venta.producto + '</td>' +
+                            '<td>' + (isNaN(precio) ? 'N/A' : precio.toFixed(2)) + '</td>' +
+                            '<td>' + (isNaN(subtotal) ? 'N/A' : subtotal.toLocaleString('us', { minimumFractionDigits: 2, maximumFractionDigits: 2 })) + '</td>' +
+                            '</tr>';
+                        tabla.append(fila);
+                    });
+                }
+            },
+            error: function() {
+                alert('Error al cargar el historial de ventas');
             }
         });
     });
-
-    // Escuchar el clic en el botón de limpiar
-    $('#clear-button').on('click', function() {
-        // Limpiar el campo de búsqueda y el div de resultados
-        $('#search-input').val('');
-        $('#search-results').html('');
-    });
-
     // Al hacer clic en "Crear Nuevo Cliente"
     $("#crearCliente").click(function () {
       var formularioSrc = "{% url 'Clientes:cliente-create' %}";
@@ -181,7 +256,7 @@ $(document).ready(function() {
       var formulario = "{% url 'Clientes:cliente-delete' 0 %}".replace('0', clienteId);
 
           // SweetAlert para mostrar el modal
-          const swalInstance = Swal.fire({
+        const swalInstance = Swal.fire({
             title: 'Eliminar Cliente',
             html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
             showCloseButton: true,
@@ -194,13 +269,29 @@ $(document).ready(function() {
               // Recargar la página completa después de cerrar la ventana flotante
               location.reload();
             },
-          });
-          return false;
-        })
-
-
+        });
+        return false;
+    })
 });
+
 </script>
+
+<script>
+    $(document).ready(function() {
+        $('#search-input').on('keyup', function() {
+            var filtro = $(this).val().toLowerCase();
+            $('tbody tr').each(function() {
+                var clienteNombre = $(this).find('td:nth-child(2)').text().toLowerCase();
+                if (clienteNombre.indexOf(filtro) === -1) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+        });
+    });
+</script>
+    
 
 <style>
     
@@ -254,12 +345,137 @@ $(document).ready(function() {
     /* Puedes ajustar otros estilos según tus preferencias */
 }
 
-
 /* Estilos adicionales para el modal */
 /* CSS global */
 .swal-popup.my-custom-modal-class {
     background-color: #E4E9F7 !important;
 }
+/*css para el modal*/
+.modal-header {
+    background-color: #17a2b8; /* Replace with the actual color code */
+}
+
+.modal-title {
+    color: #000000; /* Replace with the actual color code */
+}
+
+
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+    background-color: #f5f5f5; /* Replace with the actual color code */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Replace with the actual color code */
+    border-color: #dc3545; /* Replace with the actual color code */
+}
+
+#historialModal .modal-body {
+  max-height: 500px; /* Altura máxima en píxeles */
+  overflow-y: auto; /* Muestra una barra de desplazamiento si el contenido excede la altura máxima */
+}
+
+  .modal-dialog-custom {
+  max-width: 90%; /* O cualquier otro valor que prefieras */
+  margin: 30px auto; /* Centra el modal horizontalmente */
+}
+
+/* Puedes también asegurarte de que el modal no sea más ancho que la pantalla */
+@media (min-width: 992px) {
+  .modal-dialog-custom {
+    max-width: 80%; /* O cualquier otro valor que prefieras */
+  }
+} 
+
+
+/* Estilo para la tabla y el encabezado */
+#historialModal .modal-body {
+  overflow-y: auto; /* Habilita el desplazamiento vertical */
+}
+
+#historialModal table {
+  width: 100%; /* Asegura que la tabla ocupe todo el ancho del contenedor */
+  border-collapse: collapse; /* Opcional: para que los bordes de la tabla se vean mejor */
+}
+
+#historialModal thead th {
+  position: sticky;
+  top: 0; /* Ajusta esto si hay algún otro elemento fijo en la parte superior, como un menú de navegación */
+  background: #17a2b8; /* O el color de fondo que desees, para evitar que se vea contenido a través del encabezado */
+  color: white;
+  z-index: 10; /* Asegura que el encabezado se muestre por encima del contenido al desplazarse */
+}
+
+#historialModal thead {
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4); /* Opcional: agrega sombra para un efecto de elevación */
+}
+
+.th-header {
+  background-color:#17a2b8; /* Cambia esto por el color de fondo que prefieras */
+  color: white; /* Color del texto */
+}
+
+
+.form-group {
+    display: flex;
+    flex-direction: column; /* Apila los elementos verticalmente */
+    margin-bottom: 10px; /* Añade un poco de espacio entre los grupos */
+    position: relative;
+    color: white;
+}
+
+.form-group label {
+    margin-bottom: 5px; /* Añade un poco de espacio entre la etiqueta y el campo de entrada */
+}
+
+/* Opcional: Añadir media queries para ajustar para pantallas más pequeñas */
+@media (max-width: 600px) {
+    .form-group {
+        width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
+    }
+}
+
+/* Estilo para los botones dentro de la columna de acciones */
+.acciones {
+    display: flex;
+    justify-content: center; /* Centra los botones horizontalmente */
+    align-items: center; /* Centra los botones verticalmente */
+    gap: 5px; /* Espacio entre los botones */
+}
+
+/* Asegúrate de que todos los botones tengan el mismo tamaño */
+.acciones .btn {
+    flex: 1; /* Los botones crecerán igualmente para llenar el espacio */
+    text-align: center; /* Alinea el texto del botón al centro */
+}
+
+/* Ajusta el padding de los botones si es necesario para que se vean uniformes */
+.acciones .btn-sm {
+    padding: .25rem .5rem; /* Ajusta el relleno vertical y horizontal */
+}
 
 </style>
+
+
+<style>
+    /*estilo para boton crear cliente y buscar cliente*/
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  
+    h4 {
+      margin-top: 10;
+      margin-left: 25px;
+    }
+  
+    /* Estilo para el botón "Abrir Reporte" */
+    .btn-custom {
+      margin-top: 10px;
+      margin-right: 45px;
+    }
+    .form-control{
+      margin-left: 25px;
+    }
+  </style>
 {% endblock %}

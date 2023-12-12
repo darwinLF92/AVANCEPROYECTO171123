@@ -55,7 +55,7 @@ class Venta(models.Model):
                 # Si la fecha de pago teórica es anterior a la fecha de vencimiento,
                 # no hay días vencidos.
                 return 0
-            return (fecha_actual - fecha_pago_teorica).days
+            return (fecha_actual - fecha_pago_teorica).days - 1
         else:
             return 0 
         
@@ -83,8 +83,9 @@ class DetalleVenta(models.Model):
     stock = models.PositiveIntegerField(default=0)
     cantidad = models.PositiveIntegerField()
     precio = models.DecimalField(max_digits=10, decimal_places=2)
+    precio_compra_en_venta = models.DecimalField(max_digits=10, decimal_places=4, default=0.00)
     descuento = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2)
     devolucion = models.BooleanField(default=False)
     created = models.DateTimeField(auto_now_add=True)
 
@@ -124,7 +125,7 @@ class Cobro(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name='cobros')
     vendedor = models.ForeignKey(Vendedor, on_delete=models.SET_NULL, null=True, related_name='cobros')
     fecha_cobro = models.DateField(auto_now_add=True)
-    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    monto = models.DecimalField(max_digits=20, decimal_places=2)
     metodo_pago = models.CharField(max_length=13, choices=METODO_PAGO_CHOICES)
     anulado = models.BooleanField(default=False)
 

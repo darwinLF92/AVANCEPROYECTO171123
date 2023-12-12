@@ -56,6 +56,7 @@
                     <td>
                         <a href="{% url 'Ventas:generar_recibo' pk_cobro=cobro.id %}">Ver Recibo</a>
                         <a href="{% url 'Ventas:anular_cobro' cobro_id=cobro.id %}">Anular Cobro</a>
+                        <button type="button" class="btn btn-danger botonImprimirPDF" data-cobro-id="{{ cobro.id }}">Imprimir</button>
                     </td>
                 </tr>
             {% empty %}
@@ -305,8 +306,21 @@ document.getElementById('consultar').addEventListener('click', function() {
 });
   </script>
   
-
-
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Selecciona todos los botones con la clase 'botonImprimirPDF'
+        const botonesImprimir = document.querySelectorAll('.botonImprimirPDF');
+    
+        botonesImprimir.forEach(function(boton) {
+            boton.addEventListener('click', function() {
+                const cobroId = this.getAttribute('data-cobro-id'); // Obtiene el ID del cobro
+                const url = `/generar-recibo-pdf/${cobroId}/`; // Construye la URL para generar el PDF
+                window.open(url, '_blank'); // Abre la URL en una nueva pestaña
+            });
+        });
+    });
+    </script>
+    
 
 
 

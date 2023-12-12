@@ -1,5 +1,6 @@
 from django.db import models
 from Proveedor.models import Proveedor
+from datetime import datetime
 
 class Producto(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
