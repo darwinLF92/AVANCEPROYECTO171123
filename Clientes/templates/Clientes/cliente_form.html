@@ -1,10 +1,35 @@
-{% extends "base.html" %}
+<head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">    
+</head>
 
 {% block content %}
-<h2>Crear Cliente</h2>
+<div class="container">
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Crear Cliente</button>
+    <button type="submit" class="btn btn-success" {% if success or error_message%}style="display: none;" {% endif %}>Crear Cliente</button>
 </form>
+
+
+{% if success %}
+<div id="modalSuccess" class="modal">
+  <div class="modal-content">
+      <p>{{ message }}</p>
+    </div>
+</div>
+{% endif %}
+
+{% if error_message %}
+<div id="modalError" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <p>{{ error_message }}</p>
+  </div>
+</div>
+{% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="{% static 'js/Success.js' %}"></script>
 {% endblock %}

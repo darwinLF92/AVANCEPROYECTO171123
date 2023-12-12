@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% block content %}
-<h2>Lista de Clientes</h2>
+<h1>Lista de Clientes</h1>
 
 <div class="text-right">
-    <a href="{% url 'Clientes:cliente-create' %}" class="btn btn-custom">Crear Cliente</a>
+    <a href="#" id="crearCliente" class="btn btn-custom">Crear Cliente <i class='icon-prefix bx bx-user-plus' style="padding: 3px; border-radius: 5px;"></i></a>
 </div>
 
 <div class="form-container">
@@ -44,8 +44,8 @@
             <td>{{ cliente.correo }}</td>
             <td>{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
             <td>
-                <a href="{% url 'Clientes:cliente-edit' cliente.id %}" class="btn btn-primary btn-sm">Editar</a>
-                <a href="{% url 'Clientes:cliente-delete' cliente.id %}" class="btn btn-danger btn-sm">Eliminar</a>
+                <a href="#" class="editar-btn btn btn-warning btn-sm" data-userid="{{ cliente.id }}">Editar</a>
+                <a href="#" class="eliminar-btn btn btn-danger btn-sm" data-userid="{{ cliente.id }}">Eliminar</a>
             </td>
         </tr>
         {% empty %}
@@ -55,6 +55,53 @@
         {% endfor %}
     </tbody>
 </table>
+
+<div class="pagination">
+    <ul class="pagination">
+        {% if clientes.has_previous %}
+            <li class="waves-effect">
+                <a href="?page=1" class="start">
+                    << Inicio
+                </a>
+            </li>
+            <li class="waves-effect">
+                <a href="?page={{ clientes.previous_page_number }}" class="prev">
+                    < Atrás
+                </a>
+            </li>
+        {% endif %}
+  
+        {% for i in clientes.paginator.page_range %}
+            {% if clientes.number == i %}
+                <li class="active">
+                    <span>{{ i }}</span>
+                </li>
+            {% elif i > clientes.number|add:'-3' and i < clientes.number|add:'3' %}
+                <li class="waves-effect">
+                    <a href="?page={{ i }}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+  
+        {% if clientes.has_next %}
+            {% if clientes.number|add:'3' < clientes.paginator.num_pages %}
+                <li class="waves-effect">
+                    <span>...</span>
+                </li>
+            {% endif %}
+            <li class="waves-effect">
+                <a href="?page={{ clientes.next_page_number }}" class="next">
+                    Siguiente >
+                </a>
+            </li>
+            <li class="waves-effect">
+                <a href="?page={{ clientes.paginator.num_pages }}" class="last">
+                    Última Página >>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+  </div>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
@@ -81,6 +128,77 @@ $(document).ready(function() {
         $('#search-input').val('');
         $('#search-results').html('');
     });
+
+    // Al hacer clic en "Crear Nuevo Cliente"
+    $("#crearCliente").click(function () {
+      var formularioSrc = "{% url 'Clientes:cliente-create' %}";
+  
+      // SweetAlert para mostrar el modal
+      const swalInstance = Swal.fire({
+          title: 'Crear Cliente',
+          html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+          showCloseButton: true,
+          showConfirmButton: false,
+          customClass: {
+              container: 'swal-container',
+              popup: 'swal-popup my-custom-modal-class',
+          },
+          didClose: () => {
+              // Recargar la página completa después de cerrar la ventana flotante
+              location.reload();
+          },
+      });
+  
+      return false;
+    });
+
+      // Al hacer clic en "Editar"
+    $(".editar-btn").click(function () {
+      var clienteId = $(this).data('userid');
+      var formulario = "{% url 'Clientes:cliente-edit' 0 %}".replace('0', clienteId);
+
+      // SweetAlert para mostrar el modal
+      const swalInstance = Swal.fire({
+        title: 'Editar Cliente',
+        html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+        },
+      });
+      return false;
+    });
+
+    // Al hacer clic en "Eliminar"
+    $(".eliminar-btn").click(function () {
+      var clienteId = $(this).data('userid');
+      var formulario = "{% url 'Clientes:cliente-delete' 0 %}".replace('0', clienteId);
+
+          // SweetAlert para mostrar el modal
+          const swalInstance = Swal.fire({
+            title: 'Eliminar Cliente',
+            html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup my-custom-modal-class',
+            },
+            didClose: () => {
+              // Recargar la página completa después de cerrar la ventana flotante
+              location.reload();
+            },
+          });
+          return false;
+        })
+
+
 });
 </script>
 
@@ -135,5 +253,13 @@ $(document).ready(function() {
     color: #ffffff; /* Cambia el color del texto a blanco */
     /* Puedes ajustar otros estilos según tus preferencias */
 }
+
+
+/* Estilos adicionales para el modal */
+/* CSS global */
+.swal-popup.my-custom-modal-class {
+    background-color: #E4E9F7 !important;
+}
+
 </style>
 {% endblock %}
