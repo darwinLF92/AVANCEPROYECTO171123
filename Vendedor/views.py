@@ -3,13 +3,37 @@ from django.views import View
 from .forms import VendedorForm
 from .models import Vendedor
 from django.http import JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 class ListaVendedoresView(View):
     def get(self, request):
         # Obtener todos los vendedores, ya sean activos o inactivos
         vendedores = Vendedor.objects.all()
-        return render(request, 'lista_vendedores.html', {'vendedores': vendedores})
 
+        # Número de elementos por página
+        elementos_por_pagina = 10  # Puedes ajustar este valor según tus necesidades
+
+        # Crear un objeto Paginator
+        paginator = Paginator(vendedores, elementos_por_pagina)
+
+        # Obtener el número de página desde la solicitud GET
+        page = request.GET.get('page', 1)
+
+        try:
+            # Obtener la página actual
+            vendedores = paginator.page(page)
+        except PageNotAnInteger:
+            # Si la página no es un número entero, mostrar la primera página
+            vendedores = paginator.page(1)
+        except EmptyPage:
+            # Si la página está fuera del rango (por ejemplo, 9999), mostrar la última página
+            vendedores = paginator.page(paginator.num_pages)
+
+        context = {
+            'vendedores': vendedores
+        }
+
+        return render(request, 'lista_vendedores.html', context)
 
 
 class CrearVendedorView(View):

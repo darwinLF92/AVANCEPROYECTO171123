@@ -49,6 +49,53 @@
     </tbody>
   </table>
 
+  <div class="pagination">
+    <ul class="pagination">
+        {% if vendedores.has_previous %}
+            <li class="waves-effect">
+                <a href="?page=1" class="start">
+                    << Inicio
+                </a>
+            </li>
+            <li class="waves-effect">
+                <a href="?page={{ vendedores.previous_page_number }}" class="prev">
+                    < Atrás
+                </a>
+            </li>
+        {% endif %}
+  
+        {% for i in vendedores.paginator.page_range %}
+            {% if vendedores.number == i %}
+                <li class="active">
+                    <span>{{ i }}</span>
+                </li>
+            {% elif i > vendedores.number|add:'-3' and i < vendedores.number|add:'3' %}
+                <li class="waves-effect">
+                    <a href="?page={{ i }}">{{ i }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+  
+        {% if vendedores.has_next %}
+            {% if vendedores.number|add:'3' < vendedores.paginator.num_pages %}
+                <li class="waves-effect">
+                    <span>...</span>
+                </li>
+            {% endif %}
+            <li class="waves-effect">
+                <a href="?page={{ vendedores.next_page_number }}" class="next">
+                    Siguiente >
+                </a>
+            </li>
+            <li class="waves-effect">
+                <a href="?page={{ vendedores.paginator.num_pages }}" class="last">
+                    Última Página >>
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+  </div>
+
   <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   
 

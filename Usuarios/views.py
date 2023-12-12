@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required, permission_required
 from .forms import UserRegisterForm, UserEditForm
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 
@@ -9,7 +10,31 @@ from .forms import UserRegisterForm, UserEditForm
 @permission_required('auth.view_user')
 def list_users(request):
     users = User.objects.all()
-    return render(request, 'list_users.html', {'users': users})
+
+    # Número de elementos por página
+    elementos_por_pagina = 10  # Puedes ajustar este valor según tus necesidades
+
+    # Crear un objeto Paginator
+    paginator = Paginator(users, elementos_por_pagina)
+
+    # Obtener el número de página desde la solicitud GET
+    page = request.GET.get('page', 1)
+
+    try:
+        # Obtener la página actual
+        users = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la página no es un número entero, mostrar la primera página
+        users = paginator.page(1)
+    except EmptyPage:
+        # Si la página está fuera del rango (por ejemplo, 9999), mostrar la última página
+        users = paginator.page(paginator.num_pages)
+
+    context = {
+        'users': users
+    }
+
+    return render(request, 'list_users.html', context)
 
 
 @login_required
