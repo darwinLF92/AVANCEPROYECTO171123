@@ -2,7 +2,7 @@
 {% load humanize %}
 
 {% block content %}
-  <h2>Cuentas por Cobrar</h2>
+  <h1>Cuentas por Cobrar</h1>
 
   <div class="row">
     <div class="col-md-6">
@@ -37,7 +37,7 @@
           <td>{{ datos.total_abonos|floatformat:2|intcomma }}</td>
           <td>{{ datos.saldo_pendiente|floatformat:2|intcomma }}</td>
           <td>
-            <a href="{% url 'Ventas:lista_creditos' cliente.id %}">Ver Detalles</a>
+            <a href="{% url 'Ventas:lista_creditos' cliente.id %}" class="btn btn-info ver-detalle-btn">Ver Detalles</a>
           </td>
         </tr>
       {% endfor %}
