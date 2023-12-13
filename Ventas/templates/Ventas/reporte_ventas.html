@@ -96,6 +96,8 @@
         {% endif %}
         {% if filtro_cliente %}
             <p>Consulta por: "Cliente - {{ filtro_cliente }}"</p>
+        {% elif filtro_producto %}
+            <p>Consulta por: "Producto - {{ filtro_producto }}"</p>
         {% elif filtro_vendedor %}
             <p>Consulta por: "Vendedor - {{ filtro_vendedor }}"</p>
         {% else %}

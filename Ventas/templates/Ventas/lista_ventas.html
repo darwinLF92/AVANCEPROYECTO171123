@@ -99,6 +99,12 @@
         </div>
 
         <div class="form-group">
+            <label for="filtroProducto">Producto:</label>
+            <input type="text" id="filtroProducto" placeholder="Filtrar por producto...">
+            <div class="resultados-busqueda2" style="position: absolute; z-index: 1000;"></div>                        
+        </div>
+
+        <div class="form-group">
             <label for="filtroVendedor">Vendedor:</label>
             <select id="filtroVendedor">
                 <option value="">Seleccionar Vendedor</option>
@@ -123,12 +129,15 @@
         };
       
         // Función para actualizar el modal con datos filtrados
-        function actualizarModal(filtroCliente, filtroVendedor, fechainiciov, fechafinv) {
+        function actualizarModal(filtroCliente,filtroProducto, filtroVendedor,  fechainiciov, fechafinv) {
           let url = '/reporte-ventas'; // Asegúrate de que esta URL es correcta y está definida en tu Django urls.py
           let params = new URLSearchParams();
        
         if (filtroCliente) {
             params.append('cliente', filtroCliente);
+        }
+        if (filtroProducto) {
+            params.append('productos', filtroProducto);
         }
         if (filtroVendedor) {
             params.append('vendedor', filtroVendedor);
@@ -214,52 +223,48 @@
         const [year, month, day] = fecha.split('-');
         return `${day}-${month}-${year}`;
     }
-    
-    document.getElementById('botonAbrirModal').addEventListener('click', function() {
-      // Format the current date to 'YYYY-MM-DD'
-      const today = new Date().toISOString().split('T')[0];
-    
-      // Reset the client and vendor filters
-      document.getElementById('filtroCliente').value = '';
-      document.getElementById('filtroVendedor').value = '';
-    
-      // Set the date inputs to today's date
-      document.getElementById('fechaInicio').value = today;
-      document.getElementById('fechaFin').value = today;
-    
-      // Update the modal with today's date and reset filters
-      actualizarModal('', '', today, today);
-    });
-    
+        
     // Event listener para el botón que abre el modal
     document.getElementById('botonAbrirModal').addEventListener('click', function() {
-        let filtroCliente = document.getElementById('filtroCliente').value;
-        let filtroVendedor = document.getElementById('filtroVendedor').value;
-        let fechainiciov = document.getElementById('fechaInicio').value; // Use IDs consistent with your HTML
-        let fechafinv = document.getElementById('fechaFin').value;       // Use IDs consistent with your HTML
-        actualizarModal(filtroCliente, filtroVendedor, fechainiciov, fechafinv);
-    });
+   const today = new Date().toISOString().split('T')[0];
+   
+   // Set the date inputs to today's date
+   document.getElementById('fechaInicio').value = today;
+   document.getElementById('fechaFin').value = today;
+
+   // Get the current filter values
+   let filtroCliente = document.getElementById('filtroCliente').value;
+   let filtroProducto = document.getElementById('filtroProducto').value;
+   let filtroVendedor = document.getElementById('filtroVendedor').value;
+
+   // Update the modal with the current filter values
+   actualizarModal(filtroCliente,filtroProducto, filtroVendedor,  today, today);
+});
     
     document.getElementById('consultar').addEventListener('click', function() {
-        let filtroCliente = document.getElementById('filtroCliente').value;
-        let filtroVendedor = document.getElementById('filtroVendedor').value;
-        // No need to convert format as the input type="date" provides the date in 'YYYY-MM-DD' format
         let fechainicio = document.getElementById('fechaInicio').value;
         let fechafin = document.getElementById('fechaFin').value;
+        let filtroCliente = document.getElementById('filtroCliente').value;
+        let filtroProducto = document.getElementById('filtroProducto').value;
+        let filtroVendedor = document.getElementById('filtroVendedor').value;
+        // No need to convert format as the input type="date" provides the date in 'YYYY-MM-DD' format
+        
     
-        actualizarModal(filtroCliente, filtroVendedor, fechainicio, fechafin);
+        actualizarModal(filtroCliente,filtroProducto, filtroVendedor, fechainicio, fechafin);
     });
     
       
         document.getElementById('botonImprimirPDF').addEventListener('click', function() {
           // Asegúrate de incluir los parámetros de fecha en la URL de impresión si es necesario
           const filtroCliente = document.getElementById('filtroCliente').value;
+          const filtroProducto = document.getElementById('filtroProducto').value;
           const filtroVendedor = document.getElementById('filtroVendedor').value;
           const fechainiciov = document.getElementById('fechaInicio').value;
           const fechafinv = document.getElementById('fechaFin').value;
       
           let params = new URLSearchParams({
               cliente: filtroCliente,
+              productos: filtroProducto,
               vendedor: filtroVendedor,
               fechainiciov: fechainiciov,
               fechafinv: fechafinv
@@ -269,7 +274,7 @@
         });
 
 
-        document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     const inputCliente = document.getElementById('filtroCliente');
     const resultadosBusqueda = document.querySelector('.resultados-busqueda');
 
@@ -302,6 +307,7 @@
         }
     });
 });
+
 
       </script>
 

@@ -123,18 +123,20 @@ class AddVentaView(ListView):
                 verts_items = json.loads(request.POST.get('verts', '[]'))
                 for item in verts_items:
                     producto = Producto.objects.get(id=item['id'])
+                    descuento = Decimal(item['descuento']).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
                     detalle_data = {
                         'venta': venta,
                         'producto': Producto.objects.get(id=item['id']),
                         'cantidad': int(item['cantidad']),
                         'precio': Decimal(item['precio_venta']),
-                        'descuento': Decimal(item['descuento']),
+                        'descuento': descuento,
                         'precio_compra_en_venta': producto.precio_compra,
                         'subtotal': Decimal(item['subtotal']),
                         # ... otros campos necesarios ...
                     }
                     try:
                         detalle = DetalleVenta(**detalle_data)
+                        print("Descuento:", detalle_data['descuento'])
                         detalle.save()
                     except ValidationError as e:
                         data['error'] = str(e)
@@ -145,12 +147,14 @@ class AddVentaView(ListView):
                     data['status'] = 'success'
                     data['venta_id'] = venta.id
                 print("precio_compra_en_venta:", detalle_data['precio_compra_en_venta'])
+                
             except Exception as e:
                 data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
         else:
             data['error'] = 'Acción no permitida'
 
         return JsonResponse(data, safe=False)
+    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -833,6 +837,7 @@ def reporte_ventas(request):
 
     vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
     filtro_cliente = request.GET.get('cliente', '')
+    filtro_producto = request.GET.get('productos', '')
     filtro_vendedor = request.GET.get('vendedor', '')
     fecha_inicio_str = request.GET.get('fechainiciov', '')
     fecha_fin_str = request.GET.get('fechafinv', '')
@@ -853,15 +858,20 @@ def reporte_ventas(request):
     if fecha_fin:
         ventas_qs = ventas_qs.filter(fecha_creacion__lte=fecha_fin)
         
+     # Preparar la consulta inicial para DetalleVenta
+    detalles_qs = DetalleVenta.objects.filter(venta__in=ventas_qs)
+
+    # Aplicar filtro de producto en DetalleVenta
+    if filtro_producto:
+        detalles_qs = detalles_qs.filter(producto__nombre__icontains=filtro_producto)
 
      # Agregando a nivel de producto
-    datos_agrupados = DetalleVenta.objects.filter(venta__in=ventas_qs).values(
+    datos_agrupados = detalles_qs.values(
         'producto_id', 'producto__nombre'
     ).annotate(
         cantidad_total=Sum('cantidad'),
         costo_total=Sum(F('cantidad') * F('precio_compra_en_venta')),
-        ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
-    ).annotate(
+        ventas_total=Sum((F('cantidad') * F('precio')) - F('descuento')),
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
         porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
     )
@@ -875,6 +885,7 @@ def reporte_ventas(request):
             'ventas_total': dato['ventas_total'],
             'renta_bruta': dato['renta_bruta'],
             'porcentaje_renta': dato['porcentaje_renta'],
+            
         }
         for dato in datos_agrupados
     ]
@@ -902,6 +913,7 @@ def reporte_ventas_pdf(request):
     # Obtener lista de vendedores activos
     vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
     filtro_cliente = request.GET.get('cliente', '')
+    filtro_producto = request.GET.get('productos', '')
     filtro_vendedor = request.GET.get('vendedor', '')
     fecha_inicio_str = request.GET.get('fechainiciov', '') or datetime.now().strftime('%Y-%m-%d')
     fecha_fin_str = request.GET.get('fechafinv', '') or datetime.now().strftime('%Y-%m-%d')
@@ -922,17 +934,24 @@ def reporte_ventas_pdf(request):
     if fecha_fin:
         ventas_qs = ventas_qs.filter(fecha_creacion__lte=fecha_fin)
 
+     # Preparar la consulta inicial para DetalleVenta
+    detalles_qs = DetalleVenta.objects.filter(venta__in=ventas_qs)
+
+    # Aplicar filtro de producto en DetalleVenta
+    if filtro_producto:
+        detalles_qs = detalles_qs.filter(producto__nombre__icontains=filtro_producto)
+
      # Agregando a nivel de producto
-    datos_agrupados = DetalleVenta.objects.filter(venta__in=ventas_qs).values(
+    datos_agrupados = detalles_qs.values(
         'producto_id', 'producto__nombre'
     ).annotate(
         cantidad_total=Sum('cantidad'),
         costo_total=Sum(F('cantidad') * F('precio_compra_en_venta')),
-        ventas_total = Sum((F('cantidad') * F('precio')) - F('descuento')),
-    ).annotate(
+        ventas_total=Sum((F('cantidad') * F('precio')) - F('descuento')),
         renta_bruta=ExpressionWrapper(F('ventas_total') - F('costo_total'), output_field=DecimalField()),
         porcentaje_renta=ExpressionWrapper(F('renta_bruta') / F('ventas_total') * 100, output_field=DecimalField())
     )
+
 
     datos_ventas = [
         {
@@ -965,6 +984,7 @@ def reporte_ventas_pdf(request):
         'fecha_inicio': fecha_inicio_str,
         'fecha_fin': fecha_fin_str,
         'filtro_cliente': filtro_cliente,
+         'filtro_producto': filtro_producto,
         'filtro_vendedor': filtro_vendedor,
     })
 
@@ -984,6 +1004,11 @@ def buscar_cliente2(request):
     termino_busqueda = request.GET.get('q', '')
     clientes = Cliente.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
     return JsonResponse(list(clientes), safe=False)
+
+def buscar_producto3(request):
+    termino_busqueda = request.GET.get('q', '')
+    producto = Producto.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
+    return JsonResponse(list(producto), safe=False)
 
 
 def generar_recibo_pdf(request, pk_cobro):
