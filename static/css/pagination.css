@@ -1,64 +1,84 @@
-/* estilos para paginación */
+/* Estilos para paginación formal y compacta */
 .pagination {
-    text-align: center;
-    margin-top: 20px;
-  }
-  
-  .pagination ul.pagination {
-    list-style: none;
-    display: inline-flex;
-    padding: 0;
-    margin: 0;
-  }
-  
+  text-align: center;
+  margin-top: 20px;
+}
+
+.pagination ul.pagination {
+  list-style: none;
+  display: flex;
+  padding: 0;
+  margin: 0;
+  justify-content: center;
+  align-items: center;
+}
+
+.pagination li {
+  margin: 0 3px;
+  min-width: 30px;
+  height: 36px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination a,
+.pagination span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background-color: #f2f2f2;
+  color: #333;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 12px;
+  border: 1px solid #ccc;
+}
+
+.pagination a:hover {
+  background-color: #ddd;
+}
+
+.pagination .current {
+  background-color: #4CAF50;
+  color: #fff;
+}
+
+.pagination a.prev,
+.pagination a.next {
+  background-color: #3498db;
+  color: #fff;
+  height: 36px;
+}
+
+.pagination a.prev:hover, 
+.pagination a.next:hover {
+  background-color: #2980b9;
+}
+
+.pagination i {
+  margin: 0 3px;
+  margin-right: 1px;
+}
+
+/* Estilos para dispositivos móviles */
+@media only screen and (max-width: 600px) {
   .pagination li {
-    text-align: center;
-    margin: 0 5px;
-    min-width: 36px;
-    height: 45px;
-    border-radius: 6px;
+      margin: 0 2px;
+      min-width: 26px;
+      height: 30px;
   }
-  
+
   .pagination a,
   .pagination span {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 36px;
-    height: 45px;
-    padding: 0 10px;
-    border-radius: 6px;
-    background-color: #ddd;
-    color: #333;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 14px;
+      min-width: 26px;
+      height: 30px;
+      padding: 0 5px;
+      font-size: 10px;
   }
-  
-  .pagination a:hover {
-    background-color: #aaa;
-    color: #fff;
-  }
-  
-  .pagination .current {
-    background-color: #4CAF50;
-    color: #fff;
-  }
-  
-  .pagination a.prev,
-  .pagination a.next {
-    background-color: #2980B9;
-    color: #fff;
-    height: 45px;
-  }
-  
-  .pagination a.prev:hover, 
-  .pagination a.next:hover {
-    background-color: #0d5cb6;
-  }
-  
-  .pagination i {
-    text-align: center;
-    margin: 0 5px;
-    margin-right: 1px;
-  }
+}
