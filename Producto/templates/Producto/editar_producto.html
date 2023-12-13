@@ -1,4 +1,7 @@
-{% extends 'base.html' %}
+<head>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">    
+</head>
 
 {% block content %}
 <div class="container">
@@ -6,7 +9,27 @@
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <button type="submit" class="btn btn-primary" {% if success or error_message%}style="display: none;" {% endif %}>Guardar Cambios</button>
     </form>
 </div>
+
+{% if success %}
+<div id="modalSuccess" class="modal">
+  <div class="modal-content">
+      <p >{{ message }}</p>
+    </div>
+  </div>
+{% endif %}
+
+{% if error_message %}
+<div id="modalError" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <p>{{ error_message }}</p>
+  </div>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="{% static 'js/Success.js' %}"></script>
 {% endblock %}

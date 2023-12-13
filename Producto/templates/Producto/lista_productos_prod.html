@@ -1,36 +1,168 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/tables.css' %}">
+<style>
+  /* Estilos adicionales para el modal */
+  /* CSS global */
+  .swal-popup.my-custom-modal-class {
+    background-color: #E4E9F7 !important;
+  }
+</style>
+
 <h1>Productos para Fabricación</h1>
 
 <table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Precio Compra</th>
-            <th>Precio Venta</th>
-            <th>Stock</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for producto in productos %}
-        <tr>
-            <td>{{ producto.codigo }}</td>
-            <td>{{ producto.nombre }}</td>
-            <td>{{ producto.descripcion }}</td>
-            <td>{{ producto.precio_compra|floatformat:2 }}</td>
-            <td>{{ producto.precio_venta }}</td>
-            <td>{{ producto.stock }}</td>
-            <td>
-                <a href="{% url 'Producto:aumentar_stock' producto.id %}" class="btn btn-secondary">Aumentar</a>
-                <a href="{% url 'Producto:ver_detalle_producto' producto.id %}" class="btn btn-info">Ver Detalle</a>
-                <a href="{% url 'Producto:editar_componentes' producto.id %}" class="btn btn-primary">Editar Componentes</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
+  <thead>
+    <tr>
+      <th>Código</th>
+      <th>Nombre</th>
+      <th>Descripción</th>
+      <th>Precio Compra</th>
+      <th>Precio Venta</th>
+      <th>Stock</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for producto in productos %}
+    <tr>
+      <td>{{ producto.codigo }}</td>
+      <td>{{ producto.nombre }}</td>
+      <td>{{ producto.descripcion }}</td>
+      <td>{{ producto.precio_compra|floatformat:2 }}</td>
+      <td>{{ producto.precio_venta }}</td>
+      <td>{{ producto.stock }}</td>
+      <td>
+        <a href="#" class="aumentar-btn btn btn-success" data-userid="{{ producto.id }}">Aumentar</a>
+        <a href="#" class="btn btn-info ver-detalle-btn" data-userid="{{ producto.id }}">Ver Detalle</a>
+        <a href="#" class="editar-btn btn btn-warning" data-userid="{{ producto.id }}">Editar Componentes</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
+
+<div class="pagination">
+  <ul class="pagination">
+      {% if productos.has_previous %}
+          <li class="waves-effect">
+              <a href="?page=1" class="start">
+                  << Inicio
+              </a>
+          </li>
+          <li class="waves-effect">
+              <a href="?page={{ productos.previous_page_number }}" class="prev">
+                  < Atrás
+              </a>
+          </li>
+      {% endif %}
+
+      {% for i in productos.paginator.page_range %}
+          {% if productos.number == i %}
+              <li class="active">
+                  <span>{{ i }}</span>
+              </li>
+          {% elif i > productos.number|add:'-3' and i < productos.number|add:'3' %}
+              <li class="waves-effect">
+                  <a href="?page={{ i }}">{{ i }}</a>
+              </li>
+          {% endif %}
+      {% endfor %}
+
+      {% if productos.has_next %}
+          {% if productos.number|add:'3' < productos.paginator.num_pages %}
+              <li class="waves-effect">
+                  <span>...</span>
+              </li>
+          {% endif %}
+          <li class="waves-effect">
+              <a href="?page={{ productos.next_page_number }}" class="next">
+                  Siguiente >
+              </a>
+          </li>
+          <li class="waves-effect">
+              <a href="?page={{ productos.paginator.num_pages }}" class="last">
+                  Última Página >>
+              </a>
+          </li>
+      {% endif %}
+  </ul>
+</div>
+
+
+<div id="myModal" class="modal bd-example-modal-lg">
+  <!-- Contenido del modal se agregará dinámicamente aquí -->
+</div>
+
+<script>
+  $(document).ready(function() {
+    // Al hacer clic en "Aumentar"
+    $(".aumentar-btn").click(function () {
+      var productoId = $(this).data('userid');
+      var formularioSrc = "{% url 'Producto:aumentar_stock' 0 %}".replace('0', productoId);
+
+      // SweetAlert para mostrar el modal
+      const swalInstance = Swal.fire({
+        title: 'Aumentar',
+        html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+          container: 'swal-container',
+          popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+        },
+      });
+        return false;
+    });
+
+    // Al hacer clic en "Ver Detalle"
+    $(".ver-detalle-btn").click(function () {
+      var productoId = $(this).data('userid');
+      var formularioSrc = "{% url 'Producto:ver_detalle_producto' 0 %}".replace('0', productoId);
+
+      // SweetAlert para mostrar el modal
+      Swal.fire({
+        title: 'Ver Detalle',
+        html: `<iframe src="${formularioSrc}" width="100%" height="880vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+          container: 'swal-container',
+          popup: 'swal-popup my-custom-modal-class',
+        },
+      });
+
+      return false;
+    });
+
+    // Al hacer clic en "Editar Componentes"
+    $(".editar-btn").click(function () {
+      var productoId = $(this).data('userid');
+      var formularioSrc = "{% url 'Producto:editar_componentes' 0 %}".replace('0', productoId);
+
+      // SweetAlert para mostrar el modal
+      const swalInstance = Swal.fire({
+        title: 'Editar Componentes',
+        html: `<iframe src="${formularioSrc}" width="100%" height="880vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+          container: 'swal-container',
+          popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+          // Recargar la página completa después de cerrar la ventana flotante
+          location.reload();
+        },
+      });
+      return false;
+    });
+  });
+</script>
 {% endblock %}

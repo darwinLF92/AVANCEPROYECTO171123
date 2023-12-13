@@ -1,7 +1,21 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+<head>
+  {% load static %}
+ 
+  <link rel="stylesheet" href="{% static 'css/tables.css' %}"> 
+  <style>
+
+  </style>   
+</head>
 {% load humanize %}
 {% block content %}
-  <h2>Ventas al Crédito de {{ cliente.nombre }}</h2>
+
+  <h1>Ventas al Crédito de {{ cliente.nombre }}</h1>
+
+<div>
+  <a href="{% url 'Ventas:ventas_credito_cliente' %}" class="btn btn-primary float-right">Volver a Cuentas por Cobrar</a>
+</div>
+<br><br> 
 
   <form id="ventasForm">
     <table id="ventasTable">
@@ -29,7 +43,7 @@
             <td>
               <input type="checkbox" class="ventaCheckbox" data-total="{{ venta.saldo_pendiente }}">
             </td>
-            <td><a href="{% url 'Ventas:detalle_venta' venta.id %}">Ver Detalles</a></td>
+            <td><a href="#" class="btn btn-info ver-detalle-btn" data-userid="{{ venta.id }}" >Ver Detalles</a></td>
           </tr>
         {% empty %}
           <tr><td colspan="6">No hay ventas al crédito para este cliente.</td></tr>
@@ -37,7 +51,7 @@
       </tbody>
     </table>
     
-    <div class="acciones-cobro">
+    <div class="container">
       <div>
         <label>Total Créditos:</label>
         <input type="text" id="totalCreditos" readonly value="0.00">
@@ -50,10 +64,9 @@
         <label>Créditos Pendientes:</label>
         <input type="text" id="creditosPendientes" readonly value="0.00">
       </div>
-      <div class="botones-acciones">
-        <input type="button" value="Cobrar Seleccionados" onclick="abrirModalCobro()">
-        <input type="button" value="Abono Crédito Seleccionado" onclick="abrirModalAbono()">
-        <a href="{% url 'Ventas:ventas_credito_cliente' %}" class="btn btn-primary">Cancelar</a>
+      <div class="btn-group">
+        <button type="button" class="btn btn-info" onclick="abrirModalCobro()">Cobrar Seleccionados</button>
+        <button type="button" class="btn btn-secondary ml-2" onclick="abrirModalAbono()">Abono Crédito Seleccionado</button>
       </div>
     </div>
   </form>
@@ -121,8 +134,30 @@
 <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
 
 <script>
+  $(document).ready(function() {
+    // Al hacer clic en "Ver Detalle"
+    $(".ver-detalle-btn").click(function () {
+      var ventaId = $(this).data('userid');
+      var formularioSrc = "{% url 'Ventas:detalle_venta' 0 %}".replace('0', ventaId);
 
+      // SweetAlert para mostrar el modal
+      Swal.fire({
+        title: 'Ver Detalle',
+        html: `<iframe src="${formularioSrc}" width="100%" height="880vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+          container: 'swal-container',
+          popup: 'swal-popup my-custom-modal-class',
+        },
+      });
 
+      return false;
+    });
+  });
+</script>
+
+<script>
 
   // Función para abrir el modal de Cobro Seleccionado
   function abrirModalCobro() {
@@ -306,6 +341,67 @@ function enviarDatosCobro(datos, metodoPago) {
 
 
 <style>
+  body {
+    font-family: 'Roboto', Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    max-width: 400px;
+    margin: 50px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+
+  div {
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #333;
+  }
+
+  input {
+    width: calc(100% - 16px);
+    padding: 10px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #555;
+  }
+
+  .botones-acciones {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  input[type="button"] {
+    width: 48%;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+
+  input[type="button"]:hover {
+    background-color: #2980b9;
+  }
   .modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
@@ -347,9 +443,9 @@ function enviarDatosCobro(datos, metodoPago) {
   .botones-acciones {
     margin-top: 10px;
   }
-
+  /* Estilos adicionales para el modal */
+  .swal-popup.my-custom-modal-class {
+    background-color: #E4E9F7 !important;
+  }
 </style>
-
-
-
 {% endblock %}

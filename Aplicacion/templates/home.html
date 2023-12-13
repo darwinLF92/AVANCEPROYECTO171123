@@ -3,8 +3,103 @@
 {% block title %}Página de Inicio{% endblock %}
 
 {% block content %}
-  <h1>Bienvenido, {{ user.username }}!</h1>
-  <p>Pagina Inicio</p>
 
-  <!-- Puedes agregar más contenido específico para la página de inicio aquí -->
+{% if user.is_authenticated %}
+<div class="d-flex flex-column align-items-center justify-content-center min-vh-100">
+  <h1 class="display-4 font-weight-bold mb-4 text-center">¡Bienvenido, {{ user.username }}!</h1>
+  <p class="text-secondary text-center mb-8">Gracias por iniciar sesión en DMLR System.</p>
+
+  
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <!-- Sección de Inventario -->
+    <div class="col mb-4">
+      <a href="{% url 'Producto:listar_productos' %}" class="text-decoration-none text-dark">
+        <div class="card bg-primary text-white h-100">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-package mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2">Inventario</h2>
+            <p class="small">Administra y controla tu inventario de productos de manera eficiente.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Sección de Punto de Venta -->
+    <div class="col mb-4">
+      <a href="{% url 'Ventas:AddSale' %}" class="text-decoration-none text-dark">
+        <div class="card bg-success text-white h-100">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-dollar-circle mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2">Punto de Venta</h2>
+            <p class="small">Realiza ventas y transacciones de manera rápida y fácil.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Otras Características -->
+    <div class="col mb-4">
+      <a href="#" class="text-decoration-none text-dark">
+        <div class="card bg-warning text-white h-100">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-cog mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2">Configuración</h2>
+            <p class="small">Personaliza la configuración según tus necesidades específicas.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+  {% else %}
+  <!-- Similar a la sección cuando el usuario no está autenticado -->
+<div class="d-flex flex-column align-items-center justify-content-center min-vh-100">
+  <h1 class="display-4 font-weight-bold mb-4 text-center">¡Bienvenido!</h1>
+  <p class="text-secondary text-center mb-8">Recuerda <a href="{% url 'Aplicacion:login' %}" class="text-primary">iniciar sesión</a> en DMLR System para utilizar todas sus funciones.</p>
+
+  
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <!-- Sección de Inventario -->
+    <div class="col mb-4">
+      <a href="#" class="text-decoration-none text-dark">
+        <div class="card bg-primary text-white h-100">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-package mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2">Inventario</h2>
+            <p class="small">Administra y controla tu inventario de productos de manera eficiente.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Sección de Punto de Venta -->
+    <div class="col mb-4">
+      <a href="#" class="text-decoration-none text-dark">
+        <div class="card bg-success text-white h-100">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-dollar-circle mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2">Punto de Venta</h2>
+            <p class="small">Realiza ventas y transacciones de manera rápida y fácil.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Otras Características -->
+    <div class="col mb-4">
+      <a href="#" class="text-decoration-none text-dark">
+        <div class="card bg-warning text-white h-100">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-cog mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2">Configuración</h2>
+            <p class="small">Personaliza la configuración según tus necesidades específicas.</p>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+  {% endif %}
+
 {% endblock %}

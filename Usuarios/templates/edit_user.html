@@ -1,13 +1,100 @@
-{% extends 'base.html' %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/forms.css' %}">
+<!-- SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10">
+<head>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+    }
+  
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+  
+    h1 {
+      color: #333;
+    }
+  
+    form {
+      margin-top: 20px;
+    }
+  
+    button {
+      background-color: #4caf50;
+      color: #fff;
+      padding: 10px 15px;
+      border: none;
+      cursor: pointer;
+    }
+  
+    button:hover {
+      background-color: #45a049;
+    }
+  
+    .modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #fff;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+  
+    .close {
+      float: right;
+      font-size: 20px;
+      cursor: pointer;
+    }
+  </style>
+  
+</head>
+<body>
+  <h1> 
+    
+  </h1>
 
-{% block title %}Editar Usuario{% endblock %}
+  {% block content %}
 
-{% block content %}
-  <h1>Editar Usuario: {{ form.instance.username }}</h1>
+  {% if error_message %}
+  <div id="modalError" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <p>{{ error_message }}</p>
+    </div>
+  </div>
+  {% endif %}
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Actualizar</button>
-  </form>
+  <div class="container">
+
+    <h1>Editar Usuario: {{ form.instance.username }}</h1>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button id="crearBtn" class="btn waves-effect waves-light" type="submit" {% if success or error_message %}style="display: none;" {% endif %}>
+        Actualizar</button>
+    </form>
+
+    {% if success %}
+    <div id="modalSuccess" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <p>{{ message }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="{% static 'js/Success.js' %}"></script>
 {% endblock %}

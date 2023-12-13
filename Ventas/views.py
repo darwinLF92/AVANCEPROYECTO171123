@@ -30,6 +30,7 @@ from django.db.models.functions import Coalesce
 from django.template.loader import render_to_string
 from datetime import datetime, date
 from django.contrib import messages
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import tempfile
 
 
@@ -38,12 +39,28 @@ class ListaVentasView(ListView):
     model = Venta
     template_name = 'Ventas/lista_ventas.html'
     context_object_name = 'ventas'
+    items_per_page = 10  # Número de elementos por página
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
         context['today'] = today.strftime("%Y-%m-%d")  # Formato de fecha 'YYYY-MM-DD'
 
+        # Implementar paginación manualmente
+        ventas = context['ventas']
+        paginator = Paginator(ventas, self.items_per_page)
+        page = self.request.GET.get('page')
+
+        try:
+            ventas = paginator.page(page)
+        except PageNotAnInteger:
+            # Si la página no es un número entero, entrega la primera página.
+            ventas = paginator.page(1)
+        except EmptyPage:
+            # Si la página está fuera de rango (ejemplo: 9999), entrega la última página de resultados.
+            ventas = paginator.page(paginator.num_pages)
+
+        context['ventas'] = ventas
         # Calcular el total de ventas
         ventas = self.get_queryset()
         total_ventas = ventas.aggregate(totalv=Sum('total'))['totalv'] if ventas else 0
@@ -183,6 +200,7 @@ def eliminar_venta(request, id):
     venta = get_object_or_404(Venta, id=id)
     if request.method == 'POST':
         venta.delete()
+        messages.success(request, 'La venta se eliminó correctamente.')  # Agrega un mensaje de éxito
         return redirect('Ventas:lista_ventas')  # Redirige a la lista de ventas
     return render(request, 'Ventas/confirmar_eliminar_venta.html', {'venta': venta})
 

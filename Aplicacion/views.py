@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserLoginForm, UserRegisterForm
+from django.contrib import messages
 
 def home(request):
     return render(request, 'home.html')
@@ -14,6 +15,9 @@ def login_view(request):
             if user:
                 login(request, user)
                 return redirect('Aplicacion:home')
+            else:
+                # Agrega un mensaje de error si la autenticación falla
+                messages.error(request, 'Nombre de usuario o contraseña incorrectos.')
     else:
         form = UserLoginForm()
     return render(request, 'login.html', {'form': form})

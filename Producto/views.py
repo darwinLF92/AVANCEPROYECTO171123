@@ -12,6 +12,7 @@ from .models import Proveedor
 from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import FileResponse, JsonResponse, HttpResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 def listar_productos(request):
@@ -23,8 +24,23 @@ def listar_productos(request):
     else:
         # Si no se proporciona un valor de búsqueda, mostrar todos los productos activos
         productos = Producto.objects.filter(activo=True)
-    
-    return render(request, 'Producto/listar_productos.html', {'productos': productos, 'nombre': nombre})
+
+        # Número de elementos por página
+    elementos_por_pagina = 10
+    # Paginación
+    paginator = Paginator(productos, elementos_por_pagina)  # Muestra 10 productos por página
+
+    page = request.GET.get('page')
+    try:
+        productos_paginados = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la página no es un número entero, muestra la primera página
+        productos_paginados = paginator.page(1)
+    except EmptyPage:
+        # Si la página está fuera de rango (por ejemplo, 9999), muestra la última página
+        productos_paginados = paginator.page(paginator.num_pages)
+
+    return render(request, 'Producto/listar_productos.html', {'productos': productos_paginados, 'nombre': nombre})
 
 
 
@@ -36,8 +52,29 @@ def get_productos(request):
 
 #para ver la lista de productos marcados como fabricacion
 def listar_productos_fabricacion(request):
+    # Obtén todos los productos para fabricación activos
     productos_para_fabricacion = Producto.objects.filter(activo=True, para_fabricacion=True)
-    return render(request, 'Producto/lista_productos_prod.html', {'productos': productos_para_fabricacion})
+
+    # Número de productos por página
+    productos_por_pagina = 10  # Puedes ajustar esto según tus necesidades
+
+    # Configura el paginador
+    paginator = Paginator(productos_para_fabricacion, productos_por_pagina)
+
+    # Obtiene el número de página actual desde la solicitud GET
+    page = request.GET.get('page')
+
+    try:
+        # Obtiene los productos para la página actual
+        productos = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la página no es un número entero, muestra la primera página
+        productos = paginator.page(1)
+    except EmptyPage:
+        # Si la página está fuera de rango (por ejemplo, 9999), muestra la última página
+        productos = paginator.page(paginator.num_pages)
+
+    return render(request, 'Producto/lista_productos_prod.html', {'productos': productos})
 
 
 def agregar_producto(request):
@@ -45,7 +82,8 @@ def agregar_producto(request):
         form = ProductoForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('Producto:listar_productos')
+            
+            return render(request, 'Producto/agregar_producto.html', {'success': True, 'message': f'Producto creado satisfactoriamente'})
         else:
             # Si el formulario de producto no es válido, muestra los errores en la misma página.
             return render(request, 'Producto/agregar_producto.html', {'form': form})
@@ -65,7 +103,7 @@ def editar_producto(request, producto_id):
             # Guarda el producto editado en la base de datos
             form.save()
             # Redirige a la lista de productos o a la vista de detalles del producto
-            return redirect('Producto:listar_productos')
+            return render(request, 'Producto/agregar_producto.html', {'success': True, 'message': f'Producto editado satisfactoriamente'})
     else:
         # Crea el formulario con los datos del producto que se va a editar
         form = ProductoForm(instance=producto)
@@ -115,8 +153,8 @@ def aumentar_stock(request, producto_id):
                     cantidad=cantidad_a_fabricar,
                     # La fecha de registro se añade automáticamente con auto_now_add=True en el modelo
                 )
-
-                return redirect('Producto:listar_productos_fabricacion')
+                
+                return render(request, 'Producto/aumentar_stock.html', {'success': True, 'message': f'Producto aumentado satisfactoriamente'})
             else:
                 # Manejar la falta de componentes mostrando un mensaje al usuario
                 # Podrías añadir un mensaje al contexto para informar qué componentes no tienen stock suficiente
@@ -183,7 +221,9 @@ def editar_componentes_producto(request, producto_id):
             producto.precio_compra = costo_total_produccion
             producto.save()
 
-            return redirect('Producto:listar_productos_fabricacion')
+            
+            return render(request, 'Producto/editar_componentes_producto.html', {'success': True, 'message': f'Componente editado satisfactoriamente'})
+            
     else:
         formset = ComponenteProductoFormSet(instance=producto, prefix='componentes')
 

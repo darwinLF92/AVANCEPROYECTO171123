@@ -3,7 +3,7 @@ from .forms import ClienteForm
 from .models import Cliente
 from Ventas.models import Venta, DetalleVenta
 from django.http import JsonResponse
-from django.http import JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db.models import Q
 from django.core import serializers
 from datetime import datetime
@@ -16,7 +16,7 @@ def cliente_create_view(request):
         form = ClienteForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('Clientes:cliente-list')
+            return render(request, 'Clientes/cliente_form.html', {'success': True, 'message': f'Cliente creado satisfactoriamente'})
     else:
         form = ClienteForm()
     return render(request, 'Clientes/cliente_form.html', {'form': form})
@@ -31,8 +31,32 @@ def cliente_list_view(request):
     else:
         # Si no se proporciona un valor de búsqueda, mostrar todos los clientes activos
         clientes = Cliente.objects.filter(activo=True)
-    
-    return render(request, 'Clientes/cliente_list.html', {'clientes': clientes, 'nombre': nombre})
+
+    # Número de elementos por página
+    elementos_por_pagina = 10  # Puedes ajustar este valor según tus necesidades
+
+    # Crear un objeto Paginator
+    paginator = Paginator(clientes, elementos_por_pagina)
+
+    # Obtener el número de página desde la solicitud GET
+    page = request.GET.get('page', 1)
+
+    try:
+        # Obtener la página actual
+        clientes = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la página no es un número entero, mostrar la primera página
+        clientes = paginator.page(1)
+    except EmptyPage:
+        # Si la página está fuera del rango (por ejemplo, 9999), mostrar la última página
+        clientes = paginator.page(paginator.num_pages)
+
+    context = {
+        'clientes': clientes,
+        'nombre': nombre  # Incluye el valor de búsqueda en el contexto
+    }
+
+    return render(request, 'Clientes/cliente_list.html', context)
 
 def cliente_edit_view(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
@@ -40,7 +64,7 @@ def cliente_edit_view(request, pk):
         form = ClienteForm(request.POST, instance=cliente)
         if form.is_valid():
             form.save()
-            return redirect('Clientes:cliente-list')
+            return render(request, 'Clientes/cliente_form.html', {'success': True, 'message': f'Cliente editado satisfactoriamente'})
     else:
         form = ClienteForm(instance=cliente)
     return render(request, 'Clientes/cliente_edit.html', {'form': form})
@@ -50,7 +74,7 @@ def cliente_delete_view(request, pk):
     if request.method == 'POST':
         cliente.activo = False  # Cambiar el estado a False en lugar de eliminar
         cliente.save()
-        return redirect('Clientes:cliente-list')
+        return render(request, 'Clientes/cliente_form.html', {'success': True, 'message': f'Cliente elmininado satisfactoriamente'})
     return render(request, 'Clientes/cliente_confirm_delete.html', {'cliente': cliente})
 
 

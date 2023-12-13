@@ -1,10 +1,49 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-  <h2>Login</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Login</button>
-  </form>
+    
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <img class="mx-auto d-block mb-4 img-fluid" src="/static/Aplicacion/img/nutral-logo.png" alt="empresa" style="max-width: 150px;">
+                    <h2 class="text-3xl font-weight-bold text-center mb-4">¡Bienvenido de nuevo!</h2>
+                    <p class="text-gray-600 text-center mb-4">Por favor, inicia sesión para continuar.</p>
+
+                    <!-- Mostrar mensajes de error -->
+                    {% if messages %}
+                        <div class="alert alert-danger">
+                            {% for message in messages %}
+                                <p>{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" class="mb-4" id="login-form">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">
+                                    <i class='bx bx-user'></i>
+                                </span>
+                            </div>
+                            <input type="text" id="id_username" name="username" class="form-control" placeholder="Nombre de Usuario" required>
+                        </div>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">
+                                    <i class='bx bx-lock-alt'></i>
+                                </span>
+                            </div>
+                            <input type="password" id="id_password" name="password" class="form-control" placeholder="Contraseña" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Iniciar Sesión</button>
+                        <div id="error-message" class="text-danger mt-2 text-center"></div>
+                    </form>
+                    <a href="{% url 'Aplicacion:home' %}" class="d-block text-sm text-orange-600">Regresar al Inicio</a>
+                </div>
+            </div>
+        </div>
+  
+    <!-- Incluye los scripts de Boxicons y Tailwind CSS -->
+    <script src="/static/Aplicacion/js/login.js"></script>
 {% endblock %}
