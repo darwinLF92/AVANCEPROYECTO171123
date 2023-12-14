@@ -39,36 +39,19 @@ class ListaVentasView(ListView):
     model = Venta
     template_name = 'Ventas/lista_ventas.html'
     context_object_name = 'ventas'
-    items_per_page = 10  # Número de elementos por página
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
         context['today'] = today.strftime("%Y-%m-%d")  # Formato de fecha 'YYYY-MM-DD'
 
-        # Implementar paginación manualmente
-        ventas = context['ventas']
-        paginator = Paginator(ventas, self.items_per_page)
-        page = self.request.GET.get('page')
-
-        try:
-            ventas = paginator.page(page)
-        except PageNotAnInteger:
-            # Si la página no es un número entero, entrega la primera página.
-            ventas = paginator.page(1)
-        except EmptyPage:
-            # Si la página está fuera de rango (ejemplo: 9999), entrega la última página de resultados.
-            ventas = paginator.page(paginator.num_pages)
-
-        context['ventas'] = ventas
         # Calcular el total de ventas
-        ventas = self.get_queryset()
-        total_ventas = ventas.aggregate(totalv=Sum('total'))['totalv'] if ventas else 0
+        total_ventas = self.model.objects.aggregate(totalv=Sum('total'))['totalv'] if self.model.objects.exists() else 0
         context['total_ventas'] = total_ventas
         return context
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(anulada=False) 
+        queryset = super().get_queryset().filter(anulada=False)
         cliente_nombre = self.request.GET.get('cliente', '')
         fecha_inicio = self.request.GET.get('fecha_inicio')
         fecha_fin = self.request.GET.get('fecha_fin')
