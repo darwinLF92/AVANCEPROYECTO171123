@@ -58,3 +58,13 @@ def proveedor_delete_view(request, pk):
         return render(request, 'Proveedor/proveedor_form.html', {'success': True, 'message': f'Proveedor eliminado satisfactoriamente'})
     context = {'proveedor': proveedor}
     return render(request, 'Proveedor/proveedor_delete.html', context)
+
+
+def buscar_proveedor3(request):
+    search_term = request.GET.get('search', '')
+    if search_term:
+        proveedores = Proveedor.objects.filter(nombre__icontains=search_term)
+    else:
+        proveedores = Proveedor.objects.all()
+
+    return render(request, 'Proveedor/proveedor_list.html', {'proveedores': proveedores})

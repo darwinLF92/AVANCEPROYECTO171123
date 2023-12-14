@@ -72,53 +72,6 @@
         </tr>
     </table>
 
-    <div class="pagination">
-        <ul class="pagination">
-            {% if ventas.has_previous %}
-                <li class="waves-effect">
-                    <a href="?page=1" class="start">
-                        << Inicio
-                    </a>
-                </li>
-                <li class="waves-effect">
-                    <a href="?page={{ ventas.previous_page_number }}" class="prev">
-                        < Atrás
-                    </a>
-                </li>
-            {% endif %}
-      
-            {% for i in ventas.paginator.page_range %}
-                {% if ventas.number == i %}
-                    <li class="active">
-                        <span>{{ i }}</span>
-                    </li>
-                {% elif i > ventas.number|add:'-3' and i < ventas.number|add:'3' %}
-                    <li class="waves-effect">
-                        <a href="?page={{ i }}">{{ i }}</a>
-                    </li>
-                {% endif %}
-            {% endfor %}
-      
-            {% if ventas.has_next %}
-                {% if ventas.number|add:'3' < ventas.paginator.num_pages %}
-                    <li class="waves-effect">
-                        <span>...</span>
-                    </li>
-                {% endif %}
-                <li class="waves-effect">
-                    <a href="?page={{ ventas.next_page_number }}" class="next">
-                        Siguiente >
-                    </a>
-                </li>
-                <li class="waves-effect">
-                    <a href="?page={{ ventas.paginator.num_pages }}" class="last">
-                        Última Página >>
-                    </a>
-                </li>
-            {% endif %}
-        </ul>
-      </div>
-
 
     <div id="VentasModal" class="modal bd-example-modal-lg">
         <div class="modal-dialog modal-dialog-custom"> 

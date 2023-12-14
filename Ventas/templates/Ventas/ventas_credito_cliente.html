@@ -38,7 +38,7 @@
           <td>{{ datos.total_abonos|floatformat:2|intcomma }}</td>
           <td>{{ datos.saldo_pendiente|floatformat:2|intcomma }}</td>
           <td>
-            <a href="{% url 'Ventas:lista_creditos' cliente.id %}" class="btn btn-info ver-detalle-btn">Ver Detalles</a>
+            <a href="{% url 'Ventas:lista_creditos' cliente.id %}" class="btn btn-info ver-detalle-btn">COBRAR</a>
           </td>
         </tr>
       {% endfor %}
@@ -315,6 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
           });
       });
   });
+
   </script>
   
 

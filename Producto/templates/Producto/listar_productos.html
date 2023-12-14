@@ -123,6 +123,11 @@
 
             </td>
         </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7">No se encontraron productos</td>
+        </tr>
+        </tr>
         {% endfor %}
     </tbody>
 </table>
@@ -553,21 +558,25 @@ document.getElementById('botonImprimirPDFSinFiltros').addEventListener('click', 
 </script>
 
 <script>
-    $(document).ready(function() {
-        $('#search-input').on('keyup', function() {
-            var filtro = $(this).val().toLowerCase();
-            $('tbody tr').each(function() {
-                var codigo = $(this).find('td:nth-child(1)').text().toLowerCase();
-                var nombre = $(this).find('td:nth-child(2)').text().toLowerCase();
-                
-                if (codigo.includes(filtro) || nombre.includes(filtro)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
-            });
+$(document).ready(function() {
+    $('#search-input').on('keyup', function() {
+        var searchTerm = $(this).val();
+
+        $.ajax({
+            url: '/buscar-producto2', // Asegúrate de que esta ruta coincida con tu URL en Django
+            type: 'GET',
+            data: { search: searchTerm },
+            success: function(response) {
+                // Actualiza solo el cuerpo de la tabla con la respuesta del servidor
+                $('table tbody').html($(response).find('table tbody').html());
+            },
+            error: function(xhr, status, error) {
+                console.error("Error en la solicitud AJAX: ", error);
+            }
         });
     });
+});
+
     </script>
     
     <script>

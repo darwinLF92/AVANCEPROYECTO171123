@@ -345,9 +345,13 @@ def reporte_inventario(request):
 
 
 def buscar_producto2(request):
-    termino_busqueda = request.GET.get('q', '')
-    productos = Producto.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
-    return JsonResponse(list(productos), safe=False)
+    search_term = request.GET.get('search', '')
+    if search_term:
+        productos = Producto.objects.filter(nombre__icontains=search_term)
+    else:
+        productos = Producto.objects.all()
+
+    return render(request, 'Producto/listar_productos.html', {'productos': productos})
 
 
 

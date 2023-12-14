@@ -12,7 +12,19 @@
 </style>
   <h1>Lista de Vendedores</h1>
 
-  <a href="#" id="crearVendedor" class="btn btn-success">Crear Vendedor</a>
+
+  <div class="row">
+    <br>
+    <div class="col-md-6">
+      <h4>Buscar por nombre:</h4>
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" name="filtro_nombre" id="search-input" placeholder="Ingrese el nombre...">
+      </div>
+    </div>
+    <div class="col-md-6 text-right">
+      <a href="#" id="crearVendedor" class="btn btn-success">Crear Vendedor</a>
+    </div>
+  </div>
 
   <table class="table">
     <thead>
@@ -266,5 +278,26 @@
 
   });
 </script>
+
+<script>
+  $(document).ready(function() {
+  $('#search-input').on('keyup', function() {
+      var searchTerm = $(this).val();
+
+      $.ajax({
+          url: '/buscar-vendedor', // Asegúrate de que esta ruta coincida con tu URL en Django
+          type: 'GET',
+          data: { search: searchTerm },
+          success: function(response) {
+              // Actualiza solo el cuerpo de la tabla con la respuesta del servidor
+              $('table tbody').html($(response).find('table tbody').html());
+          },
+          error: function(xhr, status, error) {
+              console.error("Error en la solicitud AJAX: ", error);
+          }
+      });
+  });
+});
+  </script>
 
 {% endblock %}

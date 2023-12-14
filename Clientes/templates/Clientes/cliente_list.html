@@ -278,18 +278,23 @@ $(document).ready(function() {
 
 <script>
     $(document).ready(function() {
-        $('#search-input').on('keyup', function() {
-            var filtro = $(this).val().toLowerCase();
-            $('tbody tr').each(function() {
-                var clienteNombre = $(this).find('td:nth-child(2)').text().toLowerCase();
-                if (clienteNombre.indexOf(filtro) === -1) {
-                    $(this).hide();
-                } else {
-                    $(this).show();
-                }
-            });
+    $('#search-input').on('keyup', function() {
+        var searchTerm = $(this).val();
+
+        $.ajax({
+            url: '/buscar-cliente3', // Asegúrate de que esta ruta coincida con tu URL en Django
+            type: 'GET',
+            data: { search: searchTerm },
+            success: function(response) {
+                // Actualiza solo el cuerpo de la tabla con la respuesta del servidor
+                $('table tbody').html($(response).find('table tbody').html());
+            },
+            error: function(xhr, status, error) {
+                console.error("Error en la solicitud AJAX: ", error);
+            }
         });
     });
+});
 </script>
     
 

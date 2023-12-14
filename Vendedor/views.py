@@ -91,3 +91,13 @@ class CambiarEstadoVendedorView(View):
         except Exception as e:
             # Manejar cualquier excepción y proporcionar un mensaje de error
             return JsonResponse({'success': False, 'message': f'Error al cambiar el estado del vendedor: {str(e)}'})
+        
+
+def buscar_vendedor(request):
+    search_term = request.GET.get('search', '')
+    if search_term:
+        vendedores = Vendedor.objects.filter(nombre__icontains=search_term)
+    else:
+        vendedores = Vendedor.objects.all()
+
+    return render(request, 'lista_vendedores.html', {'vendedores': vendedores})

@@ -16,7 +16,7 @@
   <a href="{% url 'Ventas:ventas_credito_cliente' %}" class="btn btn-primary float-right">Volver a Cuentas por Cobrar</a>
 </div>
 <br><br> 
-
+<div class="scrollable-content">
   <form id="ventasForm">
     <table id="ventasTable">
       <thead>
@@ -27,7 +27,7 @@
           <th>Fecha Vencimiento</th>
           <th>Dias Vencidos</th>
           <th>Saldo por Cobrar</th>
-          <th>Acción</th>
+          <th>Seleccionar</th>
           <th>Detalle</th>
         </tr>
       </thead>
@@ -50,8 +50,9 @@
         {% endfor %}
       </tbody>
     </table>
-    
-    <div class="container">
+  </div>
+
+    <div class="fixed-container">
       <div>
         <label>Total Créditos:</label>
         <input type="text" id="totalCreditos" readonly value="0.00">
@@ -348,14 +349,80 @@ function enviarDatosCobro(datos, metodoPago) {
     padding: 0;
   }
 
-  .container {
-    max-width: 400px;
-    margin: 50px auto;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
+  .fixed-container {
+    position: fixed;
+    bottom: 0;
+    left: 50%; /* Establece el punto de inicio a la mitad de la pantalla */
+    right: 50%; /* Establece el punto final a la mitad de la pantalla */
+    transform: translateX(-50%); /* Desplaza el contenedor hacia la izquierda la mitad de su propio ancho */
+    background: darkblue;
+    color: black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    z-index: 100;
+    width: 80%;
+}
+
+
+@media (max-width: 768px) {
+    .fixed-container {
+        width: 95%; /* Un ancho mayor para pantallas más pequeñas */
+    }
+}
+
+
+.scrollable-content {
+    padding-bottom: 100px; /* Ajusta este valor según la altura de tu contenedor fijo */
+    overflow-y: auto; /* Permite el desplazamiento vertical */
+}
+
+.fixed-container button {
+    /* Estilos para los botones */
+    background: darkcyan; /* Color de fondo */
+    border: none;
+    padding: 10px 20px; /* Ajusta el padding para cambiar el tamaño */
+    color: #fff; /* Color del texto */
+    margin: 0 5px; /* Margen alrededor de los botones */
+    cursor: pointer;
+    border-radius: 5px; /* Bordes redondeados, ajusta este valor para cambiar la curvatura */
+    font-size: 16px; /* Ajusta el tamaño del texto */
+    line-height: 1.5; /* Ajusta la altura de línea para centrar el texto verticalmente si es necesario */
+    /* Opcional: puedes especificar un ancho y alto fijos si lo prefieres */
+    /* width: 100px; */
+    /* height: 40px; */
+}
+
+
+.fixed-container label {
+    /* Estilos para las etiquetas */
+    color: white;
+    margin-right: 10px;
+}
+
+#creditosPendientes {
+    background: #333;
+    color: white;
+    font-weight: bold; /* Esto aplicará la negrita al texto dentro del input */
+}
+#totalCreditos {
+    background: #333;
+    color: white;
+    font-weight: bold; /* Esto aplicará la negrita al texto dentro del input */
+}
+
+#cobrarCreditosSeleccionados {
+    background: #333;
+    color: white;
+    font-weight: bold; /* Esto aplicará la negrita al texto dentro del input */
+}
+
+
+/* Añade espacio en la parte inferior de la tabla para que no quede oculta */
+.table-container {
+    padding-bottom: 150px; /* Ajusta este valor según la altura de tu contenedor fijo */
+}
 
   div {
     margin-bottom: 20px;
@@ -417,17 +484,58 @@ function enviarDatosCobro(datos, metodoPago) {
   }
 
   .modal-dialog {
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
-  }
+    display: flex;
+    align-items: center; /* Esto alinea verticalmente el modal en el centro */
+    justify-content: center; /* Esto alinea horizontalmente el modal en el centro */
+    min-height: calc(100vh - 60px); /* Esto asegura que el modal-dialog sea al menos tan alto como la ventana visible, menos 60px que puedes ajustar según tu cabecera/pie de página si es necesario */
+}
+
+.modal {
+    overflow-y: auto; /* Esto permite desplazarse dentro del modal si el contenido es más grande que la pantalla */
+}
+
 
   .modal-content {
-    background-color: #fefefe;
+    background-color: black;
+    color: white;
     margin: auto;
     padding: 20px;
     border: 1px solid #888;
     width: 80%; /* Could be more or less, depending on screen size */
   }
+
+  .modal-content label{
+    color: white;
+    margin-right: 10px;
+  }
+
+  #totalCobrarModal {
+    text-align: right;
+    font-size: 24px;
+    background: midnightblue;
+    color: greenyellow;
+    font-weight: bold; /* Esto aplicará la negrita al texto dentro del input */
+}
+
+#totalAbonoModal {
+    text-align: right;
+    font-size: 24px;
+    background: midnightblue;
+    color: greenyellow;
+    font-weight: bold; /* Esto aplicará la negrita al texto dentro del input */
+}
+
+#montoAbono{
+    text-align: right;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+  input[type="text"] {
+    background-color: #e9ecef; /* Cambia esto por el color que prefieras */
+    border: 1px solid #ced4da; /* Opcional: añade o cambia el color del borde si es necesario */
+    /* ...otros estilos... */
+}
 
   .acciones-cobro {
     position: fixed;
@@ -447,5 +555,11 @@ function enviarDatosCobro(datos, metodoPago) {
   .swal-popup.my-custom-modal-class {
     background-color: #E4E9F7 !important;
   }
+  .ventaCheckbox {
+    /* Ajusta el tamaño del checkbox */
+    transform: scale(3.0); /* Aumenta el tamaño a 1.5 veces el original */
+    margin: 5px; /* Opcional: Agrega algo de margen alrededor del checkbox */
+}
+
 </style>
 {% endblock %}

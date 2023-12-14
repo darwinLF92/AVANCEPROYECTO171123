@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import proveedor_create_view, proveedor_list_view, proveedor_edit_view, proveedor_delete_view
+from .views import proveedor_create_view, proveedor_list_view, proveedor_edit_view, proveedor_delete_view, buscar_proveedor3
 
 app_name = 'Proveedor'
 
@@ -8,4 +8,5 @@ urlpatterns = [
     path('proveedores/', proveedor_list_view, name='proveedor-list'),
     path('proveedor/edit/<int:pk>/', proveedor_edit_view, name='proveedor-edit'),
     path('proveedor/delete/<int:pk>/', proveedor_delete_view, name='proveedor-delete'),
+    path('buscar-proveedor3/', buscar_proveedor3, name='buscar_proveedor3'),
 ]

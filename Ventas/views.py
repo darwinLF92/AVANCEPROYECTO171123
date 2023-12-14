@@ -1057,3 +1057,14 @@ def generar_recibo_pdf(request, pk_cobro):
     response['Content-Disposition'] = 'attachment; filename="recibo.pdf"'
 
     return response
+
+
+
+def buscar_cliente3(request):
+    search_term = request.GET.get('search', '')
+    if search_term:
+        clientes = Cliente.objects.filter(nombre__icontains=search_term)
+    else:
+        clientes = Cliente.objects.all()
+
+    return render(request, 'Ventas/ventas_credito_cliente.html', {'clientes': clientes})
