@@ -27,6 +27,9 @@ class Producto(models.Model):
         # Lógica para actualizar el stock
         self.stock -= cantidad
         self.save()
+        
+    class Meta:
+        ordering = ['nombre']  # Ordena por nombre de forma ascendente
 
     
 

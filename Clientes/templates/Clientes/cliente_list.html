@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% block content %}
+
 <h1>Lista de Clientes</h1>
 
+<style>
+    /* Estilos adicionales para el modal */
+    /* CSS global */
+    .swal-popup.my-custom-modal-class {
+      background-color: #E4E9F7 !important;
+    }
+  </style>
 
 <div class="row">
     <div class="col-md-6">
@@ -21,6 +29,7 @@
 </div>
 
 <br>
+<div class="table-responsive">
 <table class="table">
     <thead>
         <tr>
@@ -36,12 +45,12 @@
     <tbody>
         {% for cliente in clientes %}
         <tr>
-            <td>{{ cliente.nit }}</td>
-            <td>{{ cliente.nombre }}</td>
-            <td>{{ cliente.direccion }}</td>
-            <td>{{ cliente.telefono }}</td>
-            <td>{{ cliente.correo }}</td>
-            <td>{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
+            <td style="text-align: left;" >{{ cliente.nit }}</td>
+            <td style="text-align: left;">{{ cliente.nombre }}</td>
+            <td style="text-align: left;">{{ cliente.direccion }}</td>
+            <td style="text-align: center;">{{ cliente.telefono }}</td>
+            <td style="text-align: left;">{{ cliente.correo }}</td>
+            <td style="text-align: center;">{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
             <td>
                 <div class="acciones">
                     <a href="#" class="editar-btn btn btn-warning btn-sm" data-userid="{{ cliente.id }}">Editar</a>
@@ -60,6 +69,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 <div class="pagination">
     <ul class="pagination">
@@ -484,5 +494,22 @@ $(document).ready(function() {
     .form-control{
       margin-left: 25px;
     }
+
+
+.responsive-table thead {
+    display: none; /* Opcional, para ocultar el encabezado en pantallas pequeñas */
+}
+
+.responsive-table td {
+    display: block;
+    text-align: right;
+}
+
+.responsive-table td:before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+}
+
   </style>
 {% endblock %}

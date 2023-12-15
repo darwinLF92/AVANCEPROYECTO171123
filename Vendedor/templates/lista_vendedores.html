@@ -40,13 +40,14 @@
     <tbody>
       {% for vendedor in vendedores %}
       <tr>
-        <td>{{ vendedor.codigo }}</td>
-        <td>{{ vendedor.nombre }}</td>
-        <td>{{ vendedor.direccion }}</td>
-        <td>{{ vendedor.telefono }}</td>
-        <td>{{ vendedor.fecha_inicio_labores|date:"d-m-Y" }}</td>
+        <td style="text-align: left;">{{ vendedor.codigo }}</td>
+        <td style="text-align: left;">{{ vendedor.nombre }}</td>
+        <td style="text-align: left;">{{ vendedor.direccion }}</td>
+        <td style="text-align: center;">{{ vendedor.telefono }}</td>
+        <td style="text-align: center;">{{ vendedor.fecha_inicio_labores|date:"d-m-Y" }}</td>
         <td>
-          <a href="#" class="editar-btn btn btn-warning"  data-userid="{{ vendedor.pk }}">Editar</a>
+     
+          <a href="#" class="editar-btn btn btn-warning" data-userid="{{ vendedor.id }}" >Editar </a> 
           <form action="{% url 'Vendedor:cambiar_estado_vendedor' vendedor.pk %}" method="post" style="display: inline-block;">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">{{ vendedor.activo|yesno:"Inactivar,Activar" }}</button>
@@ -140,11 +141,11 @@
     // Al hacer clic en "Editar"
     $(document).on('click', '.editar-btn', function() {
     var vendedorId = $(this).data('userid');
-    var formulario = "{% url 'Vendedor:editar_vendedor' 0 %}".replace('0', vendedorId);
+    var formulario = "{% url 'Vendedor:editar_vendedores' 0 %}".replace('0', vendedorId);
 
     // SweetAlert para mostrar el modal
     Swal.fire({
-        title: 'Editar Vendedor',
+        title: 'Editar Producto',
         html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
         showCloseButton: true,
         showConfirmButton: false,
@@ -210,48 +211,13 @@ $(document).on('click', '.btn-danger', function(event) {
 });
 
   
-
-    // Al enviar el formulario dentro de la ventana flotante
-    $(document).on("submit", "iframe form", function () {
-      // Obtener la referencia del formulario
-      var form = $(this);
-
-      // Realizar la petición AJAX
-      $.ajax({
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: form.serialize(),
-        success: function (response) {
-          // Manejar la respuesta del servidor
-          if (response.success) {
-            // Mostrar el modal de éxito
-            $("#ventanaFlotante").append(response);
-            $("#modalSuccess").show();
-          } else {
-            // Mostrar el modal de error
-            $("#ventanaFlotante").append(response);
-            $("#modalError").show();
-          }
-
-          // Cerrar la ventana flotante después de un tiempo (puedes ajustar el tiempo según tus necesidades)
-          setTimeout(function () {
-            // Remover la clase 'modal-open' al cerrar la ventana flotante
-            $("body").removeClass("modal-open");
-
-            // Remover el fondo desenfocado y la ventana flotante
-            $("#fondoDesenfocado, #ventanaFlotante").remove();
-          }, 2000); // Cerrar después de 3 segundos (ejemplo)
-        },
-        error: function (response) {
-          // Manejar errores o mostrar mensajes adicionales según sea necesario
-          console.error('Error al enviar el formulario:', response);
-        }
-      });
-      // Evitar que el formulario se envíe de forma tradicional
-      return false;
+$(window).resize(function () {
+            var newMaxWidth = Math.min(0.9 * $(window).width(), 600);
+            $("#ventanaFlotante").css("max-width", newMaxWidth + "px");
+        });
     });
 
-  });
+  
 </script>
 
 <script>

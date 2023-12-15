@@ -47,12 +47,12 @@ Lista de Proveedores
     <tbody>
         {% for proveedor in proveedores %}
         <tr>
-            <td>{{ proveedor.nit }}</td>
-            <td>{{ proveedor.nombre }}</td>
-            <td>{{ proveedor.direccion }}</td>
-            <td>{{ proveedor.telefono }}</td>
-            <td>{{ proveedor.correo }}</td>
-            <td>{{ proveedor.contacto }}</td>
+            <td style="text-align: left;">{{ proveedor.nit }}</td>
+            <td style="text-align: left;">{{ proveedor.nombre }}</td>
+            <td style="text-align: left;">{{ proveedor.direccion }}</td>
+            <td style="text-align: center;">{{ proveedor.telefono }}</td>
+            <td style="text-align: left;">{{ proveedor.correo }}</td>
+            <td style="text-align: left;">{{ proveedor.contacto }}</td>
             <td>
                 <a href="#" class="editar-btn btn btn-warning"  data-userid="{{ proveedor.id }}">Editar</a>  <!-- Asegúrate de tener la URL proveedor-edit configurada -->
                 <a href="#" class="eliminar-btn btn btn-danger"  data-userid="{{ proveedor.id }}">Eliminar</a> <!-- Y la URL proveedor-delete también -->

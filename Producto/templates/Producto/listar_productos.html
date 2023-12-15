@@ -108,12 +108,12 @@
     <tbody>
         {% for producto in productos %}
         <tr>
-            <td>{{ producto.codigo }}</td>
-            <td>{{ producto.nombre }}</td>
-            <td>{{ producto.descripcion }}</td>
-            <td>{{ producto.precio_compra|floatformat:2|intcomma }}</td>
-            <td>{{ producto.precio_venta|floatformat:2|intcomma }}</td>
-            <td>{{ producto.stock|floatformat:2|intcomma }}</td>
+            <td style="text-align: left;">{{ producto.codigo }}</td>
+            <td style="text-align: left;">{{ producto.nombre }}</td>
+            <td style="text-align: left;">{{ producto.descripcion }}</td>
+            <td style="text-align: center;">{{ producto.precio_compra|floatformat:2|intcomma }}</td>
+            <td style="text-align: center;">{{ producto.precio_venta|floatformat:2|intcomma }}</td>
+            <td style="text-align: center;">{{ producto.stock|floatformat:2|intcomma }}</td>
             <td>
                 
                 <a href="#" class="editar-btn btn btn-warning" data-userid="{{ producto.id }}" >Editar </a>  

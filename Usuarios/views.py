@@ -9,7 +9,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 @login_required
 @permission_required('auth.view_user')
 def list_users(request):
-    users = User.objects.all()
+    users = User.objects.all().order_by('username')
 
     # Número de elementos por página
     elementos_por_pagina = 10  # Puedes ajustar este valor según tus necesidades
