@@ -40,16 +40,6 @@ class ListaVentasView(ListView):
     template_name = 'Ventas/lista_ventas.html'
     context_object_name = 'ventas'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        today = timezone.now().date()
-        context['today'] = today.strftime("%Y-%m-%d")  # Formato de fecha 'YYYY-MM-DD'
-
-        # Calcular el total de ventas
-        total_ventas = self.model.objects.aggregate(totalv=Sum('total'))['totalv'] if self.model.objects.exists() else 0
-        context['total_ventas'] = total_ventas
-        return context
-
     def get_queryset(self):
         queryset = super().get_queryset().filter(anulada=False)
         cliente_nombre = self.request.GET.get('cliente', '')
@@ -59,16 +49,24 @@ class ListaVentasView(ListView):
         if cliente_nombre:
             queryset = queryset.filter(cliente__nombre__icontains=cliente_nombre)
 
-        # Si no se proporcionan fechas, se filtra por el día actual
         if not fecha_inicio or not fecha_fin:
             today = timezone.now().date()
             fecha_inicio = fecha_fin = today
 
         if fecha_inicio and fecha_fin:
-            # Filtrar ventas por el rango de fechas
             queryset = queryset.filter(fecha_creacion__range=[fecha_inicio, fecha_fin])
 
+        # Calcular el total de ventas para el queryset filtrado
+        self.total_ventas = queryset.aggregate(totalv=Sum('total'))['totalv'] if queryset.exists() else 0
+
         return queryset.order_by('-id')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        context['today'] = today.strftime("%Y-%m-%d")
+        context['total_ventas'] = self.total_ventas  # Usar el total calculado en get_queryset
+        return context
 
 
 
