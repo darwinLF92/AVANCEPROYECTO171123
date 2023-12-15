@@ -141,50 +141,52 @@ Lista de Proveedores
         });
 
         // Al hacer clic en "Editar"
-        $(".editar-btn").click(function () {
-            var proveedorId = $(this).data('userid');
-            var formulario = "{% url 'Proveedor:proveedor-edit' 0 %}".replace('0', proveedorId);
+        $(document).on('click', '.editar-btn', function() {
+    var proveedorId = $(this).data('userid');
+    var formulario = "{% url 'Proveedor:proveedor-edit' 0 %}".replace('0', proveedorId);
 
-            // SweetAlert para mostrar el modal
-            const swalInstance = Swal.fire({
-                title: 'Editar Proveedor',
-                html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'swal-container',
-                    popup: 'swal-popup my-custom-modal-class',
-                },
-                didClose: () => {
-                    // Recargar la página completa después de cerrar la ventana flotante
-                    location.reload();
-                },
-            });
-            return false;
-        });
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Editar Proveedor',
+        html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
+        },
+    });
+    return false;
+});
+
 
         // Al hacer clic en "Eliminar"
-        $(".eliminar-btn").click(function () {
-            var proveedorId = $(this).data('userid');
-            var formulario = "{% url 'Proveedor:proveedor-delete' 0 %}".replace('0', proveedorId);
+        $(document).on('click', '.eliminar-btn', function() {
+    var proveedorId = $(this).data('userid');
+    var formulario = "{% url 'Proveedor:proveedor-delete' 0 %}".replace('0', proveedorId);
 
-            // SweetAlert para mostrar el modal
-            const swalInstance = Swal.fire({
-                title: 'Eliminar Proveedor',
-                html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'swal-container',
-                    popup: 'swal-popup my-custom-modal-class',
-                },
-                didClose: () => {
-                    // Recargar la página completa después de cerrar la ventana flotante
-                    location.reload();
-                },
-            });
-            return false;
-        })
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Eliminar Proveedor',
+        html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
+        },
+    });
+    return false;
+});
+
     });
 </script>
 

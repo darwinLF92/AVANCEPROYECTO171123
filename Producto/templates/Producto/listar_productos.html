@@ -295,56 +295,57 @@ $(document).ready(function(){
   });
 
     // Al hacer clic en "Editar"
-    $(".editar-btn").click(function () {
-        var productoId = $(this).data('userid');
-        var formulario = "{% url 'Producto:editar_producto' 0 %}".replace('0', productoId);
-  
-        // SweetAlert para mostrar el modal
-        const swalInstance = Swal.fire({
-          title: 'Editar Producto',
-          html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-          showCloseButton: true,
-          showConfirmButton: false,
-          customClass: {
-              container: 'swal-container',
-              popup: 'swal-popup my-custom-modal-class',
-          },
-          didClose: () => {
+    $(document).on('click', '.editar-btn', function () {
+    var productoId = $(this).data('userid');
+    var formulario = "{% url 'Producto:editar_producto' 0 %}".replace('0', productoId);
+
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Editar Producto',
+        html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
             // Recargar la página completa después de cerrar la ventana flotante
             location.reload();
-          },
-        });
-        return false;
-      });
+        },
+    });
+    return false;
+});
+
 
         // Al hacer clic en "Eliminar"
-    $(".eliminar-btn").click(function (event) {
-        // Detener el comportamiento predeterminado del enlace
-        event.preventDefault();
+        $(document).on('click', '.eliminar-btn', function(event) {
+    // Detener el comportamiento predeterminado del enlace
+    event.preventDefault();
 
-        // Obtener el nombre del producto de la fila actual
-        var productName = $(this).closest('tr').find('td:eq(1)').text();
+    // Obtener el nombre del producto de la fila actual
+    var productName = $(this).closest('tr').find('td:eq(1)').text();
 
-        // Obtener la URL de eliminación del atributo href
-        var deleteUrl = $(this).attr('href');
+    // Obtener la URL de eliminación del atributo href
+    var deleteUrl = $(this).attr('href');
 
-        // Mostrar ventana de confirmación SweetAlert2 con el nombre del producto
-        Swal.fire({
-            title: '¿Estás seguro?',
-            html: `Estás a punto de eliminar el producto:<br><strong>${productName}</strong><br>No podrás revertir esto.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminarlo'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Redirigir a la URL de eliminación si se confirma
-                window.location.href = deleteUrl;
-            }
-        });
+    // Mostrar ventana de confirmación SweetAlert2 con el nombre del producto
+    Swal.fire({
+        title: '¿Estás seguro?',
+        html: `Estás a punto de eliminar el producto:<br><strong>${productName}</strong><br>No podrás revertir esto.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, eliminarlo'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirigir a la URL de eliminación si se confirma
+            window.location.href = deleteUrl;
+        }
     });
-    
+});
+
 
         // Recargar el tamaño de la ventana flotante cuando cambia el tamaño de la ventana
         $(window).resize(function () {
@@ -580,6 +581,14 @@ $(document).ready(function() {
     </script>
     
     <script>
+
+$(document).on('click', '.btn-stock', function() {
+    var id = $(this).data('id');
+    var nombre = $(this).data('nombre');
+    var stock = $(this).data('stock');
+    prepararModal(id, nombre, stock);
+});
+
         // Función para preparar y mostrar el modal con los datos del producto
         function prepararModal(id, nombre, stock) {
 
