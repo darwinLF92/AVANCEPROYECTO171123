@@ -17,7 +17,7 @@
     </div>
   </div>
 
-
+  <div class="scrollable-content">
   <table>
     <thead>
       <tr>
@@ -51,6 +51,7 @@
       <td>{{ suma_saldo_pendiente|floatformat:2|intcomma }}</td>
     </tr>
   </table>
+  </div>
 
 <!--modal de cuentas por cobrar-->
 <div id="CuentascxcModal" class="modal bd-example-modal-lg">
@@ -466,5 +467,42 @@ table {
   }
 </style>
 
-
+<style>
+  .scrollable-content {
+      max-height: 550px;
+      overflow-y: auto;
+      overflow-x: auto;
+      width: 100%;
+      border: 1px solid #ccc;
+  }
+  
+  table {
+      width: 100%;
+      border-collapse: collapse;
+  }
+  
+  thead th {
+      position: sticky;
+      top: 0;
+      background-color: white;
+      z-index: 10;
+  }
+  
+  table, th, td {
+      border: 1px solid black;
+  }
+  
+  tbody tr:nth-child(odd) {
+      background-color: white;
+  }
+  
+  tbody tr:nth-child(even) {
+      background-color: #B2E0F4;
+  }
+  
+  tfoot tr {
+      background-color: #f5f5f5; /* Color diferente para la fila de totales, si se desea */
+  }
+  
+  </style>
 {% endblock %}
