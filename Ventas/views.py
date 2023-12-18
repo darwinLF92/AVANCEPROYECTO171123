@@ -279,16 +279,17 @@ def procesar_cobro(request):
     data = json.loads(request.body)
     cobros = data.get('cobros', [])
     errores = []
-    ultimo_cobro_id = None
+    cliente_id = None
 
     for cobro_data in cobros:
         venta_id = cobro_data.get('venta_id')
         monto = Decimal(cobro_data.get('monto')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         metodo_pago = cobro_data.get('metodo_pago')
-        print(f"Intentando guardar el monto: {monto}") 
 
         try:
             venta = Venta.objects.get(id=venta_id)
+            cliente_id = venta.cliente.id  # Asumiendo que Venta tiene una relación con Cliente
+
             if monto > venta.saldo_pendiente:
                 errores.append(f"El monto del cobro para la venta {venta_id} excede el saldo pendiente.")
                 continue
@@ -299,7 +300,6 @@ def procesar_cobro(request):
                 monto=monto,
                 metodo_pago=metodo_pago
             )
-            ultimo_cobro_id = cobro.id
         except Venta.DoesNotExist:
             errores.append(f"Venta con ID {venta_id} no encontrada.")
             continue
@@ -307,9 +307,10 @@ def procesar_cobro(request):
     if errores:
         return JsonResponse({"success": False, "errores": errores})
     else:
-        # Modifica la siguiente línea para usar una URL válida de recibo
-        recibo_url = f"/recibo/{ultimo_cobro_id}/"
-        return JsonResponse({"success": True, "recibo_url": recibo_url})
+        # Construye la URL para redirigir a la lista de créditos del cliente
+        lista_creditos_url = reverse('Ventas:lista_creditos', args=[cliente_id])
+        return JsonResponse({"success": True, "lista_creditos_url": lista_creditos_url})
+
 
 def generar_recibo(request, pk_cobro):
     cobro = get_object_or_404(Cobro, pk=pk_cobro)
