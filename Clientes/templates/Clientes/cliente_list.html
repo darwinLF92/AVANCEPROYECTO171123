@@ -1,8 +1,16 @@
 {% extends "base.html" %}
 {% load humanize %}
 {% block content %}
+
 <h1>Lista de Clientes</h1>
 
+<style>
+    /* Estilos adicionales para el modal */
+    /* CSS global */
+    .swal-popup.my-custom-modal-class {
+      background-color: #E4E9F7 !important;
+    }
+  </style>
 
 <div class="row">
     <div class="col-md-6">
@@ -21,6 +29,7 @@
 </div>
 
 <br>
+<div class="table-responsive">
 <table class="table">
     <thead>
         <tr>
@@ -36,12 +45,12 @@
     <tbody>
         {% for cliente in clientes %}
         <tr>
-            <td>{{ cliente.nit }}</td>
-            <td>{{ cliente.nombre }}</td>
-            <td>{{ cliente.direccion }}</td>
-            <td>{{ cliente.telefono }}</td>
-            <td>{{ cliente.correo }}</td>
-            <td>{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
+            <td style="text-align: left;" >{{ cliente.nit }}</td>
+            <td style="text-align: left;">{{ cliente.nombre }}</td>
+            <td style="text-align: left;">{{ cliente.direccion }}</td>
+            <td style="text-align: center;">{{ cliente.telefono }}</td>
+            <td style="text-align: left;">{{ cliente.correo }}</td>
+            <td style="text-align: center;">{{ cliente.limitecredito|floatformat:2|intcomma }}</td>
             <td>
                 <div class="acciones">
                     <a href="#" class="editar-btn btn btn-warning btn-sm" data-userid="{{ cliente.id }}">Editar</a>
@@ -60,6 +69,7 @@
         {% endfor %}
     </tbody>
 </table>
+</div>
 
 <div class="pagination">
     <ul class="pagination">
@@ -228,12 +238,12 @@ $(document).ready(function() {
     });
 
       // Al hacer clic en "Editar"
-    $(".editar-btn").click(function () {
-      var clienteId = $(this).data('userid');
-      var formulario = "{% url 'Clientes:cliente-edit' 0 %}".replace('0', clienteId);
+      $(document).on('click', '.editar-btn', function() {
+    var clienteId = $(this).data('userid');
+    var formulario = "{% url 'Clientes:cliente-edit' 0 %}".replace('0', clienteId);
 
-      // SweetAlert para mostrar el modal
-      const swalInstance = Swal.fire({
+    // SweetAlert para mostrar el modal
+    Swal.fire({
         title: 'Editar Cliente',
         html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
         showCloseButton: true,
@@ -243,53 +253,60 @@ $(document).ready(function() {
             popup: 'swal-popup my-custom-modal-class',
         },
         didClose: () => {
-          // Recargar la página completa después de cerrar la ventana flotante
-          location.reload();
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
         },
-      });
-      return false;
     });
+    return false;
+});
+
 
     // Al hacer clic en "Eliminar"
-    $(".eliminar-btn").click(function () {
-      var clienteId = $(this).data('userid');
-      var formulario = "{% url 'Clientes:cliente-delete' 0 %}".replace('0', clienteId);
+    $(document).on('click', '.eliminar-btn', function() {
+    var clienteId = $(this).data('userid');
+    var formulario = "{% url 'Clientes:cliente-delete' 0 %}".replace('0', clienteId);
 
-          // SweetAlert para mostrar el modal
-        const swalInstance = Swal.fire({
-            title: 'Eliminar Cliente',
-            html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-            showCloseButton: true,
-            showConfirmButton: false,
-            customClass: {
-                container: 'swal-container',
-                popup: 'swal-popup my-custom-modal-class',
-            },
-            didClose: () => {
-              // Recargar la página completa después de cerrar la ventana flotante
-              location.reload();
-            },
-        });
-        return false;
-    })
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Eliminar Cliente',
+        html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
+        },
+    });
+    return false;
+});
+
 });
 
 </script>
 
 <script>
     $(document).ready(function() {
-        $('#search-input').on('keyup', function() {
-            var filtro = $(this).val().toLowerCase();
-            $('tbody tr').each(function() {
-                var clienteNombre = $(this).find('td:nth-child(2)').text().toLowerCase();
-                if (clienteNombre.indexOf(filtro) === -1) {
-                    $(this).hide();
-                } else {
-                    $(this).show();
-                }
-            });
+    $('#search-input').on('keyup', function() {
+        var searchTerm = $(this).val();
+
+        $.ajax({
+            url: '/buscar-cliente3', // Asegúrate de que esta ruta coincida con tu URL en Django
+            type: 'GET',
+            data: { search: searchTerm },
+            success: function(response) {
+                // Actualiza solo el cuerpo de la tabla con la respuesta del servidor
+                $('table tbody').html($(response).find('table tbody').html());
+            },
+            error: function(xhr, status, error) {
+                console.error("Error en la solicitud AJAX: ", error);
+            }
         });
     });
+});
 </script>
     
 
@@ -477,5 +494,22 @@ $(document).ready(function() {
     .form-control{
       margin-left: 25px;
     }
+
+
+.responsive-table thead {
+    display: none; /* Opcional, para ocultar el encabezado en pantallas pequeñas */
+}
+
+.responsive-table td {
+    display: block;
+    text-align: right;
+}
+
+.responsive-table td:before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+}
+
   </style>
 {% endblock %}

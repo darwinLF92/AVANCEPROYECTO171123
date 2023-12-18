@@ -12,4 +12,5 @@ urlpatterns = [
     path('lista/', views.cliente_list_view, name='cliente-list'),
     path('cliente-search/', views.cliente_search_view, name='cliente-search'),
     path('clientes/historial_ventas/', views.historial_ventas, name='historial_ventas'),
+    path('buscar-cliente3/', views.buscar_cliente3, name='buscar_cliente3'),
 ]

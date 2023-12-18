@@ -9,6 +9,7 @@ from django.db.models import F
 from decimal import Decimal
 from datetime import timedelta
 from django.db.models import Sum
+from decimal import Decimal, ROUND_HALF_UP
 
 class Venta(models.Model):
     TIPO_DOCUMENTO_CHOICES = [

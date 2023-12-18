@@ -12,7 +12,19 @@
 </style>
   <h1>Lista de Vendedores</h1>
 
-  <a href="#" id="crearVendedor" class="btn btn-success">Crear Vendedor</a>
+
+  <div class="row">
+    <br>
+    <div class="col-md-6">
+      <h4>Buscar por nombre:</h4>
+      <div class="input-group mb-3">
+        <input type="text" class="form-control" name="filtro_nombre" id="search-input" placeholder="Ingrese el nombre...">
+      </div>
+    </div>
+    <div class="col-md-6 text-right">
+      <a href="#" id="crearVendedor" class="btn btn-success">Crear Vendedor</a>
+    </div>
+  </div>
 
   <table class="table">
     <thead>
@@ -28,13 +40,14 @@
     <tbody>
       {% for vendedor in vendedores %}
       <tr>
-        <td>{{ vendedor.codigo }}</td>
-        <td>{{ vendedor.nombre }}</td>
-        <td>{{ vendedor.direccion }}</td>
-        <td>{{ vendedor.telefono }}</td>
-        <td>{{ vendedor.fecha_inicio_labores|date:"d-m-Y" }}</td>
+        <td style="text-align: left;">{{ vendedor.codigo }}</td>
+        <td style="text-align: left;">{{ vendedor.nombre }}</td>
+        <td style="text-align: left;">{{ vendedor.direccion }}</td>
+        <td style="text-align: center;">{{ vendedor.telefono }}</td>
+        <td style="text-align: center;">{{ vendedor.fecha_inicio_labores|date:"d-m-Y" }}</td>
         <td>
-          <a href="#" class="editar-btn btn btn-warning"  data-userid="{{ vendedor.pk }}">Editar</a>
+     
+          <a href="#" class="editar-btn btn btn-warning" data-userid="{{ vendedor.id }}" >Editar </a> 
           <form action="{% url 'Vendedor:cambiar_estado_vendedor' vendedor.pk %}" method="post" style="display: inline-block;">
             {% csrf_token %}
             <button type="submit" class="btn btn-danger">{{ vendedor.activo|yesno:"Inactivar,Activar" }}</button>
@@ -126,13 +139,13 @@
   });    
 
     // Al hacer clic en "Editar"
-    $(".editar-btn").click(function () {
-      var vendedorId = $(this).data('userid');
-      var formulario = "{% url 'Vendedor:editar_vendedor' 0 %}".replace('0', vendedorId);
+    $(document).on('click', '.editar-btn', function() {
+    var vendedorId = $(this).data('userid');
+    var formulario = "{% url 'Vendedor:editar_vendedores' 0 %}".replace('0', vendedorId);
 
-      // SweetAlert para mostrar el modal
-      const swalInstance = Swal.fire({
-        title: 'Editar Vendedor',
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Editar Producto',
         html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
         showCloseButton: true,
         showConfirmButton: false,
@@ -141,34 +154,27 @@
             popup: 'swal-popup my-custom-modal-class',
         },
         didClose: () => {
-          // Recargar la página completa después de cerrar la ventana flotante
-          location.reload();
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
         },
-      });
-      return false;
     });
+    return false;
+});
 
 
-    $(".btn-danger").click(function (event) {
-      // Detener el comportamiento predeterminado del enlace
-      event.preventDefault();
-    
-      // Obtener el nombre del vendedor de la fila actual
-      var vendedorName = $(this).closest('tr').find('td:eq(1)').text();
-    
-      // Obtener la URL de eliminación del atributo href
-      var deleteUrl = $(this).closest('form').attr('action');
-    
-      // Obtener el texto del botón (Inactivar/Activar)
-      var buttonText = $(this).text();
-    
-      // Definir el mensaje dependiendo de si se va a inactivar o activar al vendedor
-      var message = buttonText === "Inactivar"
+
+$(document).on('click', '.btn-danger', function(event) {
+    // Detener el comportamiento predeterminado del enlace
+    event.preventDefault();
+
+    var vendedorName = $(this).closest('tr').find('td:eq(1)').text();
+    var deleteUrl = $(this).closest('form').attr('action');
+    var buttonText = $(this).text();
+    var message = buttonText === "Inactivar"
         ? `Estás a punto de Inactivar el Vendedor:<br><strong>${vendedorName}</strong><br>podrás revertir este cambio.`
         : `Estás a punto de Activar el Vendedor:<br><strong>${vendedorName}</strong><br>podrás revertir este cambio.`;
-    
-      // Mostrar ventana de confirmación SweetAlert2 con el nombre del vendedor
-      Swal.fire({
+
+    Swal.fire({
         title: '¿Estás seguro?',
         html: message,
         icon: 'warning',
@@ -176,95 +182,63 @@
         confirmButtonColor: '#3085d6',
         cancelButtonColor: '#d33',
         confirmButtonText: buttonText === "Inactivar" ? 'Sí, inactivarlo' : 'Sí, activarlo'
-      }).then((result) => {
+    }).then((result) => {
         if (result.isConfirmed) {
-          // Realizar la acción solo si el usuario confirma
-          // Redirigir a la URL de eliminación si se confirma
-          $.ajax({
-            type: "POST",
-            url: deleteUrl,
-            data: {
-              csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
-            },
-            success: function (response) {
-              // Mostrar el mensaje de éxito o error
-              if (response.success) {
-                Swal.fire({
-                  title: 'Éxito',
-                  text: response.message,
-                  icon: 'success'
-                });
-              } else {
-                Swal.fire({
-                  title: 'Error',
-                  text: response.message,
-                  icon: 'error'
-                });
-              }
-    
-              // Cerrar la ventana flotante después de un tiempo
-              setTimeout(function () {
-                // Remover la clase 'modal-open' al cerrar la ventana flotante
-                $("body").removeClass("modal-open");
-    
-                // Remover el fondo desenfocado y la ventana flotante
-                $("#fondoDesenfocado, #ventanaFlotante").remove();
-    
-                // Recargar la página completa después de cerrar la ventana flotante
-                location.reload();
-              }, 2000); // Cerrar después de 2 segundos (ejemplo)
-            },
-            error: function (response) {
-              // Manejar errores o mostrar mensajes adicionales según sea necesario
-              console.error('Error al enviar el formulario:', response);
-            }
-          });
+            $.ajax({
+                type: "POST",
+                url: deleteUrl,
+                data: {
+                    csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
+                },
+                success: function (response) {
+                    Swal.fire({
+                        title: response.success ? 'Éxito' : 'Error',
+                        text: response.message,
+                        icon: response.success ? 'success' : 'error'
+                    });
+                    setTimeout(function () {
+                        $("body").removeClass("modal-open");
+                        $("#fondoDesenfocado, #ventanaFlotante").remove();
+                        location.reload();
+                    }, 2000);
+                },
+                error: function (response) {
+                    console.error('Error al enviar el formulario:', response);
+                }
+            });
         }
-      });
     });
+});
+
   
-
-    // Al enviar el formulario dentro de la ventana flotante
-    $(document).on("submit", "iframe form", function () {
-      // Obtener la referencia del formulario
-      var form = $(this);
-
-      // Realizar la petición AJAX
-      $.ajax({
-        type: form.attr('method'),
-        url: form.attr('action'),
-        data: form.serialize(),
-        success: function (response) {
-          // Manejar la respuesta del servidor
-          if (response.success) {
-            // Mostrar el modal de éxito
-            $("#ventanaFlotante").append(response);
-            $("#modalSuccess").show();
-          } else {
-            // Mostrar el modal de error
-            $("#ventanaFlotante").append(response);
-            $("#modalError").show();
-          }
-
-          // Cerrar la ventana flotante después de un tiempo (puedes ajustar el tiempo según tus necesidades)
-          setTimeout(function () {
-            // Remover la clase 'modal-open' al cerrar la ventana flotante
-            $("body").removeClass("modal-open");
-
-            // Remover el fondo desenfocado y la ventana flotante
-            $("#fondoDesenfocado, #ventanaFlotante").remove();
-          }, 2000); // Cerrar después de 3 segundos (ejemplo)
-        },
-        error: function (response) {
-          // Manejar errores o mostrar mensajes adicionales según sea necesario
-          console.error('Error al enviar el formulario:', response);
-        }
-      });
-      // Evitar que el formulario se envíe de forma tradicional
-      return false;
+$(window).resize(function () {
+            var newMaxWidth = Math.min(0.9 * $(window).width(), 600);
+            $("#ventanaFlotante").css("max-width", newMaxWidth + "px");
+        });
     });
 
-  });
+  
 </script>
+
+<script>
+  $(document).ready(function() {
+  $('#search-input').on('keyup', function() {
+      var searchTerm = $(this).val();
+
+      $.ajax({
+          url: '/buscar-vendedor', // Asegúrate de que esta ruta coincida con tu URL en Django
+          type: 'GET',
+          data: { search: searchTerm },
+          success: function(response) {
+              // Actualiza solo el cuerpo de la tabla con la respuesta del servidor
+              $('table tbody').html($(response).find('table tbody').html());
+          },
+          error: function(xhr, status, error) {
+              console.error("Error en la solicitud AJAX: ", error);
+          }
+      });
+  });
+});
+  </script>
 
 {% endblock %}

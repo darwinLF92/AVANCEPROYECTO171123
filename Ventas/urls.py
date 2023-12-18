@@ -32,5 +32,6 @@ urlpatterns = [
     path('reporte-ventas-pdf/', reporte_ventas_pdf, name='reporte_ventas_pdf'),
     path('buscar-cliente2/', views.buscar_cliente2, name='buscar_cliente2'),
     path('generar-recibo-pdf/<int:pk_cobro>/', views.generar_recibo_pdf, name='generar_recibo_pdf'),
-
+    path('buscar-producto3/', views.buscar_producto3, name='buscar_producto3'),
+     path('buscar-cliente3/', views.buscar_cliente3, name='buscar_cliente3'),
 ]

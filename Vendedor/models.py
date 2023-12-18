@@ -12,6 +12,7 @@ class Vendedor(models.Model):
     class Meta:
         verbose_name = 'vendedor'
         verbose_name_plural = 'vendedores'
+        ordering = ['nombre']  # Ordena por nombre de forma ascendente
 
     def __str__(self):
         return f"{self.codigo} - {self.nombre}"

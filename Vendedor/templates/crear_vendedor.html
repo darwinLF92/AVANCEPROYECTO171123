@@ -29,7 +29,7 @@
     <input type="date" name="fecha_inicio_labores" class="form-control" id="id_fecha_inicio_labores" value="{{ form.fecha_inicio_labores.value|date:"d-m-Y"|default_if_none:'' }}">
   </div>
 
-  <button type="submit" class="btn btn-primary">Guardar</button>
+  <button type="submit" class="btn btn-primary" {% if success or error_message%}style="display: none;" {% endif %}>Guardar</button>
 </form>
 </div>
 

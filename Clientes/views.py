@@ -112,3 +112,12 @@ def historial_ventas(request):
             })
 
     return JsonResponse({'ventas': ventas_data, 'nombre_cliente': cliente.nombre})
+
+def buscar_cliente3(request):
+    search_term = request.GET.get('search', '')
+    if search_term:
+        clientes = Cliente.objects.filter(nombre__icontains=search_term)
+    else:
+        clientes = Cliente.objects.all()
+
+    return render(request, 'Clientes/cliente_list.html', {'clientes': clientes})

@@ -47,12 +47,12 @@ Lista de Proveedores
     <tbody>
         {% for proveedor in proveedores %}
         <tr>
-            <td>{{ proveedor.nit }}</td>
-            <td>{{ proveedor.nombre }}</td>
-            <td>{{ proveedor.direccion }}</td>
-            <td>{{ proveedor.telefono }}</td>
-            <td>{{ proveedor.correo }}</td>
-            <td>{{ proveedor.contacto }}</td>
+            <td style="text-align: left;">{{ proveedor.nit }}</td>
+            <td style="text-align: left;">{{ proveedor.nombre }}</td>
+            <td style="text-align: left;">{{ proveedor.direccion }}</td>
+            <td style="text-align: center;">{{ proveedor.telefono }}</td>
+            <td style="text-align: left;">{{ proveedor.correo }}</td>
+            <td style="text-align: left;">{{ proveedor.contacto }}</td>
             <td>
                 <a href="#" class="editar-btn btn btn-warning"  data-userid="{{ proveedor.id }}">Editar</a>  <!-- Asegúrate de tener la URL proveedor-edit configurada -->
                 <a href="#" class="eliminar-btn btn btn-danger"  data-userid="{{ proveedor.id }}">Eliminar</a> <!-- Y la URL proveedor-delete también -->
@@ -141,70 +141,75 @@ Lista de Proveedores
         });
 
         // Al hacer clic en "Editar"
-        $(".editar-btn").click(function () {
-            var proveedorId = $(this).data('userid');
-            var formulario = "{% url 'Proveedor:proveedor-edit' 0 %}".replace('0', proveedorId);
+        $(document).on('click', '.editar-btn', function() {
+    var proveedorId = $(this).data('userid');
+    var formulario = "{% url 'Proveedor:proveedor-edit' 0 %}".replace('0', proveedorId);
 
-            // SweetAlert para mostrar el modal
-            const swalInstance = Swal.fire({
-                title: 'Editar Proveedor',
-                html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'swal-container',
-                    popup: 'swal-popup my-custom-modal-class',
-                },
-                didClose: () => {
-                    // Recargar la página completa después de cerrar la ventana flotante
-                    location.reload();
-                },
-            });
-            return false;
-        });
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Editar Proveedor',
+        html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
+        },
+    });
+    return false;
+});
+
 
         // Al hacer clic en "Eliminar"
-        $(".eliminar-btn").click(function () {
-            var proveedorId = $(this).data('userid');
-            var formulario = "{% url 'Proveedor:proveedor-delete' 0 %}".replace('0', proveedorId);
+        $(document).on('click', '.eliminar-btn', function() {
+    var proveedorId = $(this).data('userid');
+    var formulario = "{% url 'Proveedor:proveedor-delete' 0 %}".replace('0', proveedorId);
 
-            // SweetAlert para mostrar el modal
-            const swalInstance = Swal.fire({
-                title: 'Eliminar Proveedor',
-                html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'swal-container',
-                    popup: 'swal-popup my-custom-modal-class',
-                },
-                didClose: () => {
-                    // Recargar la página completa después de cerrar la ventana flotante
-                    location.reload();
-                },
-            });
-            return false;
-        })
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Eliminar Proveedor',
+        html: `<iframe src="${formulario}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+        didClose: () => {
+            // Recargar la página completa después de cerrar la ventana flotante
+            location.reload();
+        },
+    });
+    return false;
+});
+
     });
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     $(document).ready(function() {
-        $('#search-input').on('keyup', function() {
-            var filtro = $(this).val().toLowerCase();
-            $('tbody tr').each(function() {
-                var nit = $(this).find('td:nth-child(1)').text().toLowerCase();
-                var nombre = $(this).find('td:nth-child(2)').text().toLowerCase();
-                
-                if (nit.includes(filtro) || nombre.includes(filtro)) {
-                    $(this).show();
-                } else {
-                    $(this).hide();
-                }
-            });
+    $('#search-input').on('keyup', function() {
+        var searchTerm = $(this).val();
+
+        $.ajax({
+            url: '/buscar-proveedor3', // Asegúrate de que esta ruta coincida con tu URL en Django
+            type: 'GET',
+            data: { search: searchTerm },
+            success: function(response) {
+                // Actualiza solo el cuerpo de la tabla con la respuesta del servidor
+                $('table tbody').html($(response).find('table tbody').html());
+            },
+            error: function(xhr, status, error) {
+                console.error("Error en la solicitud AJAX: ", error);
+            }
         });
     });
+});
     </script>
 
 <style>
