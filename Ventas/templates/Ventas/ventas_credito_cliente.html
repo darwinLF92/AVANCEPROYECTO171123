@@ -490,39 +490,44 @@ document.addEventListener('DOMContentLoaded', function() {
   flex-direction: column;
   justify-content: center; /* Centra horizontalmente */
   align-items: center; /* Centra verticalmente */
-  max-height: 20cm; /* Altura máxima del contenedor */
+  max-height: 700px; /* Altura máxima del contenedor */
   overflow: auto; /* Permite desplazamiento vertical y horizontal si es necesario */
   border: 1px solid #ccc;
 }
 
-.data-clientes {
-  width: 40cm; /* Ancho de la tabla, asegúrate de que esto se ajusta a tus necesidades */
+.data-clientes { 
+  margin-top: 1000px;
+  width: 100%; /* Cambiado de 40cm a 100% para mejor adaptabilidad */
+  max-width: 40cm; /* Si aún necesitas una anchura máxima, utiliza max-width */
   border-collapse: collapse;
-  margin: auto; /* Centra la tabla horizontalmente */
+  
 }
+
 
 .clientes-head th {
   position: sticky;
-  top: 0;
-  background-color: black;
-  z-index: 10;
-  color: aliceblue;
+  top: 0; /* Ajusta esto si hay algún otro elemento fijo en la parte superior, como un menú de navegación */
+  background:black; /* O el color de fondo que desees, para evitar que se vea contenido a través del encabezado */
+  color: white;
+  z-index: 10; /* Asegura que el encabezado se muestre por encima del contenido al desplazarse */
 }
 
 .clientes-tfoot tr {
   position: sticky;
   bottom: 0;
   background-color: darkblue;
-  z-index: 10;
+  z-index: 10; /* Corregido a un número sin 'px' */
   color: white;
 }
 
 .clientes-tbody tr:nth-child(odd) {
   background-color: white;
+ 
 }
 
 .clientes-tbody tr:nth-child(even) {
   background-color: #dcfff9;
 }
+
   </style>
 {% endblock %}
