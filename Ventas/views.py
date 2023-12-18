@@ -192,39 +192,56 @@ class VentasCreditoPorClienteView(ListView):
     template_name = 'Ventas/ventas_credito_cliente.html'
 
     def get_queryset(self):
-        # Filtrar solo ventas al crédito con saldo pendiente
-        return Venta.objects.filter(tipo_pago='credito', saldo_pendiente__gt=0, anulada=False).select_related('cliente')
+        queryset = Venta.objects.filter(
+            tipo_pago='credito',
+            saldo_pendiente__gt=0,
+            anulada=False
+        ).select_related('cliente')
+
+        # Obtener el término de búsqueda del query string
+        search_query = self.request.GET.get('filtro_nombre', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(cliente__nombre__icontains=search_query) |
+                Q(cliente__apellido__icontains=search_query)
+                # Añade aquí otros campos de búsqueda si es necesario
+            )
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()  # Asegúrate de usar el queryset filtrado
         ventas_por_cliente = {}
 
         # Inicializar los totales
         suma_total_documentos = 0
-        suma_total_inicial = 0
-        suma_abonos = 0
-        suma_saldo_pendiente = 0
+        suma_total_inicial = Decimal('0.00')  # Usar Decimal para evitar problemas de precisión
+        suma_abonos = Decimal('0.00')
+        suma_saldo_pendiente = Decimal('0.00')
 
-        for venta in self.object_list:
+        for venta in queryset:  # Usa el queryset filtrado
             cliente = venta.cliente
             if cliente not in ventas_por_cliente:
                 ventas_por_cliente[cliente] = {
+                    'cliente': venta.cliente,
                     'ventas': [],
-                    'total_inicial': 0,
-                    'total_abonos': 0,
-                    'saldo_pendiente': 0,
+                    'total_inicial': Decimal('0.00'),
+                    'total_abonos': Decimal('0.00'),
+                    'saldo_pendiente': Decimal('0.00'),
                 }
 
+           # Acumular los totales para cada cliente
             ventas_por_cliente[cliente]['ventas'].append(venta)
             ventas_por_cliente[cliente]['total_inicial'] += venta.total
             ventas_por_cliente[cliente]['saldo_pendiente'] += venta.saldo_pendiente
 
-            # Acumular los totales
+            # Acumular los totales generales
             suma_total_inicial += venta.total
             suma_saldo_pendiente += venta.saldo_pendiente
 
         # Calcular los abonos para cada cliente y acumular el total de abonos y documentos
-        for cliente, datos in ventas_por_cliente.items():
+        for datos in ventas_por_cliente.values():
             datos['total_abonos'] = datos['total_inicial'] - datos['saldo_pendiente']
             suma_abonos += datos['total_abonos']
             suma_total_documentos += len(datos['ventas'])
@@ -237,7 +254,7 @@ class VentasCreditoPorClienteView(ListView):
         context['suma_saldo_pendiente'] = suma_saldo_pendiente
 
         return context
-
+    
 class DetalleVentasCreditoClienteView(DetailView):
     model = Cliente
     template_name = 'ventas/lista_creditos.html'

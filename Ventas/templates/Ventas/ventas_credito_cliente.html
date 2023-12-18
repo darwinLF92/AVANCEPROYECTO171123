@@ -17,7 +17,7 @@
     </div>
   </div>
 
-  <div class="scrollable-content">
+  <div class="scrollable-content">    
     <table class="data-clientes">
       <thead class="clientes-head">
         <tr>
@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 /* Opcional: Añadir media queries para ajustar para pantallas más pequeñas */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
     .form-group {
         width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
     }
@@ -486,23 +486,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
 .scrollable-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center; /* Centra horizontalmente */
-  align-items: center; /* Centra verticalmente */
+  position: relative; /* Posicionamiento relativo para que funcione como contenedor para el posicionamiento absoluto de los hijos */
+  height: 100vh; /* Usa todo el alto de la ventana gráfica */
   max-height: 700px; /* Altura máxima del contenedor */
   overflow: auto; /* Permite desplazamiento vertical y horizontal si es necesario */
   border: 1px solid #ccc;
 }
 
 .data-clientes { 
-  margin-top: 1000px;
+  margin-top: auto;
   width: 100%; /* Cambiado de 40cm a 100% para mejor adaptabilidad */
   max-width: 40cm; /* Si aún necesitas una anchura máxima, utiliza max-width */
   border-collapse: collapse;
-  
-}
+  margin-left: 10%; /* Margen automático a la izquierda */
+  margin-right: 10%; /* Margen automático a la derecha */
+  position: absolute; /* Posicionamiento absoluto para permitir centrado vertical */
 
+}
 
 .clientes-head th {
   position: sticky;
@@ -525,8 +525,34 @@ document.addEventListener('DOMContentLoaded', function() {
  
 }
 
+.clientes-tbody {
+  padding-top: 60px; /* Ajusta este valor al alto de tus celdas de `thead` */
+  padding-bottom: 60px; /* Ajusta este valor al alto de tus celdas de `tfoot` */
+}
+
+
 .clientes-tbody tr:nth-child(even) {
   background-color: #dcfff9;
+}
+
+.clientes-head th:first-child {
+  width: 700px;
+  min-width: 700px; /* Asegura que el ancho no sea menor de 60px */
+  max-width: 700px; /* Asegura que el ancho no sea mayor de 60px */
+}
+
+/* Estilos para las celdas de la columna Nombre Cliente en el cuerpo de la tabla */
+.clientes-tbody td:first-child {
+  width: 700px;
+  min-width: 700px;
+  max-width: 700px;
+}
+
+/* Si necesitas ajustar las celdas del pie de página también */
+.clientes-tfoot td:first-child {
+  width: 700px;
+  min-width: 700px;
+  max-width: 700px;
 }
 
   </style>
