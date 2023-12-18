@@ -54,9 +54,10 @@
                     <td>{{ cobro.venta.comentarios }}</td>
                     <td>{{ cobro.monto|floatformat:2|intcomma }}</td>
                     <td>
-                        <a href="{% url 'Ventas:generar_recibo' pk_cobro=cobro.id %}">Ver Recibo</a>
-                        <a href="{% url 'Ventas:anular_cobro' cobro_id=cobro.id %}">Anular Cobro</a>
-                        <button type="button" class="btn btn-danger botonImprimirPDF" data-cobro-id="{{ cobro.id }}">Imprimir</button>
+                        <a href="{% url 'Ventas:generar_recibo' pk_cobro=cobro.id %}" class="btn btn-ver-recibo">Ver Recibo</a>
+                        <a href="{% url 'Ventas:anular_cobro' cobro_id=cobro.id %}" class="btn btn-anular-cobro">Anular Cobro</a>
+                        <button type="button" class="btn btn-imprimir botonImprimirPDF" data-cobro-id="{{ cobro.id }}">Imprimir</button>                        
+
                     </td>
                 </tr>
             {% empty %}
@@ -486,6 +487,36 @@ document.getElementById('consultar').addEventListener('click', function() {
     .form-group {
         width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
     }
+}
+
+.btn-ver-recibo {
+    background-color: darkblue; /* Verde */
+    color: white;
+}
+
+.btn-ver-recibo:hover {
+    background-color: cyan; /* Color al pasar el ratón - Verde más oscuro */
+    color: #000000;
+}
+
+.btn-anular-cobro {
+    background-color: maroon; /* Naranja */
+    color: white;
+}
+
+.btn-anular-cobro:hover {
+    background-color: red; /* Color al pasar el ratón - Naranja más oscuro */
+    color: white;
+}
+
+.btn-imprimir {
+    background-color: orangered; /* Azul */
+    color: white;
+}
+
+.btn-imprimir:hover {
+    background-color: orange; /* Color al pasar el ratón - Azul más oscuro */
+    color:#000000;
 }
 
 
