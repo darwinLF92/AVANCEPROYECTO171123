@@ -53,7 +53,7 @@
                 <td>{{ venta.total|floatformat:2|intcomma }}</td>
                 <td>{{ venta.comentarios }}</td>
                 <td>
-                    <a href="#" class="devolucion-btn btn btn-info" data-userid="{{ venta.id }}" >Devolución</a>
+                    <a href="#" class="devolucion-btn btn btn-info" data-userid="{{ venta.id }}" >Anular</a>
                     <a href="{% url 'Ventas:imprimir_venta' venta.id %}" class="btn btn-success" >Imprimir Venta</a>
                     <a href="#" class="detalle-btn btn btn-warning" data-userid="{{ venta.id }}" >Ver Detalles</a>
                     <a href="{% url 'Ventas:confirmar_eliminar_venta' venta.id %}" class="eliminar-btn btn btn-danger" data-userid="{{ venta.id }}" >Eliminar</a>
@@ -127,27 +127,31 @@
       </div>
 
       <script>
-        $(document).ready(function() {
-        // Al hacer clic en "devolucion"
-        $(".devolucion-btn").click(function () {
-            var ventaId = $(this).data('userid');
-            var formularioSrc = "{% url 'Ventas:anular_venta' 0 %}".replace('0', ventaId);
-  
-                  // SweetAlert para mostrar el modal
-            Swal.fire({
-                title: 'Anular Venta',
-                html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'swal-container',
-                    popup: 'swal-popup my-custom-modal-class',
-                },
-            });
-          return false;
-          // Recargar la página completa después de cerrar la ventana flotante
-          location.reload();
-          });   
+$(document).ready(function() {
+    // Al hacer clic en "devolucion"
+    $(".devolucion-btn").click(function () {
+        var ventaId = $(this).data('userid');
+        var formularioSrc = "{% url 'Ventas:anular_venta' 0 %}".replace('0', ventaId);
+
+        // SweetAlert para mostrar el modal
+        Swal.fire({
+            title: 'Anular Venta',
+            html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+            showCloseButton: true,
+            showConfirmButton: false,
+            customClass: {
+                container: 'swal-container',
+                popup: 'swal-popup my-custom-modal-class',
+            },
+        }).then((result) => {
+            // Recargar la página completa después de cerrar la ventana flotante
+            if (result.dismiss === Swal.DismissReason.close || result.dismiss === Swal.DismissReason.backdrop) {
+                location.reload();
+            }
+        });
+        
+        return false;
+    });
 
         // Al hacer clic en "ver detalle"
         $(".detalle-btn").click(function () {
@@ -172,26 +176,30 @@
 
         // Al hacer clic en "eliminar-btn"
         $(".eliminar-btn").click(function () {
-            var ventaId = $(this).data('userid');
-            var formularioSrc = "{% url 'Ventas:confirmar_eliminar_venta' 0 %}".replace('0', ventaId);
-            
-            
-                  // SweetAlert para mostrar el modal
-            Swal.fire({
-                title: 'Eliminar Venta',
-                icon: 'warning',
-                html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
-                showCloseButton: true,
-                showConfirmButton: false,
-                customClass: {
-                    container: 'swal-container',
-                    popup: 'swal-popup my-custom-modal-class',
-                },
-            });
-          return false;
-          // Recargar la página completa después de cerrar la ventana flotante
-          location.reload();
-          });
+    var ventaId = $(this).data('userid');
+    var formularioSrc = "{% url 'Ventas:confirmar_eliminar_venta' 0 %}".replace('0', ventaId);
+
+    // SweetAlert para mostrar el modal
+    Swal.fire({
+        title: 'Eliminar Venta',
+        icon: 'warning',
+        html: `<iframe src="${formularioSrc}" width="100%" height="500vh" frameborder="0" style="max-width: 100%;"></iframe>`,
+        showCloseButton: true,
+        showConfirmButton: false,
+        customClass: {
+            container: 'swal-container',
+            popup: 'swal-popup my-custom-modal-class',
+        },
+    }).then((result) => {
+        // Recargar la página completa después de cerrar la ventana flotante
+        if (result.dismiss === Swal.DismissReason.close || result.dismiss === Swal.DismissReason.backdrop) {
+            location.reload();
+        }
+    });
+
+    return false;
+});
+
 
         });
       </script>
@@ -199,10 +207,15 @@
       <script>
         // Función para formatear números con comas y dos decimales
         const formatNumber = (value, isPercentage = false) => {
+        if (value === null || value === '' || isNaN(value)) {
+        return 'N/A'; // O cualquier valor predeterminado para casos no válidos
+        }
+
         const number = typeof value === 'string' ? parseFloat(value) : value;
         const formattedNumber = number.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         return isPercentage ? `${formattedNumber}%` : formattedNumber;
         };
+
       
         // Función para actualizar el modal con datos filtrados
         function actualizarModal(filtroCliente,filtroProducto, filtroVendedor,  fechainiciov, fechafinv) {

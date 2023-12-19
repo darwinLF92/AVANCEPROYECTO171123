@@ -100,6 +100,9 @@ class AddVentaView(ListView):
                 vendedor_id = request.POST.get('vendedor')
                 vendedor = get_object_or_404(Vendedor, id=vendedor_id)
 
+                dias_credito_raw = request.POST.get('dias_credito')
+                dias_credito = int(dias_credito_raw) if dias_credito_raw.isdigit() else None
+
                 venta_data = {
                     'fecha_creacion': request.POST.get('fecha_creacion'),
                     'cliente': cliente,
@@ -111,7 +114,7 @@ class AddVentaView(ListView):
                     'paga_con': Decimal(request.POST.get('paga_con')) or None,
                     'cambio': Decimal(request.POST.get('cambio')) or None,
                     'comentarios': request.POST.get('comentarios') or None,
-                    'dias_credito': int(request.POST.get('dias_credito')) or None,
+                    'dias_credito': dias_credito,
                     'fecha_vencimiento': request.POST.get('fecha_vencimiento') or None
                 }
                 venta = Venta(**venta_data)
@@ -182,8 +185,13 @@ def eliminar_venta(request, id):
     if request.method == 'POST':
         venta.delete()
         messages.success(request, 'La venta se eliminó correctamente.')  # Agrega un mensaje de éxito
-        return redirect('Ventas:lista_ventas')  # Redirige a la lista de ventas
+        return redirect('Ventas:eliminacion_exitosa')  # Redirige a la lista de ventas
     return render(request, 'Ventas/confirmar_eliminar_venta.html', {'venta': venta})
+
+
+def venta_eliminada_exito(request):
+    # No es necesario pasar contexto si solo vas a mostrar un mensaje
+    return render(request, 'Ventas/eliminacion_exitosa.html')
 
 
 
@@ -449,11 +457,15 @@ def anular_venta(request, venta_id):
             # Marcar la venta como anulada
             venta.anulada = True
             venta.save()
-            return redirect('Ventas:lista_ventas')
+            return redirect('Ventas:anulacion_exitosa')
     else:
         form = AnulacionForm()
 
     return render(request, 'Ventas/anular_venta.html', {'venta': venta, 'form': form})
+
+def venta_anulada_exito(request):
+    # No es necesario pasar contexto si solo vas a mostrar un mensaje
+    return render(request, 'Ventas/anulacion_exitosa.html')
 
 #reporte de cuentas por cobrar
 
