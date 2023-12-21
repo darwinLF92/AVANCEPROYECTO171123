@@ -93,64 +93,70 @@ class AddVentaView(ListView):
         data = {}
         action = request.POST.get('action', '')
         if action == 'save':
-            try:
-                # Crear objeto de Venta
-                cliente_id = request.POST.get('cliente')
-                cliente = get_object_or_404(Cliente, id=cliente_id)
-                vendedor_id = request.POST.get('vendedor')
-                vendedor = get_object_or_404(Vendedor, id=vendedor_id)
+            with transaction.atomic():  # Iniciar una transacción
+                try:
+                    # Obtener datos del formulario
+                    cliente_id = request.POST.get('cliente')
+                    cliente = get_object_or_404(Cliente, id=cliente_id)
+                    vendedor_id = request.POST.get('vendedor')
+                    vendedor = get_object_or_404(Vendedor, id=vendedor_id)
+                    total_venta = Decimal(request.POST.get('total'))
 
-                dias_credito_raw = request.POST.get('dias_credito')
-                dias_credito = int(dias_credito_raw) if dias_credito_raw.isdigit() else None
+                    # Verificar límite de crédito del cliente
+                    if cliente.saldo + total_venta > cliente.limitecredito:
+                        raise ValidationError('La venta excede el límite de crédito del cliente.')
 
-                venta_data = {
-                    'fecha_creacion': request.POST.get('fecha_creacion'),
-                    'cliente': cliente,
-                    'vendedor': vendedor,
-                    'tipo_documento': request.POST.get('tipo_documento'),
-                    'tipo_pago': request.POST.get('tipo_pago'),
-                    'metodo_pago': request.POST.get('metodo_pago') or None,
-                    'total': Decimal(request.POST.get('total')),
-                    'paga_con': Decimal(request.POST.get('paga_con')) or None,
-                    'cambio': Decimal(request.POST.get('cambio')) or None,
-                    'comentarios': request.POST.get('comentarios') or None,
-                    'dias_credito': dias_credito,
-                    'fecha_vencimiento': request.POST.get('fecha_vencimiento') or None
-                }
-                venta = Venta(**venta_data)
-                venta.save()
-            
-                # Procesar y guardar los detalles de la venta
-                verts_items = json.loads(request.POST.get('verts', '[]'))
-                for item in verts_items:
-                    producto = Producto.objects.get(id=item['id'])
-                    descuento = Decimal(item['descuento']).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                    detalle_data = {
-                        'venta': venta,
-                        'producto': Producto.objects.get(id=item['id']),
-                        'cantidad': int(item['cantidad']),
-                        'precio': Decimal(item['precio_venta']),
-                        'descuento': descuento,
-                        'precio_compra_en_venta': producto.precio_compra,
-                        'subtotal': Decimal(item['subtotal']),
-                        # ... otros campos necesarios ...
-                    }
-                    try:
-                        detalle = DetalleVenta(**detalle_data)
-                        print("Descuento:", detalle_data['descuento'])
+                    # Crear objeto de Venta con datos del formulario
+                    venta = Venta(
+                        fecha_creacion=request.POST.get('fecha_creacion'),
+                        cliente=cliente,
+                        vendedor=vendedor,
+                        tipo_documento=request.POST.get('tipo_documento'),
+                        tipo_pago=request.POST.get('tipo_pago'),
+                        metodo_pago=request.POST.get('metodo_pago'),
+                        total=total_venta,
+                        paga_con=Decimal(request.POST.get('paga_con')),
+                        cambio=Decimal(request.POST.get('cambio')),
+                        comentarios=request.POST.get('comentarios'),
+                        dias_credito=int(request.POST.get('dias_credito')) if request.POST.get('dias_credito') else None,
+                        fecha_vencimiento=request.POST.get('fecha_vencimiento'),
+                    )
+
+                    # Obtener y validar detalles de la venta
+                    verts_items = json.loads(request.POST.get('verts', '[]'))
+                    for item in verts_items:
+                        producto = Producto.objects.get(id=item['id'])
+                        cantidad_requerida = int(item['cantidad'])
+
+                        # Validar stock del producto
+                        if producto.stock < cantidad_requerida:
+                            raise ValidationError(f'No hay suficiente stock para el producto {producto.nombre}. Disponible: {producto.stock}, Requerido: {cantidad_requerida}')
+
+                        # Preparar datos del detalle de la venta
+                        detalle = DetalleVenta(
+                            venta=venta,
+                            producto=producto,
+                            cantidad=cantidad_requerida,
+                            precio=Decimal(item['precio_venta']),
+                            descuento=Decimal(item['descuento']).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                            precio_compra_en_venta=producto.precio_compra,
+                            subtotal=Decimal(item['subtotal']),
+                            # ... otros campos necesarios ...
+                        )
                         detalle.save()
-                    except ValidationError as e:
-                        data['error'] = str(e)
-                        venta.delete()  # Opcional: elimina la venta si no se puede completar
-                        break  # Salir del bucle si hay un error
 
-                if 'error' not in data:
+                    # Guardar la venta
+                    venta.save()
                     data['status'] = 'success'
                     data['venta_id'] = venta.id
-                print("precio_compra_en_venta:", detalle_data['precio_compra_en_venta'])
-                
-            except Exception as e:
-                data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
+
+                except ValidationError as e:
+                    data['error'] = str(e)
+                    # No es necesario eliminar la venta aquí, ya que la transacción no se ha completado
+
+                except Exception as e:
+                    data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
+
         else:
             data['error'] = 'Acción no permitida'
 

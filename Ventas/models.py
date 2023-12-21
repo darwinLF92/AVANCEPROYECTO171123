@@ -10,6 +10,7 @@ from decimal import Decimal
 from datetime import timedelta
 from django.db.models import Sum
 from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
 
 class Venta(models.Model):
     TIPO_DOCUMENTO_CHOICES = [
@@ -61,19 +62,17 @@ class Venta(models.Model):
             return 0 
         
     def save(self, *args, **kwargs):
-        if not self.pk and self.tipo_pago == 'credito':  
-            nuevo_saldo = Decimal(self.cliente.saldo) + Decimal(self.total)
-            if nuevo_saldo > self.cliente.limitecredito:
-                raise ValidationError('La venta excede el límite de crédito del cliente.')
-       
-            self.saldo_pendiente = Decimal(self.total)
-            self.cliente.saldo = nuevo_saldo
-            self.cliente.save()
-        super(Venta, self).save(*args, **kwargs)
+        with transaction.atomic():
+            if not self.pk and self.tipo_pago == 'credito':  
+                nuevo_saldo = Decimal(self.cliente.saldo) + Decimal(self.total)
+                if nuevo_saldo > self.cliente.limitecredito:
+                    raise ValidationError('La venta excede el límite de crédito del cliente.')
+            
+                self.saldo_pendiente = Decimal(self.total)
+                self.cliente.saldo = nuevo_saldo
+                self.cliente.save()
 
-
-    def __str__(self):
-        return str(self.id)
+            super(Venta, self).save(*args, **kwargs)
     
 
     
