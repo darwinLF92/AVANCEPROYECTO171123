@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
 .scrollable-content {
-  position: relative; /* Posicionamiento relativo para que funcione como contenedor para el posicionamiento absoluto de los hijos */
+  
   height: 100vh; /* Usa todo el alto de la ventana gráfica */
   max-height: 700px; /* Altura máxima del contenedor */
   overflow: auto; /* Permite desplazamiento vertical y horizontal si es necesario */
@@ -498,9 +498,6 @@ document.addEventListener('DOMContentLoaded', function() {
   width: 100%; /* Cambiado de 40cm a 100% para mejor adaptabilidad */
   max-width: 40cm; /* Si aún necesitas una anchura máxima, utiliza max-width */
   border-collapse: collapse;
-  margin-left: 10%; /* Margen automático a la izquierda */
-  margin-right: 10%; /* Margen automático a la derecha */
-  position: absolute; /* Posicionamiento absoluto para permitir centrado vertical */
 
 }
 
@@ -533,26 +530,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .clientes-tbody tr:nth-child(even) {
   background-color: #dcfff9;
-}
-
-.clientes-head th:first-child {
-  width: 700px;
-  min-width: 700px; /* Asegura que el ancho no sea menor de 60px */
-  max-width: 700px; /* Asegura que el ancho no sea mayor de 60px */
-}
-
-/* Estilos para las celdas de la columna Nombre Cliente en el cuerpo de la tabla */
-.clientes-tbody td:first-child {
-  width: 700px;
-  min-width: 700px;
-  max-width: 700px;
-}
-
-/* Si necesitas ajustar las celdas del pie de página también */
-.clientes-tfoot td:first-child {
-  width: 700px;
-  min-width: 700px;
-  max-width: 700px;
 }
 
   </style>
