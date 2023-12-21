@@ -487,11 +487,30 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 .scrollable-content {
   
-  height: 100vh; /* Usa todo el alto de la ventana gráfica */
-  max-height: 700px; /* Altura máxima del contenedor */
-  overflow: auto; /* Permite desplazamiento vertical y horizontal si es necesario */
+  /*height: 100vh; /* Usa todo el alto de la ventana gráfica */
+  /*max-height: 700px; /* Altura máxima del contenedor */
+  /*overflow: auto; /* Permite desplazamiento vertical y horizontal si es necesario */
   border: 1px solid #ccc;
 }
+
+.parent-container { /* Asumiendo que es el contenedor padre de .scrollable-content */
+  display: flex;
+  justify-content: center; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+  height: 100vh; /* Asegura que el contenedor padre tenga todo el alto de la ventana */
+}
+
+.scrollable-content {
+  max-width: 100%; /* Asegura que no sobrepase el ancho de la pantalla */
+  /* Resto de tus estilos... */
+}
+
+@media (max-width: 600px) {
+  .data-clientes, .clientes-head th, .clientes-tfoot tr {
+    font-size: smaller; /* O cualquier ajuste específico que necesites */
+  }
+}
+
 
 .data-clientes { 
   margin-top: auto;
