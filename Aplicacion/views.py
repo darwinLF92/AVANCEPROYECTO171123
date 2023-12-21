@@ -2,9 +2,18 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserLoginForm, UserRegisterForm
 from django.contrib import messages
+from configuracion.models import Configuracion
 
 def home(request):
-    return render(request, 'home.html')
+    try:
+        configuracion = Configuracion.objects.first()  # Asegúrate de que haya al menos un registro en la base de datos
+    except Configuracion.DoesNotExist:
+        configuracion = None  # O maneja la situación con un valor predeterminado o una redirección
+
+    context = {
+        'configuracion': configuracion
+    }
+    return render(request, 'home.html', context)
 
 def login_view(request):
     if request.method == 'POST':
