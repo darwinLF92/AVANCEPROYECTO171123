@@ -121,6 +121,7 @@ class AddVentaView(ListView):
                         dias_credito=int(request.POST.get('dias_credito')) if request.POST.get('dias_credito') else None,
                         fecha_vencimiento=request.POST.get('fecha_vencimiento'),
                     )
+                    venta.save()  # Guardar la venta
 
                     # Obtener y validar detalles de la venta
                     verts_items = json.loads(request.POST.get('verts', '[]'))
@@ -132,7 +133,7 @@ class AddVentaView(ListView):
                         if producto.stock < cantidad_requerida:
                             raise ValidationError(f'No hay suficiente stock para el producto {producto.nombre}. Disponible: {producto.stock}, Requerido: {cantidad_requerida}')
 
-                        # Preparar datos del detalle de la venta
+                        # Preparar y guardar los datos del detalle de la venta
                         detalle = DetalleVenta(
                             venta=venta,
                             producto=producto,
@@ -145,14 +146,12 @@ class AddVentaView(ListView):
                         )
                         detalle.save()
 
-                    # Guardar la venta
-                    venta.save()
                     data['status'] = 'success'
                     data['venta_id'] = venta.id
 
                 except ValidationError as e:
                     data['error'] = str(e)
-                    # No es necesario eliminar la venta aquí, ya que la transacción no se ha completado
+                    # En caso de excepción, la transacción se revierte automáticamente
 
                 except Exception as e:
                     data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
@@ -161,7 +160,6 @@ class AddVentaView(ListView):
             data['error'] = 'Acción no permitida'
 
         return JsonResponse(data, safe=False)
-    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

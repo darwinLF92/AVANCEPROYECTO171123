@@ -45,3 +45,15 @@ def register_view(request):
         form = UserRegisterForm()
     return render(request, 'register.html', {'form': form})
 
+def reportes(request):
+    try:
+        configuracion = Configuracion.objects.first()  # Asegúrate de que haya al menos un registro en la base de datos
+    except Configuracion.DoesNotExist:
+        configuracion = None  # O maneja la situación con un valor predeterminado o una redirección
+
+    context = {
+        'configuracion': configuracion
+    }
+    # No es necesario pasar contexto si solo vas a mostrar un mensaje
+    return render(request, 'reportes.html', context)
+
