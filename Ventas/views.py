@@ -74,6 +74,10 @@ def detalle_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
 
+    # Calcular el precio unitario para cada detalle
+    for detalle in detalles:
+        detalle.precio_unitario = detalle.subtotal / detalle.cantidad if detalle.cantidad else 0
+
     context = {
         'venta': venta,
         'detalles': detalles,

@@ -6,41 +6,105 @@
 {% load humanize %}
 
 {% block content %}
-    <h1> </h1>
-    <p><strong>ID Venta:</strong> {{ venta.id }}</p>
-    <p><strong>Fecha:</strong> {{ venta.fecha_creacion }}</p>
-    <p><strong>Nit:</strong> {{ venta.cliente.nit }}</p>
-    <p><strong>Cliente:</strong> {{ venta.cliente.nombre }}</p>
-    <p><strong>Direccion:</strong> {{ venta.cliente.direccion }}</p>
-    <p><strong>Telefono:</strong> {{ venta.cliente.telefono }}</p>
-    <p><strong>Total:</strong> {{ venta.total }}</p>
-    <p><strong>Tipo Pago:</strong> {{ venta.tipo_pago }}</p>
+    <div class="invoice-container">
+        <div class="invoice-header">
+            <div class="invoice-details">
+                <p><strong>ID Venta:</strong> {{ venta.id }}</p>
+                <p><strong>Fecha Venta:</strong> {{ venta.fecha_creacion|date:"d-m-Y" }}</p>
+                <p><strong>Cliente:</strong> {{ venta.cliente.nombre }}</p>
+                <p><strong>Direccion:</strong> {{ venta.cliente.direccion }}</p>
+            </div>
+            <div class="invoice-details">
+                <p><strong>Nit:</strong> {{ venta.cliente.nit }}</p>
+                <p><strong>Telefono:</strong> {{ venta.cliente.telefono }}</p>
+                <p><strong>Tipo Pago:</strong> {{ venta.tipo_pago }}</p>
+            </div>
+        </div>
 
-    <h2>Productos Vendidos</h2>
-    <table>
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Precio</th>
-                <th>Descuento</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for detalle in detalles %}
-            <tr>
-                <td>{{ detalle.producto.nombre }}</td>
-                <td>{{ detalle.cantidad|intcomma }}</td>
-                <td>{{ detalle.precio }}</td>
-                <td>{{ detalle.descuento }}</td>
-                <td>{{ detalle.subtotal|floatformat:2|intcomma }}</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5">No hay productos en esta venta.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <h2>Productos Vendidos</h2>
+        <table class="invoice-table">
+            <thead>
+                <tr>
+                    <th>Cantidad</th>
+                    <th>Producto</th>
+                    <th>Precio</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in detalles %}
+                <tr>
+                    <td style="text-align: left;">{{ detalle.cantidad|intcomma }}</td>
+                    <td style="text-align: left;">{{ detalle.producto.nombre }}</td>
+                    <td style="text-align: right;">{{ detalle.precio_unitario|floatformat:2 }}</td>
+                    <td style="text-align: right;">{{ detalle.subtotal|floatformat:2|intcomma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No hay productos en esta venta.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="3"><p><strong>TOTAL VENTA: </strong></p></td>
+                    <td class="Total2"><strong>Q. {{ venta.total|floatformat:2|intcomma }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 {% endblock %}
+
+
+<style>
+    .invoice-container {
+    font-family: 'Arial', sans-serif;
+    max-width: 800px;
+    margin: auto;
+}
+
+.invoice-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.invoice-details p {
+    margin: 4px 0;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.invoice-table th, .invoice-table td {
+    border: none;
+    padding: 8px;
+    text-align: left;
+}
+
+.invoice-table th {
+    background-color: #f2f2f2;
+}
+
+.invoice-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.invoice-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+.invoice-table .total-row td {
+    border-top: 2px solid #000; /* Puedes ajustar el grosor del borde según necesites */
+    text-align: right;
+    padding-top: 8px; /* Añade un poco de espacio por encima del borde para la separación visual */
+}
+
+/* Asegurando que no hay margen extra en los párrafos dentro de .Total2 */
+.invoice-table .total-row .Total2 p {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+</style>

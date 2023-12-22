@@ -49,8 +49,8 @@
             <tr>
                 <td>{{ venta.id }}</td>
                 <td>{{ venta.fecha_creacion|date:"d-m-Y" }}</td>
-                <td>{{ venta.cliente.nombre }}</td>
-                <td>{{ venta.total|floatformat:2|intcomma }}</td>
+                <td style="text-align: left;">{{ venta.cliente.nombre }}</td>
+                <td style="text-align: right;">Q. {{ venta.total|floatformat:2|intcomma }}</td>
                 <td>{{ venta.comentarios }}</td>
                 <td>
                     <a href="#" class="devolucion-btn btn btn-info" data-userid="{{ venta.id }}" >Anular</a>
@@ -68,7 +68,7 @@
         </tbody>
         <tr>
             <td colspan="3" style="border: none; text-align: center;"><h1>TOTAL VENTAS:</h1></td>
-            <td style="border: none;"><h1>{{ total_ventas|floatformat:2|intcomma }}</h1></td>
+            <td style="border: none;"><h1>Q. {{ total_ventas|floatformat:2|intcomma }}</h1></td>
         </tr>
     </table>
 
