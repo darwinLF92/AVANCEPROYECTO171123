@@ -53,10 +53,10 @@
                 <td style="text-align: right;">Q. {{ venta.total|floatformat:2|intcomma }}</td>
                 <td>{{ venta.comentarios }}</td>
                 <td>
-                    <a href="#" class="devolucion-btn btn btn-info" data-userid="{{ venta.id }}" >Anular</a>
+                    <a href="#" class="devolucion-btn btn btn-danger" data-userid="{{ venta.id }}" >Anular</a>
                     <a href="{% url 'Ventas:imprimir_venta' venta.id %}" class="btn btn-success" >Imprimir Venta</a>
-                    <a href="#" class="detalle-btn btn btn-warning" data-userid="{{ venta.id }}" >Ver Detalles</a>
-                    <a href="{% url 'Ventas:confirmar_eliminar_venta' venta.id %}" class="eliminar-btn btn btn-danger" data-userid="{{ venta.id }}" >Eliminar</a>
+                    <a href="#" class="detalle-btn btn btn-info" data-userid="{{ venta.id }}" >Ver Detalles</a>
+
                 </td>
 
             </tr>
