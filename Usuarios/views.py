@@ -97,4 +97,5 @@ def delete_user(request, user_id):
         user_instance.delete()
         return render(request, 'delete_user_confirm.html', {'success': True, 'message': f'Usuario {user_instance.username} Eliminado satisfactoriamente'})
         # return redirect('Usuarios:list_users')
-    return render(request, 'delete_user_confirm.html', {'user': user_instance})
+    return render(request, 'delete_user_confirm.html', {'user': user_instance})                                                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                                             

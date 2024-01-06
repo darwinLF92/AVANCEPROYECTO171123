@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from .forms import UserLoginForm, UserRegisterForm
 from django.contrib import messages
 from configuracion.models import Configuracion
@@ -45,6 +46,7 @@ def register_view(request):
         form = UserRegisterForm()
     return render(request, 'register.html', {'form': form})
 
+@login_required
 def reportes(request):
     try:
         configuracion = Configuracion.objects.first()  # Asegúrate de que haya al menos un registro en la base de datos

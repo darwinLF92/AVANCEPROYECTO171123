@@ -13,8 +13,9 @@ from weasyprint import HTML
 from django.template.loader import render_to_string
 from django.http import FileResponse, JsonResponse, HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth.decorators import login_required
 
-
+@login_required
 def listar_productos(request):
     nombre = request.GET.get('nombre', '')
 
@@ -43,13 +44,14 @@ def listar_productos(request):
     return render(request, 'Producto/listar_productos.html', {'productos': productos_paginados, 'nombre': nombre})
 
 
-
+@login_required
 def get_productos(request):
     producto = Producto.objects.filter(activo=True).values('nombre', 'precio_compra')
     return JsonResponse(list(producto), safe=False)
  
 
 
+@login_required
 #para ver la lista de productos marcados como fabricacion
 def listar_productos_fabricacion(request):
     # Obtén todos los productos para fabricación activos
@@ -77,6 +79,7 @@ def listar_productos_fabricacion(request):
     return render(request, 'Producto/lista_productos_prod.html', {'productos': productos})
 
 
+@login_required
 def agregar_producto(request):
     if request.method == 'POST':
         form = ProductoForm(request.POST)
@@ -91,7 +94,7 @@ def agregar_producto(request):
         form = ProductoForm()
         return render(request, 'Producto/agregar_producto.html', {'form': form})
 
-
+@login_required
 def editar_producto(request, producto_id):
     # Obtén el producto que quieres editar o manda un error 404 si no existe
     producto = get_object_or_404(Producto, id=producto_id)
@@ -111,7 +114,7 @@ def editar_producto(request, producto_id):
     # Renderiza la plantilla con el formulario
     return render(request, 'Producto/editar_producto.html', {'form': form, 'producto': producto})
 
-
+@login_required
 def eliminar_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     if request.method == 'POST':
@@ -121,6 +124,7 @@ def eliminar_producto(request, producto_id):
     return render(request, 'Producto/eliminar_producto.html', {'producto': producto})
 
 
+@login_required
 @transaction.atomic  # Asegura que las operaciones sean atómicas
 def aumentar_stock(request, producto_id):
     producto_principal = get_object_or_404(Producto, id=producto_id)
@@ -169,6 +173,7 @@ def aumentar_stock(request, producto_id):
         return redirect('Producto:listar_productos')
     
     
+@login_required    
 def ver_detalle_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     componentes = ComponenteProducto.objects.filter(producto_principal=producto).select_related('producto_componente')
@@ -193,7 +198,7 @@ def ver_detalle_producto(request, producto_id):
 
 
 from django.db.models import F, Sum
-
+@login_required
 def editar_componentes_producto(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
    
@@ -239,6 +244,7 @@ def editar_componentes_producto(request, producto_id):
         
     })
 
+@login_required
 def producto_search_view(request):
     nombre = request.GET.get('nombre', '')
 
@@ -249,6 +255,7 @@ def producto_search_view(request):
 
     return render(request, 'Producto/listar_productos.html', {'productos': productos, 'nombre': nombre})
 
+@login_required
 def buscar_productos(request):
     query = request.GET.get('q', '')
     productos = Producto.objects.filter(nombre__icontains=query)[:10]  # limitamos a 10 resultados
@@ -258,7 +265,7 @@ def buscar_productos(request):
     ]
     return JsonResponse(productos_json, safe=False)
 
-
+@login_required
 def reporte_inventario(request):
     proveedores = list(Proveedor.objects.filter(activo=True).values_list('nombre', flat=True))
     filtro_producto = request.GET.get('producto', '')
@@ -344,6 +351,7 @@ def reporte_inventario(request):
     })
 
 
+@login_required
 def buscar_producto2(request):
     search_term = request.GET.get('search', '')
     if search_term:
@@ -354,7 +362,7 @@ def buscar_producto2(request):
     return render(request, 'Producto/listar_productos.html', {'productos': productos})
 
 
-
+@login_required
 def reporte_inventariofinanciero_pdf(request):
     # Obtener lista de vendedores activos
     proveedores = list(Proveedor.objects.filter(activo=True).values_list('nombre', flat=True))
@@ -452,7 +460,7 @@ def reporte_inventariofinanciero_pdf(request):
 
     return response
 
-
+@login_required
 def reporte_inventario_pdf(request):
     fecha_hoy = datetime.now().strftime('%Y-%m-%d')
 
@@ -492,6 +500,7 @@ def reporte_inventario_pdf(request):
 
     return response
 
+@login_required
 def actualizar_stock(request):
     if request.method == 'POST':
         producto_id = request.POST.get('producto_id')

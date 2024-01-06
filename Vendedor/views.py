@@ -5,8 +5,10 @@ from .forms import VendedorForm
 from .models import Vendedor
 from django.http import JsonResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-class ListaVendedoresView(View):
+class ListaVendedoresView(LoginRequiredMixin,View):
     def get(self, request):
         # Obtener todos los vendedores, ya sean activos o inactivos
         vendedores = Vendedor.objects.all()
@@ -36,7 +38,7 @@ class ListaVendedoresView(View):
 
         return render(request, 'lista_vendedores.html', context)
 
-
+@login_required
 def crear_vendedor(request):
     if request.method == 'POST':
         form = VendedorForm(request.POST)
@@ -50,13 +52,14 @@ def crear_vendedor(request):
     else:
         form = VendedorForm()
         return render(request, 'crear_vendedor.html', {'form': form})
-    
+
+@login_required    
 def vendedor_creado_exito(request):
     # No es necesario pasar contexto si solo vas a mostrar un mensaje
     return render(request, 'vendedor_creado_exito.html')
     
     
-class EditarVendedorView(View):
+class EditarVendedorView(View, LoginRequiredMixin):
     def get(self, request, pk):  # Cambiar 'vendedor_id' a 'pk'
         vendedor = get_object_or_404(Vendedor, pk=pk)
         form = VendedorForm(instance=vendedor)
@@ -72,6 +75,7 @@ class EditarVendedorView(View):
         return render(request, 'editar_vendedor.html', {'form': form, 'vendedor': vendedor})
     
 
+@login_required
 def editar_vendedores(request, vendedor_id):
     vendedor = get_object_or_404(Vendedor, id=vendedor_id)
 
@@ -85,12 +89,13 @@ def editar_vendedores(request, vendedor_id):
 
     return render(request, 'editar_vendedor.html', {'form': form, 'vendedor': vendedor})
 
+@login_required
 def vendedor_editado_exito(request):
     # No es necesario pasar contexto si solo vas a mostrar un mensaje
     return render(request, 'vendedor_editado.html')
 
 
-class CambiarEstadoVendedorView(View):
+class CambiarEstadoVendedorView(View, LoginRequiredMixin):
     def post(self, request, pk):
         try:
             vendedor = get_object_or_404(Vendedor, pk=pk)
@@ -102,6 +107,7 @@ class CambiarEstadoVendedorView(View):
             return JsonResponse({'success': False, 'message': f'Error al cambiar el estado del vendedor: {str(e)}'})
         
 
+@login_required
 def buscar_vendedor(request):
     search_term = request.GET.get('search', '')
     if search_term:

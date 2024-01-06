@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from .forms import ClienteForm
 from .models import Cliente
 from Ventas.models import Venta, DetalleVenta
@@ -10,7 +11,7 @@ from datetime import datetime
 
 
 
-
+@login_required
 def cliente_create_view(request):
     if request.method == 'POST':
         form = ClienteForm(request.POST)
@@ -21,6 +22,7 @@ def cliente_create_view(request):
         form = ClienteForm()
     return render(request, 'Clientes/cliente_form.html', {'form': form})
 
+@login_required
 def cliente_list_view(request):
     # Obtener el valor del parámetro de búsqueda "nombre"
     nombre = request.GET.get('nombre', '')
@@ -58,6 +60,7 @@ def cliente_list_view(request):
 
     return render(request, 'Clientes/cliente_list.html', context)
 
+@login_required
 def cliente_edit_view(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
@@ -69,6 +72,7 @@ def cliente_edit_view(request, pk):
         form = ClienteForm(instance=cliente)
     return render(request, 'Clientes/cliente_edit.html', {'form': form})
 
+@login_required
 def cliente_delete_view(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     if request.method == 'POST':
@@ -78,6 +82,7 @@ def cliente_delete_view(request, pk):
     return render(request, 'Clientes/cliente_confirm_delete.html', {'cliente': cliente})
 
 
+@login_required
 def cliente_search_view(request):
     nombre = request.GET.get('nombre', '')
 
@@ -88,6 +93,7 @@ def cliente_search_view(request):
 
     return render(request, 'Clientes/cliente_list.html', {'clientes': clientes, 'nombre': nombre})
 
+@login_required
 def historial_ventas(request):
     cliente_id = request.GET.get('cliente_id')
     cliente = Cliente.objects.get(id=cliente_id) 
@@ -113,6 +119,7 @@ def historial_ventas(request):
 
     return JsonResponse({'ventas': ventas_data, 'nombre_cliente': cliente.nombre})
 
+@login_required
 def buscar_cliente3(request):
     search_term = request.GET.get('search', '')
     if search_term:

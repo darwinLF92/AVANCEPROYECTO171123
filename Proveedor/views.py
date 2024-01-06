@@ -2,7 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404, redirect
 from .forms import ProveedorForm
 from .models import Proveedor
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def proveedor_create_view(request):
     form = ProveedorForm(request.POST or None)
     if form.is_valid():
@@ -14,6 +16,7 @@ def proveedor_create_view(request):
     }
     return render(request, "Proveedor/proveedor_form.html", context)
 
+@login_required
 def proveedor_list_view(request):
     proveedores = Proveedor.objects.all()
 
@@ -42,6 +45,7 @@ def proveedor_list_view(request):
 
     return render(request, "Proveedor/proveedor_list.html", context)
 
+@login_required
 def proveedor_edit_view(request, pk):
     proveedor = get_object_or_404(Proveedor, pk=pk)
     form = ProveedorForm(request.POST or None, instance=proveedor)
@@ -51,6 +55,7 @@ def proveedor_edit_view(request, pk):
     context = {'form': form}
     return render(request, 'Proveedor/proveedor_edit.html', context)
 
+@login_required
 def proveedor_delete_view(request, pk):
     proveedor = get_object_or_404(Proveedor, pk=pk)
     if request.method == 'POST':
@@ -59,7 +64,7 @@ def proveedor_delete_view(request, pk):
     context = {'proveedor': proveedor}
     return render(request, 'Proveedor/proveedor_delete.html', context)
 
-
+@login_required
 def buscar_proveedor3(request):
     search_term = request.GET.get('search', '')
     if search_term:

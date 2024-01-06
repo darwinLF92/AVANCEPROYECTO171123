@@ -32,10 +32,12 @@ from datetime import datetime, date
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 import tempfile
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 
-class ListaVentasView(ListView):
+class ListaVentasView(ListView, LoginRequiredMixin):
     model = Venta
     template_name = 'Ventas/lista_ventas.html'
     context_object_name = 'ventas'
@@ -70,6 +72,7 @@ class ListaVentasView(ListView):
 
 
 
+@login_required
 def detalle_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
@@ -86,7 +89,7 @@ def detalle_venta(request, venta_id):
 
 
 
-class AddVentaView(ListView):
+class AddVentaView(ListView, LoginRequiredMixin):
     model = Venta
     template_name = 'Ventas/crear_venta.html'
 
@@ -172,7 +175,7 @@ class AddVentaView(ListView):
         context['Vendedores_list'] = Vendedor.objects.filter(activo=True)
         return context
     
-
+@login_required
 def buscar_productos(request):
     query = request.GET.get('q', '')
     productos = Producto.objects.filter(nombre__icontains=query)[:10]  # limitamos a 10 resultados
@@ -182,12 +185,13 @@ def buscar_productos(request):
     ]
     return JsonResponse(productos_json, safe=False)
 
+@login_required
 def buscar_clientes(request):
     query = request.GET.get('q', '')
     clientes = Cliente.objects.filter(nombre__icontains=query).values('nit', 'nombre', 'direccion', 'telefono')[:10]  # Limita los resultados
     return JsonResponse(list(clientes), safe=False)
 #archivo que contiene ventas
-
+@login_required
 def eliminar_venta(request, id):
     venta = get_object_or_404(Venta, id=id)
     if request.method == 'POST':
@@ -196,14 +200,14 @@ def eliminar_venta(request, id):
         return redirect('Ventas:eliminacion_exitosa')  # Redirige a la lista de ventas
     return render(request, 'Ventas/confirmar_eliminar_venta.html', {'venta': venta})
 
-
+@login_required
 def venta_eliminada_exito(request):
     # No es necesario pasar contexto si solo vas a mostrar un mensaje
     return render(request, 'Ventas/eliminacion_exitosa.html')
 
 
 
-class VentasCreditoPorClienteView(ListView):
+class VentasCreditoPorClienteView(ListView, LoginRequiredMixin):
     model = Venta
     template_name = 'Ventas/ventas_credito_cliente.html'
 
@@ -271,7 +275,7 @@ class VentasCreditoPorClienteView(ListView):
 
         return context
     
-class DetalleVentasCreditoClienteView(DetailView):
+class DetalleVentasCreditoClienteView(DetailView, LoginRequiredMixin):
     model = Cliente
     template_name = 'ventas/lista_creditos.html'
     context_object_name = 'cliente'
@@ -289,6 +293,7 @@ class DetalleVentasCreditoClienteView(DetailView):
 
     
 
+@login_required
 @csrf_exempt
 @require_http_methods(["POST"])
 def procesar_cobro(request):
@@ -328,6 +333,7 @@ def procesar_cobro(request):
         return JsonResponse({"success": True, "lista_creditos_url": lista_creditos_url})
 
 
+@login_required
 def generar_recibo(request, pk_cobro):
     cobro = get_object_or_404(Cobro, pk=pk_cobro)
     venta = cobro.venta
@@ -347,7 +353,8 @@ def generar_recibo(request, pk_cobro):
 
     return render(request, 'Ventas/recibo.html', context)
 
-class CobroCreateView(CreateView):
+
+class CobroCreateView(CreateView, LoginRequiredMixin):
     model = Cobro
     fields = ['venta', 'vendedor', 'monto', 'metodo_pago']
     template_name = 'cobros/cobro_form.html'  # Especifica tu plantilla HTML
@@ -363,7 +370,7 @@ class CobroCreateView(CreateView):
             return render(self.request, self.template_name, {'form': form})
 
 
-class CobrosListView(ListView):
+class CobrosListView(ListView, LoginRequiredMixin):
     model = Cobro
     template_name = 'Ventas/cobros_list.html'
     context_object_name = 'cobros'
@@ -403,6 +410,7 @@ from reportlab.lib.pagesizes import letter
 def format_currency(value):
     return "{:,.2f}".format(value)
 
+@login_required
 def imprimir_venta(request, venta_id):
     venta = Venta.objects.get(pk=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
@@ -446,7 +454,7 @@ def imprimir_venta(request, venta_id):
     return response
 
 # views.py
-
+@login_required
 def anular_venta(request, venta_id):
     venta = get_object_or_404(Venta, pk=venta_id)
     if request.method == 'POST':
@@ -471,12 +479,13 @@ def anular_venta(request, venta_id):
 
     return render(request, 'Ventas/anular_venta.html', {'venta': venta, 'form': form})
 
+@login_required
 def venta_anulada_exito(request):
     # No es necesario pasar contexto si solo vas a mostrar un mensaje
     return render(request, 'Ventas/anulacion_exitosa.html')
 
 #reporte de cuentas por cobrar
-
+@login_required
 def reporte_cuentasxcobrar(request):
     fecha_hoy = timezone.now().date()
     clientes_data = []
@@ -586,6 +595,7 @@ def reporte_cuentasxcobrar(request):
 
     return JsonResponse(response_data)
 
+@login_required
 def reporte_cuentasxcobrar_pdf(request):
     fecha_hoy = timezone.now().date()
     clientes_data = []
@@ -710,6 +720,7 @@ def reporte_cuentasxcobrar_pdf(request):
 
 from django.core.exceptions import ObjectDoesNotExist
 
+@login_required
 def reporte_cobros(request):
     vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
     filtro_cliente = request.GET.get('cliente', '')
@@ -758,6 +769,7 @@ def reporte_cobros(request):
         'vendedores': vendedores
     })
 
+@login_required
 def reporte_cobros_pdf(request):
     # Obtener lista de vendedores activos
     vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
@@ -823,7 +835,7 @@ def reporte_cobros_pdf(request):
 
     return response
 
-
+@login_required
 def anular_cobro(request, cobro_id):
     cobro = get_object_or_404(Cobro, pk=cobro_id)
 
@@ -869,7 +881,7 @@ def anular_cobro(request, cobro_id):
     return render(request, 'ventas/anular_cobro.html', context)
 
 
-
+@login_required
 def reporte_ventas(request):
 
     vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
@@ -946,6 +958,7 @@ def reporte_ventas(request):
     })
 
 
+@login_required
 def reporte_ventas_pdf(request):
     # Obtener lista de vendedores activos
     vendedores = list(Vendedor.objects.filter(activo=True).values_list('nombre', flat=True))
@@ -1037,17 +1050,19 @@ def reporte_ventas_pdf(request):
 
 
 
+@login_required
 def buscar_cliente2(request):
     termino_busqueda = request.GET.get('q', '')
     clientes = Cliente.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
     return JsonResponse(list(clientes), safe=False)
 
+login_required()
 def buscar_producto3(request):
     termino_busqueda = request.GET.get('q', '')
     producto = Producto.objects.filter(nombre__icontains=termino_busqueda).values('nombre')[:10]  # Limita los resultados a 10
     return JsonResponse(list(producto), safe=False)
 
-
+@login_required
 def generar_recibo_pdf(request, pk_cobro):
     # Toma los mismos pasos para obtener los datos del recibo como lo harías normalmente
     cobro = get_object_or_404(Cobro, pk=pk_cobro)
@@ -1078,7 +1093,7 @@ def generar_recibo_pdf(request, pk_cobro):
     return response
 
 
-
+@login_required
 def buscar_cliente3(request):
     search_term = request.GET.get('search', '')
     if search_term:
