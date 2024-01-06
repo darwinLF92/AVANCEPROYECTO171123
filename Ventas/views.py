@@ -74,6 +74,10 @@ def detalle_venta(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta)
 
+    # Calcular el precio unitario para cada detalle
+    for detalle in detalles:
+        detalle.precio_unitario = detalle.subtotal / detalle.cantidad if detalle.cantidad else 0
+
     context = {
         'venta': venta,
         'detalles': detalles,
@@ -93,66 +97,73 @@ class AddVentaView(ListView):
         data = {}
         action = request.POST.get('action', '')
         if action == 'save':
-            try:
-                # Crear objeto de Venta
-                cliente_id = request.POST.get('cliente')
-                cliente = get_object_or_404(Cliente, id=cliente_id)
-                vendedor_id = request.POST.get('vendedor')
-                vendedor = get_object_or_404(Vendedor, id=vendedor_id)
+            with transaction.atomic():  # Iniciar una transacción
+                try:
+                    # Obtener datos del formulario
+                    cliente_id = request.POST.get('cliente')
+                    cliente = get_object_or_404(Cliente, id=cliente_id)
+                    vendedor_id = request.POST.get('vendedor')
+                    vendedor = get_object_or_404(Vendedor, id=vendedor_id)
+                    total_venta = Decimal(request.POST.get('total'))
 
-                venta_data = {
-                    'fecha_creacion': request.POST.get('fecha_creacion'),
-                    'cliente': cliente,
-                    'vendedor': vendedor,
-                    'tipo_documento': request.POST.get('tipo_documento'),
-                    'tipo_pago': request.POST.get('tipo_pago'),
-                    'metodo_pago': request.POST.get('metodo_pago') or None,
-                    'total': Decimal(request.POST.get('total')),
-                    'paga_con': Decimal(request.POST.get('paga_con')) or None,
-                    'cambio': Decimal(request.POST.get('cambio')) or None,
-                    'comentarios': request.POST.get('comentarios') or None,
-                    'dias_credito': int(request.POST.get('dias_credito')) or None,
-                    'fecha_vencimiento': request.POST.get('fecha_vencimiento') or None
-                }
-                venta = Venta(**venta_data)
-                venta.save()
-            
-                # Procesar y guardar los detalles de la venta
-                verts_items = json.loads(request.POST.get('verts', '[]'))
-                for item in verts_items:
-                    producto = Producto.objects.get(id=item['id'])
-                    descuento = Decimal(item['descuento']).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-                    detalle_data = {
-                        'venta': venta,
-                        'producto': Producto.objects.get(id=item['id']),
-                        'cantidad': int(item['cantidad']),
-                        'precio': Decimal(item['precio_venta']),
-                        'descuento': descuento,
-                        'precio_compra_en_venta': producto.precio_compra,
-                        'subtotal': Decimal(item['subtotal']),
-                        # ... otros campos necesarios ...
-                    }
-                    try:
-                        detalle = DetalleVenta(**detalle_data)
-                        print("Descuento:", detalle_data['descuento'])
+                    # Verificar límite de crédito del cliente
+                    if cliente.saldo + total_venta > cliente.limitecredito:
+                        raise ValidationError('La venta excede el límite de crédito del cliente.')
+
+                    # Crear objeto de Venta con datos del formulario
+                    venta = Venta(
+                        fecha_creacion=request.POST.get('fecha_creacion'),
+                        cliente=cliente,
+                        vendedor=vendedor,
+                        tipo_documento=request.POST.get('tipo_documento'),
+                        tipo_pago=request.POST.get('tipo_pago'),
+                        metodo_pago=request.POST.get('metodo_pago'),
+                        total=total_venta,
+                        paga_con=Decimal(request.POST.get('paga_con')),
+                        cambio=Decimal(request.POST.get('cambio')),
+                        comentarios=request.POST.get('comentarios'),
+                        dias_credito=int(request.POST.get('dias_credito')) if request.POST.get('dias_credito') else None,
+                        fecha_vencimiento=request.POST.get('fecha_vencimiento'),
+                    )
+                    venta.save()  # Guardar la venta
+
+                    # Obtener y validar detalles de la venta
+                    verts_items = json.loads(request.POST.get('verts', '[]'))
+                    for item in verts_items:
+                        producto = Producto.objects.get(id=item['id'])
+                        cantidad_requerida = int(item['cantidad'])
+
+                        # Validar stock del producto
+                        if producto.stock < cantidad_requerida:
+                            raise ValidationError(f'No hay suficiente stock para el producto {producto.nombre}. Disponible: {producto.stock}, Requerido: {cantidad_requerida}')
+
+                        # Preparar y guardar los datos del detalle de la venta
+                        detalle = DetalleVenta(
+                            venta=venta,
+                            producto=producto,
+                            cantidad=cantidad_requerida,
+                            precio=Decimal(item['precio_venta']),
+                            descuento=Decimal(item['descuento']).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+                            precio_compra_en_venta=producto.precio_compra,
+                            subtotal=Decimal(item['subtotal']),
+                            # ... otros campos necesarios ...
+                        )
                         detalle.save()
-                    except ValidationError as e:
-                        data['error'] = str(e)
-                        venta.delete()  # Opcional: elimina la venta si no se puede completar
-                        break  # Salir del bucle si hay un error
 
-                if 'error' not in data:
                     data['status'] = 'success'
                     data['venta_id'] = venta.id
-                print("precio_compra_en_venta:", detalle_data['precio_compra_en_venta'])
-                
-            except Exception as e:
-                data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
+
+                except ValidationError as e:
+                    data['error'] = str(e)
+                    # En caso de excepción, la transacción se revierte automáticamente
+
+                except Exception as e:
+                    data['error'] = 'Error procesando la solicitud: {}'.format(str(e))
+
         else:
             data['error'] = 'Acción no permitida'
 
         return JsonResponse(data, safe=False)
-    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -182,8 +193,13 @@ def eliminar_venta(request, id):
     if request.method == 'POST':
         venta.delete()
         messages.success(request, 'La venta se eliminó correctamente.')  # Agrega un mensaje de éxito
-        return redirect('Ventas:lista_ventas')  # Redirige a la lista de ventas
+        return redirect('Ventas:eliminacion_exitosa')  # Redirige a la lista de ventas
     return render(request, 'Ventas/confirmar_eliminar_venta.html', {'venta': venta})
+
+
+def venta_eliminada_exito(request):
+    # No es necesario pasar contexto si solo vas a mostrar un mensaje
+    return render(request, 'Ventas/eliminacion_exitosa.html')
 
 
 
@@ -192,39 +208,56 @@ class VentasCreditoPorClienteView(ListView):
     template_name = 'Ventas/ventas_credito_cliente.html'
 
     def get_queryset(self):
-        # Filtrar solo ventas al crédito con saldo pendiente
-        return Venta.objects.filter(tipo_pago='credito', saldo_pendiente__gt=0, anulada=False).select_related('cliente')
+        queryset = Venta.objects.filter(
+            tipo_pago='credito',
+            saldo_pendiente__gt=0,
+            anulada=False
+        ).select_related('cliente')
+
+        # Obtener el término de búsqueda del query string
+        search_query = self.request.GET.get('filtro_nombre', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(cliente__nombre__icontains=search_query) |
+                Q(cliente__apellido__icontains=search_query)
+                # Añade aquí otros campos de búsqueda si es necesario
+            )
+
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()  # Asegúrate de usar el queryset filtrado
         ventas_por_cliente = {}
 
         # Inicializar los totales
         suma_total_documentos = 0
-        suma_total_inicial = 0
-        suma_abonos = 0
-        suma_saldo_pendiente = 0
+        suma_total_inicial = Decimal('0.00')  # Usar Decimal para evitar problemas de precisión
+        suma_abonos = Decimal('0.00')
+        suma_saldo_pendiente = Decimal('0.00')
 
-        for venta in self.object_list:
+        for venta in queryset:  # Usa el queryset filtrado
             cliente = venta.cliente
             if cliente not in ventas_por_cliente:
                 ventas_por_cliente[cliente] = {
+                    'cliente': venta.cliente,
                     'ventas': [],
-                    'total_inicial': 0,
-                    'total_abonos': 0,
-                    'saldo_pendiente': 0,
+                    'total_inicial': Decimal('0.00'),
+                    'total_abonos': Decimal('0.00'),
+                    'saldo_pendiente': Decimal('0.00'),
                 }
 
+           # Acumular los totales para cada cliente
             ventas_por_cliente[cliente]['ventas'].append(venta)
             ventas_por_cliente[cliente]['total_inicial'] += venta.total
             ventas_por_cliente[cliente]['saldo_pendiente'] += venta.saldo_pendiente
 
-            # Acumular los totales
+            # Acumular los totales generales
             suma_total_inicial += venta.total
             suma_saldo_pendiente += venta.saldo_pendiente
 
         # Calcular los abonos para cada cliente y acumular el total de abonos y documentos
-        for cliente, datos in ventas_por_cliente.items():
+        for datos in ventas_por_cliente.values():
             datos['total_abonos'] = datos['total_inicial'] - datos['saldo_pendiente']
             suma_abonos += datos['total_abonos']
             suma_total_documentos += len(datos['ventas'])
@@ -237,7 +270,7 @@ class VentasCreditoPorClienteView(ListView):
         context['suma_saldo_pendiente'] = suma_saldo_pendiente
 
         return context
-
+    
 class DetalleVentasCreditoClienteView(DetailView):
     model = Cliente
     template_name = 'ventas/lista_creditos.html'
@@ -262,16 +295,17 @@ def procesar_cobro(request):
     data = json.loads(request.body)
     cobros = data.get('cobros', [])
     errores = []
-    ultimo_cobro_id = None
+    cliente_id = None
 
     for cobro_data in cobros:
         venta_id = cobro_data.get('venta_id')
         monto = Decimal(cobro_data.get('monto')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         metodo_pago = cobro_data.get('metodo_pago')
-        print(f"Intentando guardar el monto: {monto}") 
 
         try:
             venta = Venta.objects.get(id=venta_id)
+            cliente_id = venta.cliente.id  # Asumiendo que Venta tiene una relación con Cliente
+
             if monto > venta.saldo_pendiente:
                 errores.append(f"El monto del cobro para la venta {venta_id} excede el saldo pendiente.")
                 continue
@@ -282,7 +316,6 @@ def procesar_cobro(request):
                 monto=monto,
                 metodo_pago=metodo_pago
             )
-            ultimo_cobro_id = cobro.id
         except Venta.DoesNotExist:
             errores.append(f"Venta con ID {venta_id} no encontrada.")
             continue
@@ -290,9 +323,10 @@ def procesar_cobro(request):
     if errores:
         return JsonResponse({"success": False, "errores": errores})
     else:
-        # Modifica la siguiente línea para usar una URL válida de recibo
-        recibo_url = f"/recibo/{ultimo_cobro_id}/"
-        return JsonResponse({"success": True, "recibo_url": recibo_url})
+        # Construye la URL para redirigir a la lista de créditos del cliente
+        lista_creditos_url = reverse('Ventas:lista_creditos', args=[cliente_id])
+        return JsonResponse({"success": True, "lista_creditos_url": lista_creditos_url})
+
 
 def generar_recibo(request, pk_cobro):
     cobro = get_object_or_404(Cobro, pk=pk_cobro)
@@ -431,11 +465,15 @@ def anular_venta(request, venta_id):
             # Marcar la venta como anulada
             venta.anulada = True
             venta.save()
-            return redirect('Ventas:lista_ventas')
+            return redirect('Ventas:anulacion_exitosa')
     else:
         form = AnulacionForm()
 
     return render(request, 'Ventas/anular_venta.html', {'venta': venta, 'form': form})
+
+def venta_anulada_exito(request):
+    # No es necesario pasar contexto si solo vas a mostrar un mensaje
+    return render(request, 'Ventas/anulacion_exitosa.html')
 
 #reporte de cuentas por cobrar
 

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Datos de la Empresa{% endblock %}
+
+{% block content %}
+<div class="container empresa-datos">
+    <h2 class="titulo-empresa">Datos de la Empresa</h2>
+    {% if configuracion %}
+        <div class="info-empresa">
+            <p><strong>NIT:</strong> {{ configuracion.nit_empresa }}</p>
+            <p><strong>Nombre:</strong> {{ configuracion.nombre_empresa }}</p>
+            <p><strong>Dirección:</strong> {{ configuracion.direccion_empresa }}</p>
+            <p><strong>Teléfono:</strong> {{ configuracion.telefono_empresa }}</p>
+            <p><strong>Correo:</strong> {{ configuracion.correo_empresa|default:"No especificado" }}</p>
+            <p><strong>Sitio Web:</strong> {{ configuracion.sitio_web_empresa|default:"No especificado" }}</p>
+        </div>
+        <div class="logo-container">
+            <p><strong>Logo Empresa: </strong></p>
+            <img src="{{ configuracion.logo_empresa.url }}" alt="Logo de la Empresa" class="logo-empresa">
+        </div>
+    {% else %}
+        <p>No se ha configurado la información de la empresa.</p>
+    {% endif %}
+    <div class="editar-configuracion">
+        <a href="{% url 'Configuracion:configuracion_editar' %}" class="boton-editar">Editar Configuración</a>
+    </div>
+</div>
+
+<style>
+.empresa-datos {
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    color: #333;
+    margin-top: 20px;
+}
+
+.titulo-empresa {
+    margin-bottom: 30px;
+}
+
+.info-empresa p {
+    margin: 10px 0;
+    font-size: 1.1em;
+}
+
+.logo-container {
+    margin: 20px 0;
+}
+
+.logo-empresa {
+    max-width: 150px;
+    height: auto;
+}
+
+.boton-editar {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.boton-editar:hover {
+    background-color: green;
+    color: white;
+}
+</style>
+{% endblock %}

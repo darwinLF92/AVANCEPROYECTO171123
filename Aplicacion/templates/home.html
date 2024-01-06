@@ -6,7 +6,15 @@
 
 {% if user.is_authenticated %}
 <div class="d-flex flex-column align-items-center justify-content-center min-vh-100">
-  <h1 class="display-4 font-weight-bold mb-4 text-center">¡Bienvenido, {{ user.username }}!</h1>
+
+
+    <!-- Logo de la Empresa -->
+  <div style="position:absolute; top:0; right:0; padding:20px;">
+    <img src="{{ configuracion.logo_empresa.url }}" alt="Logo de la Empresa" class="logo-empresa" style="width:150px; height:auto;">
+  </div>
+
+
+  <h1 class="display-4 font-weight-bold mb-4 text-center">¡Bienvenido, {{ user.username }}! a {{ configuracion.nombre_empresa }}</h1>
   <p class="text-secondary text-center mb-8">Gracias por iniciar sesión en DMLR System.</p>
 
   
@@ -52,7 +60,7 @@
 
     <!-- Otras Características -->
     <div class="col mb-4">
-      <a href="#" class="text-decoration-none text-dark">
+      <a href="{% url 'Configuracion:mostrar_configuracion' %}" class="text-decoration-none text-dark">
         <div class="card bg-dark text-white h-100">
           <div class="card-body d-flex flex-column justify-content-center align-items-center">
             <i class='bx bx-cog mb-4 h1'></i>
@@ -115,4 +123,18 @@
 </div>
   {% endif %}
 
+
+ <style>
+  /* styles.css */
+  .logo-empresa {
+  width: 150px; /* o el tamaño que prefieras */
+  height: auto; /* para mantener la proporción */
+  margin-top: 25px;
+  margin-right: 60px;
+  border-radius: 15px; /* Esto hará que los bordes sean redondos, ajusta según prefieras */
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); /* Esto añade sombra, ajusta según prefieras */
+}
+
+
+ </style> 
 {% endblock %}

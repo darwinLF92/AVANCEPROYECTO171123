@@ -149,11 +149,19 @@
       </table>
     </div>
   </div>
+
   <div class="row mt-3">
-    <div class="col-11 text-right">
-      <h5 class="text-danger font-weight-bold" id="total"> Total: Q 0.00 </h5>
+    <!-- Columna para el Total -->
+    <div class="col-md-6 text-left"> 
+        <h5 class="text-primary font-weight-bold" id="totalitems">Items: 0.00</h5>
     </div>
-  </div>
+
+    <!-- Columna para los Items -->
+    <div class="col-md-6 text-right"> 
+        <h5 class="text-danger font-weight-bold" id="total">Total: Q 0.00</h5>
+    </div>
+</div>
+
 
   <div class="row text-center mt-4">
     <div class="col-12">
@@ -253,7 +261,7 @@
                           <td>
                             <button onclick="seleccionarCliente('{{i.id}}',  '{{i.nit}}', '{{i.nombre}}', '{{i.direccion}}', '{{i.telefono}}')" class="btn btn-success"
                             data-dismiss="modal" type="button">
-                            <i class="fas fa-share-square"></i>
+                            <i class="fas fa-share-square"></i>Seleccionar
                         </button>
                           </td>
                       </tr>
@@ -378,15 +386,21 @@
  var verts = {
       items: {
           total: 0.00,
+          totalProducts: 0.00,
           products: []
       },
       calculate: function () {
           var calculatedtotal = 0;
+          var totalProductsCount = 0;
           this.items.products.forEach(function (dict) {
               calculatedtotal += parseFloat(dict.subtotal);
+              totalProductsCount += parseFloat(dict.cantidad); 
           });
           this.items.total = calculatedtotal;
+          this.items.totalProducts = totalProductsCount;
           document.getElementById("total").textContent = "Total " + this.items.total.toFixed(2);
+          document.getElementById("totalitems").textContent = "Items: " + this.items.totalProducts.toFixed(2);
+
       },
 
       list: function () {
@@ -487,10 +501,19 @@ function updateDiscount(input, index) {
 
 
 function actualizarFechaVencimiento(dias) {
-    var fechaVencimiento = new Date();
+    // Obtener la fecha de creación seleccionada por el usuario
+    var fechaCreacion = document.getElementById('fecha_creacion').value;
+
+    // Crear un objeto Date con la fecha de creación, o la fecha actual si no se ha seleccionado ninguna
+    var fechaVencimiento = fechaCreacion ? new Date(fechaCreacion) : new Date();
+
+    // Sumar los días a la fecha de vencimiento
     fechaVencimiento.setDate(fechaVencimiento.getDate() + dias);
+
+    // Actualizar el elemento con id 'fecha_vencimiento' con la nueva fecha de vencimiento
     document.getElementById('fecha_vencimiento').value = fechaVencimiento.toISOString().split('T')[0];
 }
+
 
 // Función para cerrar el modal
 function closeConfirmationModal() {
@@ -722,7 +745,7 @@ function validarCampos() {
 
 //funcion para guardar datos del html a la vista
 function saveData() {
-    if (parseFloat(verts.items.total) === 0) {
+    if (parseFloat(verts.items.totalProducts) === 0) {
         Swal.fire({
             icon: 'error',
             title: '',

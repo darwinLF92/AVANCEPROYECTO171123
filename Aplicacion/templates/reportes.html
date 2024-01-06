@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Página de Inicio{% endblock %}
+
+{% block content %}
+
+
+
+
+  <h1 class="display-4 font-weight-bold mb-4 text-center">Reportes</h1>
+  <p class="text-secondary text-center mb-8">Acá puedes ver reportes detallados de la operacion de la empresa {{ configuracion.nombre_empresa }}</p>
+
+  
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <!-- Sección de Inventario -->
+    <div class="col mb-4">
+      <a href="{% url 'Producto:listar_productos' %}" class="text-decoration-none text-dark">
+        <div class="card text-white h-100" style="background-color: rgb(5, 179, 5); color: aliceblue; ">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-package mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2" style="color: aliceblue;">Inventario</h2>
+            <p class="small">Consulta información del Inventario</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Sección de Punto de Venta -->
+    <div class="col mb-4">
+      <a href="{% url 'Ventas:lista_ventas' %}" class="text-decoration-none text-dark">
+        <div class="card text-white h-100" style="background-color: rgb(0, 119, 255); color: aliceblue; ">
+          <div class="card-body d-flex flex-column justify-content-center align-items-center">
+            <i class='bx bx-dollar-circle mb-4 h1'></i>
+            <h2 class="h4 font-weight-bold mb-2" style="color:aliceblue">Ver Ventas</h2>
+            <p class="small">Consulta Ventas del Período</p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+        <!-- Sección de Punto de CXC -->
+        <div class="col mb-4">
+          <a href="{% url 'Ventas:cobros-list' %}" class="text-decoration-none text-dark">
+            <div class="card text-white h-100" style="background-color: orangered;color: aliceblue;">
+              <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                <i class='bx bx-dollar-circle mb-4 h1'></i>
+                <h2 class="h4 font-weight-bold mb-2" style="color: aliceblue;">Cobros</h2>
+                <p class="small">Consulta Abonos y Pagos de Ventas al Crédito</p>
+              </div>
+            </div>
+          </a>
+        </div>
+
+  </div>
+</div>
+
+    <!-- Logo de la Empresa -->
+    <div style="position:absolute; bottom:0; right:0; padding:20px;">
+      <img src="{{ configuracion.logo_empresa.url }}" alt="Logo de la Empresa" class="logo-empresa" style="width:150px; height:auto;">
+  </div>
+  
+ <style>
+  /* styles.css */
+  .logo-empresa {
+  width: 150px; /* o el tamaño que prefieras */
+  height: auto; /* para mantener la proporción */
+  margin-bottom: 30px;
+  margin-right: 60px;
+  border-radius: 15px; /* Esto hará que los bordes sean redondos, ajusta según prefieras */
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); /* Esto añade sombra, ajusta según prefieras */
+}
+
+
+ </style> 
+{% endblock %}

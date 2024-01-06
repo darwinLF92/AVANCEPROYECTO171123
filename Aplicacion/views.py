@@ -2,9 +2,18 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from .forms import UserLoginForm, UserRegisterForm
 from django.contrib import messages
+from configuracion.models import Configuracion
 
 def home(request):
-    return render(request, 'home.html')
+    try:
+        configuracion = Configuracion.objects.first()  # Asegúrate de que haya al menos un registro en la base de datos
+    except Configuracion.DoesNotExist:
+        configuracion = None  # O maneja la situación con un valor predeterminado o una redirección
+
+    context = {
+        'configuracion': configuracion
+    }
+    return render(request, 'home.html', context)
 
 def login_view(request):
     if request.method == 'POST':
@@ -35,4 +44,16 @@ def register_view(request):
     else:
         form = UserRegisterForm()
     return render(request, 'register.html', {'form': form})
+
+def reportes(request):
+    try:
+        configuracion = Configuracion.objects.first()  # Asegúrate de que haya al menos un registro en la base de datos
+    except Configuracion.DoesNotExist:
+        configuracion = None  # O maneja la situación con un valor predeterminado o una redirección
+
+    context = {
+        'configuracion': configuracion
+    }
+    # No es necesario pasar contexto si solo vas a mostrar un mensaje
+    return render(request, 'reportes.html', context)
 

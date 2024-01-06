@@ -17,41 +17,45 @@
     </div>
   </div>
 
-  <div class="scrollable-content">
-  <table>
-    <thead>
-      <tr>
-        <th>Cliente</th>
-        <th>Documentos</th>
-        <th>Total Inicial</th>
-        <th>Abonos</th>
-        <th>Saldo Pendiente</th>
-        <th>Acciones</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for cliente, datos in ventas_por_cliente.items %}
+  <div class="scrollable-content">    
+    <table class="data-clientes">
+      <thead class="clientes-head">
         <tr>
-          <td>{{ cliente.nombre }}</td>
-          <td>{{ datos.ventas|length|intcomma }}</td>
-          <td>{{ datos.total_inicial|floatformat:2|intcomma }}</td>
-          <td>{{ datos.total_abonos|floatformat:2|intcomma }}</td>
-          <td>{{ datos.saldo_pendiente|floatformat:2|intcomma }}</td>
-          <td>
-            <a href="{% url 'Ventas:lista_creditos' cliente.id %}" class="btn btn-info ver-detalle-btn">COBRAR</a>
-          </td>
+          <th class="text-left">Nombre Cliente</th>
+          <th class="text-center">Documentos</th>
+          <th class="text-center">Total Inicial</th>
+          <th class="text-center">Abonos</th>
+          <th class="text-center">Saldo Pendiente</th>
+          <th class="text-center">Cobrar</th>
         </tr>
-      {% endfor %}
-    </tbody>
-    <tr>
-      <td>Totales:</td>
-      <td>{{ suma_total_documentos|intcomma }}</td>
-      <td>{{ suma_total_inicial|floatformat:2|intcomma }}</td>
-      <td>{{ suma_abonos|floatformat:2|intcomma }}</td>
-      <td>{{ suma_saldo_pendiente|floatformat:2|intcomma }}</td>
-    </tr>
-  </table>
+      </thead>
+      <tbody class="clientes-tbody">
+        {% for cliente, datos in ventas_por_cliente.items %}
+          <tr>
+            <td class="text-left">{{ cliente.nombre }}</td>
+            <td class="text-center">{{ datos.ventas|length|intcomma }}</td>
+            <td class="text-right">{{ datos.total_inicial|floatformat:2|intcomma }}</td>
+            <td class="text-right">{{ datos.total_abonos|floatformat:2|intcomma }}</td>
+            <td class="text-right">{{ datos.saldo_pendiente|floatformat:2|intcomma }}</td>
+            <td class="text-center">
+              <a href="{% url 'Ventas:lista_creditos' cliente.id %}" class="btn btn-info ver-detalle-btn">COBRAR</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="clientes-tfoot">
+        <tr>
+          <td class="text-left"><h4>Totales:</h4></td>
+          <td class="text-center"><h4>{{ suma_total_documentos|intcomma }}</h4></td>
+          <td class="text-right"><h4>{{ suma_total_inicial|floatformat:2|intcomma }}</h4></td>
+          <td class="text-right"><h4>{{ suma_abonos|floatformat:2|intcomma }}</h4></td>
+          <td class="text-right"><h4>{{ suma_saldo_pendiente|floatformat:2|intcomma }}</h4></td>
+          <td class="text-right"><h4></h4></td>
+        </tr>
+      </tfoot>
+    </table>
   </div>
+  
 
 <!--modal de cuentas por cobrar-->
 <div id="CuentascxcModal" class="modal bd-example-modal-lg">
@@ -124,7 +128,7 @@
     .then(data => {
         const modalBody = document.querySelector('#CuentascxcModal .modal-body');
         let htmlContent = `
-            <table>
+            <table class="lista-documentos">
                 <thead>
                   <tr class="no-border">
                         <th>DOC</th>
@@ -145,7 +149,7 @@
                 <tbody>`;
 
         data.clientes.forEach(cliente => {
-            htmlContent += `<tr class="no-border"><td colspan="13" style="border:none;"><strong>CLIENTE: ${cliente.nombre}</strong></td></tr>`;
+            htmlContent += `<tr class="cliente-nombre"><td colspan="13" style="border:none;"><strong>CLIENTE: ${cliente.nombre}</strong></td></tr>`;
             cliente.ventas_credito.forEach(venta => {
                 htmlContent += `
                 <tr class="no-border">
@@ -166,7 +170,7 @@
             });
             htmlContent += `
             <tr class="border-top">
-                  <td colspan="5" style="border:none;"><strong>Totales para ${cliente.nombre}</strong></td>
+                  <td class="totales-cliente" colspan="5" style="border:none;"><strong>Totales para ${cliente.nombre}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_monto)}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_cobrar)}</strong></td>
                   <td style="border:none;"><strong>${formatNumber(cliente.total_sin_vencer)}</strong></td>
@@ -185,11 +189,11 @@
       htmlContent += `
           
           <div>
-              <table>
+              <table class="resumen">
                   <tr>
                     <tr>
-                    <td colspan="3" style="border:none;"></td> <!-- Asegúrate de que el colspan aquí sea el número correcto de columnas antes de "31-60 días" -->
-                    <td colspan="4" style="border: 1px solid black; text-align: center;">VENCIDO</td> <!-- Colspan es el número de columnas desde "31-60 días" a "+121 días" -->
+                    <td class="th-espacio" colspan="3" style="border:none;"></td> <!-- Asegúrate de que el colspan aquí sea el número correcto de columnas antes de "31-60 días" -->
+                    <td class="th-titulo" colspan="4" style="border: 1px solid black; text-align: center;">VENCIDO</td> <!-- Colspan es el número de columnas desde "31-60 días" a "+121 días" -->
                     </tr>
                       <th class="th-header">TOTAL FACTURADO</th>
                       <th class="th-header">COBRAR</th>
@@ -384,11 +388,24 @@ document.addEventListener('DOMContentLoaded', function() {
   color: white; /* Color del texto */
 }
 
-table {
+.th-espacio {
+  background-color: white; /* Cambia esto por el color de fondo que prefieras */
+  color: white; /* Color del texto */
+}
+
+.th-titulo{
+  background-color: white;
+}
+
+.lista-documentos{
         width: 100%;
         border-collapse: collapse;
         margin-top: 20px;
+        background-color: white;
     }
+.cliente-nombre{
+  background-color: #dcfff9;
+}
     th, td {
         padding: 8px;
         text-align: left;
@@ -436,7 +453,7 @@ table {
 }
 
 /* Opcional: Añadir media queries para ajustar para pantallas más pequeñas */
-@media (max-width: 600px) {
+@media (max-width: 700px) {
     .form-group {
         width: 100%; /* Ajusta el ancho en dispositivos más pequeños */
     }
@@ -468,41 +485,71 @@ table {
 </style>
 
 <style>
-  .scrollable-content {
-      max-height: 550px;
-      overflow-y: auto;
-      overflow-x: auto;
-      width: 100%;
-      border: 1px solid #ccc;
-  }
+.scrollable-content {
   
-  table {
-      width: 100%;
-      border-collapse: collapse;
+  /*height: 100vh; /* Usa todo el alto de la ventana gráfica */
+  /*max-height: 700px; /* Altura máxima del contenedor */
+  /*overflow: auto; /* Permite desplazamiento vertical y horizontal si es necesario */
+  border: 1px solid #ccc;
+}
+
+.parent-container { /* Asumiendo que es el contenedor padre de .scrollable-content */
+  display: flex;
+  justify-content: center; /* Centra horizontalmente */
+  align-items: center; /* Centra verticalmente */
+  height: 100vh; /* Asegura que el contenedor padre tenga todo el alto de la ventana */
+}
+
+.scrollable-content {
+  max-width: 100%; /* Asegura que no sobrepase el ancho de la pantalla */
+  /* Resto de tus estilos... */
+}
+
+@media (max-width: 600px) {
+  .data-clientes, .clientes-head th, .clientes-tfoot tr {
+    font-size: smaller; /* O cualquier ajuste específico que necesites */
   }
-  
-  thead th {
-      position: sticky;
-      top: 0;
-      background-color: white;
-      z-index: 10;
-  }
-  
-  table, th, td {
-      border: 1px solid black;
-  }
-  
-  tbody tr:nth-child(odd) {
-      background-color: white;
-  }
-  
-  tbody tr:nth-child(even) {
-      background-color: #B2E0F4;
-  }
-  
-  tfoot tr {
-      background-color: #f5f5f5; /* Color diferente para la fila de totales, si se desea */
-  }
-  
+}
+
+
+.data-clientes { 
+  margin-top: auto;
+  width: 100%; /* Cambiado de 40cm a 100% para mejor adaptabilidad */
+  max-width: 40cm; /* Si aún necesitas una anchura máxima, utiliza max-width */
+  border-collapse: collapse;
+
+}
+
+.clientes-head th {
+  position: sticky;
+  top: 0; /* Ajusta esto si hay algún otro elemento fijo en la parte superior, como un menú de navegación */
+  background:black; /* O el color de fondo que desees, para evitar que se vea contenido a través del encabezado */
+  color: white;
+  z-index: 10; /* Asegura que el encabezado se muestre por encima del contenido al desplazarse */
+}
+
+.clientes-tfoot tr {
+  position: sticky;
+  bottom: 0;
+  background-color: darkblue;
+  z-index: 10; /* Corregido a un número sin 'px' */
+  color: white;
+}
+
+.clientes-tbody tr:nth-child(odd) {
+  background-color: white;
+ 
+}
+
+.clientes-tbody {
+  padding-top: 60px; /* Ajusta este valor al alto de tus celdas de `thead` */
+  padding-bottom: 60px; /* Ajusta este valor al alto de tus celdas de `tfoot` */
+}
+
+
+.clientes-tbody tr:nth-child(even) {
+  background-color: #dcfff9;
+}
+
   </style>
 {% endblock %}

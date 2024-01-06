@@ -311,13 +311,13 @@ function enviarDatosCobro(datos, metodoPago) {
   })
   .then(response => response.json())
     .then(data => {
-      console.log('Cobro realizado:', data);
+      alert('Cobro realizado:', data);
       // Redirigir al recibo del pago
-      if (data.success && data.recibo_url) {
-        window.location.href = data.recibo_url;
+      if (data.success && data.lista_creditos_url) {
+        window.location.href = data.lista_creditos_url;
       } else {
         // Manejar casos donde no hay URL de recibo o el cobro no fue exitoso
-        console.error('No se pudo redirigir al recibo del pago');
+        console.error('No se pudo realizar del pago');
       }
 
       // Actualizar el campo "Cobrar Marcados" en la interfaz
