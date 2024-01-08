@@ -4,86 +4,125 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10">
 <head>
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
+    /* Estilos generales */
+    .user-edit-form body {
+        font-family: 'Arial', sans-serif;
     }
-  
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
+
+    .user-edit-form .container {
+        max-width: 800px; /* Ajusta el ancho máximo según tus necesidades */
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5; /* Cambiado a un color de fondo más claro */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px; /* Bordes más redondeados */
     }
-  
-    h1 {
-      color: #333;
+
+    .user-edit-form h1 {
+        color: #333;
     }
-  
-    form {
-      margin-top: 20px;
+
+    /* Estilos para el formulario y sus elementos */
+    .user-edit-form .form-group {
+        margin-top: 20px;
     }
-  
-    button {
-      background-color: #4caf50;
-      color: #fff;
-      padding: 10px 15px;
-      border: none;
-      cursor: pointer;
+
+    .user-edit-form label {
+        font-weight: bold;
+        color: #555;
     }
-  
-    button:hover {
-      background-color: #45a049;
+
+    .user-edit-form button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 12px 20px; /* Ajustado el padding para hacerlo más grande */
+        border: none;
+        cursor: pointer;
+        margin-top: 20px;
+        border-radius: 5px;
+        font-size: 16px; /* Tamaño de fuente aumentado */
     }
-  
-    .modal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #fff;
-      padding: 20px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
+
+    .user-edit-form button:hover {
+        background-color: #45a049;
     }
-  
-    .close {
-      float: right;
-      font-size: 20px;
-      cursor: pointer;
+
+    /* Estilos específicos para el campo de permisos */
+    .permission-checkbox label {
+        display: flex;
+        flex-direction: row-reverse;
+        align-items: center; /* Centrar verticalmente */
+        margin-bottom: 10px;
+        color: #555;
     }
-  </style>
-  
+
+    .permission-checkbox input {
+        margin-left: 10px;  /* Espacio entre el checkbox y la etiqueta */
+    }
+
+    .permission-checkbox ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .permission-checkbox li {
+        margin-bottom: 5px;
+    }
+
+    /* Estilos para pantallas pequeñas */
+    @media (max-width: 600px) {
+        .user-edit-form .container {
+            max-width: 100%;
+        }
+    }
+</style>
+
 </head>
-<body>
-  <h1> 
-    
-  </h1>
+<body class="user-edit-form">
+    <h1></h1>
 
-  {% block content %}
+    {% block content %}
+    {% if error_message %}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: '{{ error_message }}',
+        });
+    </script>
+    {% endif %}
 
-  {% if error_message %}
-  <div id="modalError" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <p>{{ error_message }}</p>
-    </div>
-  </div>
-  {% endif %}
+    <div class="container">
+        <h1>Editar Usuario: {{ form.instance.username }}</h1>
 
-  <div class="container">
+        <form method="post">
+            {% csrf_token %}
 
-    <h1>Editar Usuario: {{ form.instance.username }}</h1>
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Nombre de usuario:</label>
+                {{ form.username }}
+                {{ form.username.errors }}
+            </div>
 
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button id="crearBtn" class="btn waves-effect waves-light" type="submit" {% if success or error_message %}style="display: none;" {% endif %}>
-        Actualizar</button>
-    </form>
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Correo electrónico:</label>
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
 
+            <div class="form-group permission-checkbox">
+              <h1>Permisos de Usuario: </h1>
+              <br>
+                {{ form.user_permissions }}
+                {{ form.user_permissions.errors }}
+            </div>
+
+            <button id="crearBtn" class="btn waves-effect waves-light" type="submit" {% if success or error_message %}style="display: none;" {% endif %}>
+                Actualizar
+            </button>
+        </form>
+        
     {% if success %}
     <div id="modalSuccess" class="modal">
       <div class="modal-content">

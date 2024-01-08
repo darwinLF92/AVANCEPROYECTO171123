@@ -47,7 +47,9 @@ INSTALLED_APPS = [
     'Clientes',
     'Vendedor',
     'Ventas',
-    'configuracion'
+    'configuracion',
+    'crispy_forms',
+    
 ]
 
 MIDDLEWARE = [
@@ -147,3 +149,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CRISPY_TEMPLATE_PACK = ''  # O 'bootstrap'
+

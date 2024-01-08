@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import Http404
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required, permission_required
 from .forms import UserRegisterForm, UserEditForm
@@ -57,7 +58,10 @@ def create_user(request):
 @login_required
 @permission_required('auth.change_user')
 def edit_user(request, user_id):
-    user_instance = get_object_or_404(User, id=user_id)
+    try:
+        user_instance = get_object_or_404(User, id=user_id)
+    except User.DoesNotExist:
+        raise Http404("El usuario no existe")
     if request.method == 'POST':
         form = UserEditForm(request.POST, instance=user_instance)  # Asumiendo que tienes un formulario UserEditForm
         if form.is_valid():
@@ -66,7 +70,7 @@ def edit_user(request, user_id):
             # return redirect('Usuarios:list_users')
         else:
             # Devolver una respuesta HTML indicando un error en el formulario 
-            return render(request, 'edit_user.html', {'form': form, 'error_message': 'Error inesperado, intente nuevamente'})  
+            return render(request, 'edit_user.html', {'form': form, 'error_message': 'Error inesperado, intente nuevamente. Asegúrese de completar correctamente todos los campos y seleccionar al menos un permiso.'})  
     else:
         form = UserEditForm(instance=user_instance)
     return render(request, 'edit_user.html', {'form': form})
@@ -75,7 +79,10 @@ def edit_user(request, user_id):
 @login_required
 @permission_required('auth.change_user')
 def edit_user(request, user_id):
-    user_instance = get_object_or_404(User, id=user_id)
+    try:
+        user_instance = get_object_or_404(User, id=user_id)
+    except User.DoesNotExist:
+        raise Http404("El usuario no existe")
     if request.method == 'POST':
         form = UserEditForm(request.POST, instance=user_instance)  # Asumiendo que tienes un formulario UserEditForm
         if form.is_valid():
@@ -83,7 +90,7 @@ def edit_user(request, user_id):
             return render(request, 'edit_user.html', {'success': True, 'message': f'Usuario {form.instance.username} Editado satisfactoriamente'})
         else:
             # Devolver una respuesta HTML indicando un error en el formulario 
-            return render(request, 'edit_user.html', {'form': form, 'error_message': 'Error inesperado, intente nuevamente, debe de seleccionar al menos un permiso'})  
+            return render(request, 'edit_user.html', {'form': form, 'error_message': 'Error inesperado, intente nuevamente. Asegúrese de completar correctamente todos los campos y seleccionar al menos un permiso.'})  
     else:
         form = UserEditForm(instance=user_instance)
     return render(request, 'edit_user.html', {'form': form})
