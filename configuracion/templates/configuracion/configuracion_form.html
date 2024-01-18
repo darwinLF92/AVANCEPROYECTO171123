@@ -4,12 +4,51 @@
 
 {% block content %}
 <div class="container">
-    <h2>Configuración de la Empresa</h2>
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center">Configuración de la Empresa</h1>
+        </div>
+    </div>
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Guardar">
-        <a href="{% url 'Aplicacion:home' %}"><button type="button">Inicio</button></a>
+        <div class="row">
+            <div class="form-group col-md-12">
+                <label for="{{ form.nit_empresa.id_for_label }}">NIT de la Empresa:</label>
+                {{ form.nit_empresa }}
+            </div>
+            <div class="form-group col-md-12">
+                <label for="{{ form.nombre_empresa.id_for_label }}">Nombre de la Empresa:</label>
+                {{ form.nombre_empresa }}
+            </div>
+            <div class="form-group col-md-12">
+                <label for="{{ form.direccion_empresa.id_for_label }}">Dirección de la Empresa:</label>
+                {{ form.direccion_empresa }}
+            </div>
+            <div class="form-group col-md-12">
+                <label for="{{ form.telefono_empresa.id_for_label }}">Teléfono de la Empresa:</label>
+                {{ form.telefono_empresa }}
+            </div>
+            <div class="form-group col-md-12">
+                <label for="{{ form.correo_empresa.id_for_label }}">Correo de la Empresa:</label>
+                {{ form.correo_empresa }}
+            </div>
+            <div class="form-group col-md-12">
+                <label for="{{ form.sitio_web_empresa.id_for_label }}">Sitio Web de la Empresa:</label>
+                {{ form.sitio_web_empresa }}
+            </div>
+            <div class="form-group col-md-12">
+                <label for="{{ form.logo_empresa.id_for_label }}">Logo de la Empresa:</label>
+                {{ form.logo_empresa }}
+            </div>
+            <div class="form-group col-md-12">
+                <label for="{{ form.fondo_pagina_principal.id_for_label }}">Fondo de la Página Principal:</label>
+                {{ form.fondo_pagina_principal }}
+            </div>
+            <div class="form-group col-md-12">
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="{% url 'Aplicacion:home' %}" class="btn btn-secondary">Regresar al Inicio</a>
+            </div>
+        </div>
     </form>
 </div>
 {% endblock %}
